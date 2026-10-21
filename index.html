@@ -1,0 +1,228 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bethany Church – Member App (Mockup v2)</title>
+<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#00303f">
+<link rel="apple-touch-icon" href="assets/icon-192.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Bethany">
+<style>
+:root{--teal:#00303f;--teal2:#0b4a5c;--gold:#dcae1d;--cream:#f7f5ee;--ink:#1a2226;--mut:#4a5559}
+*{box-sizing:border-box}html,body{margin:0}
+body{font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:19px;line-height:1.5;background:var(--cream);color:var(--ink)}
+.app{max-width:480px;margin:0 auto;min-height:100vh;padding-bottom:96px;position:relative}
+header{background:var(--teal);color:#fff;padding:14px 18px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:5}
+header img{height:38px}header .t{margin-left:auto;font-size:15px;opacity:.85}
+.screen{display:none}.screen.on{display:block}
+.pad{padding:20px 18px}
+h1{font-size:30px;line-height:1.2;margin:0 0 8px}h2{font-size:23px;margin:26px 0 10px;color:var(--teal)}h3{font-size:20px;margin:0 0 4px}
+.hero{position:relative;color:#fff;background:var(--teal) center/cover;min-height:250px;display:flex;align-items:flex-end}
+.hero:before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,48,63,.15),rgba(0,48,63,.92))}
+.hero>div{position:relative;padding:22px 18px}.hero p{margin:0;font-size:18px}
+.card{background:#fff;border-radius:16px;padding:18px;margin:12px 0;box-shadow:0 2px 10px rgba(0,48,63,.08);border:1px solid #e7e2d2}
+.next{border-left:6px solid var(--gold)}.label{font-size:15px;text-transform:uppercase;letter-spacing:.08em;color:var(--mut);font-weight:700}
+.big{font-size:26px;font-weight:800;color:var(--teal)}
+.btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:62px;padding:14px 18px;border-radius:14px;font-size:21px;font-weight:800;text-decoration:none;border:0;margin:10px 0;cursor:pointer;font-family:inherit}
+.btn-live{background:#c4161c;color:#fff;font-size:24px;min-height:74px}
+.btn-gold{background:var(--gold);color:var(--teal)}.btn-teal{background:var(--teal);color:#fff}
+.btn-out{background:#fff;color:var(--teal);border:3px solid var(--teal)}
+.dot{width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 0 0 4px rgba(255,255,255,.35)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.ql{background:#fff;border:2px solid #e2dccb;border-radius:16px;padding:16px 12px;text-align:center;text-decoration:none;color:var(--teal);font-weight:800;font-size:18px;min-height:104px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+.ql .ic{font-size:32px}
+.row{display:flex;justify-content:space-between;gap:10px;padding:12px 0;border-bottom:1px solid #ece7d8}.row:last-child{border:0}
+.row b{color:var(--teal)}.row span{text-align:right;font-weight:700;white-space:nowrap}
+.step{display:flex;align-items:center;gap:6px}.step button{width:48px;height:52px;flex:none;border-radius:12px;border:2px solid var(--teal);background:#fff;color:var(--teal);font-size:26px;font-weight:800;cursor:pointer}.step input{text-align:center;padding:12px 4px;min-width:0}
+.ph{background:#fff3c4;border:2px dashed #b8890a;color:#6b4f00;padding:2px 8px;border-radius:8px;font-weight:700;font-size:.9em}
+.ev-date{background:var(--teal);color:#fff;border-radius:12px;text-align:center;padding:8px 10px;min-width:70px}
+.ev-date .m{font-size:14px;color:var(--gold);font-weight:800}.ev-date .d{font-size:28px;font-weight:800;line-height:1}
+.ev{display:flex;gap:14px;align-items:flex-start}
+.past{opacity:.85}.past .ev-date{background:#7b8a8f}
+.tag{display:inline-block;background:var(--gold);color:var(--teal);font-weight:800;font-size:14px;padding:2px 10px;border-radius:20px}
+label{display:block;font-weight:700;margin:14px 0 6px}
+input,select,textarea{width:100%;font-size:19px;padding:14px;border:2px solid #9aa6a9;border-radius:12px;font-family:inherit;background:#fff}
+textarea{min-height:130px}
+.photo{width:100%;border-radius:16px;display:block;margin:12px 0;aspect-ratio:16/9;object-fit:cover}
+a.lnk{color:var(--teal);font-weight:700}
+.muted{color:var(--mut);font-size:17px}
+.note{font-size:14px;color:var(--mut);text-align:center;margin:20px 0 0}
+nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:var(--teal);display:grid;grid-template-columns:repeat(5,1fr);z-index:10;padding-bottom:env(safe-area-inset-bottom)}
+nav a{color:#cfe0e4;text-decoration:none;text-align:center;font-size:16px;font-weight:700;padding:10px 0 12px;display:flex;flex-direction:column;align-items:center;gap:2px}
+nav a .ic{font-size:24px;line-height:1.1}
+nav a.on{color:var(--gold);box-shadow:inset 0 4px 0 var(--gold)}
+
+nav a svg{width:28px;height:28px}
+.ico{width:24px;height:24px;vertical-align:-5px;flex:none}
+.h3i{display:flex;align-items:center;gap:8px;margin:0 0 4px;font-size:20px}
+a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible{outline:4px solid var(--gold);outline-offset:3px;box-shadow:0 0 0 7px var(--teal)}
+nav a:focus-visible{outline-offset:-6px;box-shadow:none}
+.cal{display:inline-flex;align-items:center;gap:6px;background:#fff;color:var(--teal);border:2px solid var(--teal);border-radius:10px;font-weight:800;font-size:16px;padding:8px 12px;min-height:44px;cursor:pointer;font-family:inherit;margin-top:8px}
+.srow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid #ece7d8}.srow:last-child{border:0}
+.srow .calx{margin:0;padding:6px 10px;font-size:15px}
+.srow b{color:var(--teal);display:block}.srow small{font-size:17px;font-weight:700}
+.serm{display:flex;gap:12px;align-items:center;text-decoration:none;color:inherit;padding:10px 0;border-bottom:1px solid #ece7d8}.serm:last-child{border:0}
+.serm img{width:128px;height:72px;object-fit:cover;border-radius:10px;flex:none}
+.serm .tt{font-weight:800;color:var(--teal);font-size:17px;line-height:1.3}.serm .dt{font-size:15px;color:var(--mut)}
+details{background:#fff;border:1px solid #e7e2d2;border-radius:16px;margin:12px 0;box-shadow:0 2px 10px rgba(0,48,63,.08)}
+summary{list-style:none;cursor:pointer;padding:18px;font-size:21px;font-weight:800;color:var(--teal);display:flex;justify-content:space-between;align-items:center;min-height:64px}
+summary::-webkit-details-marker{display:none}
+summary:after{content:"+";font-size:30px;color:var(--gold);line-height:1}
+details[open] summary:after{content:"–"}
+details>div{padding:0 18px 18px}
+details .card{box-shadow:none;margin:10px 0;background:var(--cream)}
+ol{padding-left:24px;margin:6px 0}ol li{margin:6px 0}
+</style></head><body><div class="app">
+<header><img src="assets/logo-bethany-light.svg" alt="Bethany Church"><span class="t">Members</span></header>
+
+<section class="screen" id="s-home">
+ <div class="hero" style="background-image:url(assets/hero.jpg)"><div><h1>Welcome home.</h1><p>Bethany Church · Lynnwood, WA</p></div></div>
+ <div class="pad">
+  <div class="card next"><div class="label">Next service</div><div class="big" id="nx-when">Sunday · 10:00 AM</div><div id="nx-name">English (EM) Service</div><div class="muted">15414 Ash Way, Lynnwood</div></div>
+  <a class="btn btn-live" href="#watch"><span class="dot"></span>Watch Live</a>
+  <h2>Quick links</h2>
+  <div class="grid">
+   <a class="ql" href="#events"><svg class="ico" style="width:34px;height:34px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Events</a>
+   <a class="ql" href="#give"><svg class="ico" style="width:34px;height:34px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-8-5-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 6-8 11-8 11z"/></svg>Give</a>
+   <a class="ql" href="#watch"><svg class="ico" style="width:34px;height:34px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="4"/><path d="M10 9l5 3-5 3z" fill="currentColor"/></svg>Sermons</a>
+   <a class="ql" href="#more"><svg class="ico" style="width:34px;height:34px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="19" cy="12" r="1.6" fill="currentColor"/></svg>About &amp; Times</a>
+  </div>
+  <h2>Coming up</h2>
+  <div class="card"><div class="ev"><div class="ev-date"><div class="m">OCT</div><div class="d">31</div></div><div><h3>Harvestfest</h3><div>Saturday · 4–7 PM</div><a class="lnk" href="#events">Details →</a></div></div></div>
+ </div>
+</section>
+
+<section class="screen" id="s-watch"><div class="pad">
+ <h1>Watch</h1><p class="muted">Join us live or catch up on recent services.</p>
+ <div class="card" style="background:var(--teal);color:#fff;text-align:center;padding:22px 18px">
+  <div style="font-size:20px;font-weight:700">Bethany Church on YouTube</div>
+  <a class="btn btn-live" href="https://www.youtube.com/@bethanychurch2134/streams" target="_blank"><span class="dot"></span>Watch Live Now</a>
+ </div>
+ <h2>Recent sermons</h2>
+ <div class="card"><a class="serm" href="https://www.youtube.com/watch?v=RD-z2mtRfmI" target="_blank"><img src="assets/yt-RD-z2mtRfmI.jpg" alt=""><div><div class="tt">Having Compassion Like Jesus</div><div class="dt">Sun Oct 18, 2026 · English · Pastor Woori Cheh</div></div></a><a class="serm" href="https://www.youtube.com/watch?v=BXkvDVEWF4g" target="_blank"><img src="assets/yt-BXkvDVEWF4g.jpg" alt=""><div><div class="tt">예수님처럼 불쌍히 여기는 삶</div><div class="dt">Sun Oct 18, 2026 · Korean · 최우리 목사</div></div></a><a class="serm" href="https://www.youtube.com/watch?v=Ft4VTw6ZzIE" target="_blank"><img src="assets/yt-Ft4VTw6ZzIE.jpg" alt=""><div><div class="tt">토요일 새벽예배</div><div class="dt">Sat Oct 17, 2026 · Korean Morning Prayer</div></div></a><a class="serm" href="https://www.youtube.com/watch?v=5aAoIUO6024" target="_blank"><img src="assets/yt-5aAoIUO6024.jpg" alt=""><div><div class="tt">수요예배 · 헌금 후의 바람직한 태도</div><div class="dt">Wed Oct 14, 2026 · Korean · 전리사 목사</div></div></a><a class="serm" href="https://www.youtube.com/watch?v=nFqJh4yqI_s" target="_blank"><img src="assets/yt-nFqJh4yqI_s.jpg" alt=""><div><div class="tt">Humble Like Jesus Part 2</div><div class="dt">Sun Oct 4, 2026 · English · Pastor Woori Cheh</div></div></a></div>
+ <a class="btn btn-out" style="font-size:18px" href="https://www.youtube.com/@bethanychurch2134/streams" target="_blank">See all services on YouTube</a>
+ <h2>Livestream times</h2>
+ <div class="card"><div class="srow"><div><b>Sunday English (EM)</b><small>Sun 10:00 AM</small></div></div><div class="srow"><div><b>Sunday Korean</b><small>Sun 11:30 AM</small></div></div><div class="srow"><div><b>Wednesday Korean</b><small>Wed 7:00 PM</small></div></div><div class="srow"><div><b>Morning Prayer (Korean)</b><small>Sat 7:00 AM</small></div></div></div>
+</div></section>
+
+<section class="screen" id="s-events"><div class="pad">
+ <h1>Events</h1><p class="muted">What's happening at Bethany.</p>
+ <h2>Upcoming</h2>
+ <div class="card"><div class="ev"><div class="ev-date"><div class="m">OCT</div><div class="d">31</div></div><div><h3>Harvestfest</h3><div><b>Saturday, Oct 31, 2026</b></div><div>4:00 – 7:00 PM</div><div class="muted">15414 Ash Way, Lynnwood</div></div></div>
+  <p style="margin:10px 0 0">Pumpkin carving, face painting, games, food and candy galore. Costume up and join the fun!</p>
+  <button class="btn btn-gold" onclick="openRsvp()">RSVP for Harvestfest</button>
+  <button class="btn btn-out" style="font-size:18px;min-height:52px" onclick="ics('harvest')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M12 13v5M9.5 15.5h5"/></svg>Add to calendar</button></div>
+ <div class="card" id="rsvp" hidden><div id="rsvp-form"><h3 style="color:var(--teal)">RSVP · Harvestfest</h3><div class="muted">Sat, Oct 31 · 4–7 PM</div>
+  <label for="r-name">Your name</label><input id="r-name" autocomplete="name" placeholder="First and last name">
+  <div class="grid"><div><label for="r-ad">Adults</label><div class="step"><button type="button" onclick="st('r-ad',-1)" aria-label="Fewer adults">−</button><input id="r-ad" inputmode="numeric" value="1" aria-live="polite"><button type="button" onclick="st('r-ad',1)" aria-label="More adults">+</button></div></div>
+  <div><label for="r-kd">Kids</label><div class="step"><button type="button" onclick="st('r-kd',-1)" aria-label="Fewer kids">−</button><input id="r-kd" inputmode="numeric" value="0" aria-live="polite"><button type="button" onclick="st('r-kd',1)" aria-label="More kids">+</button></div></div></div>
+  <label for="r-ph">Phone or email <span class="muted">(optional)</span></label><input id="r-ph" placeholder="So we can reach you">
+  <p id="r-err" style="color:#b00020;font-weight:700;margin:8px 0 0" hidden>Please enter your name.</p>
+  <button class="btn btn-teal" onclick="sendRsvp()">Send RSVP</button><button class="btn btn-out" style="min-height:52px;font-size:18px" onclick="closeRsvp()">Cancel</button></div>
+  <div id="rsvp-ok" hidden style="text-align:center"><div style="font-size:52px;color:#1d7a3a">✓</div><h3 style="color:var(--teal)">You're on the list!</h3><p id="r-sum" style="font-size:20px;font-weight:700;margin:6px 0"></p><p class="muted">See you Saturday, Oct 31 at 4 PM.</p><button class="btn btn-out" style="min-height:52px;font-size:18px" onclick="closeRsvp()">Done</button></div></div>
+ <h2>Weekly gatherings</h2>
+ <div class="card"><div class="srow"><div><b>Sunday English (EM)</b><small>Sun 10:00 AM</small></div></div><div class="srow"><div><b>Sunday Korean</b><small>Sun 11:30 AM</small></div></div><div class="srow"><div><b>Wednesday Korean</b><small>Wed 7:00 PM</small></div></div><div class="srow"><div><b>Sat Morning Prayer</b><small>Sat 7:00 AM</small></div></div></div>
+ <h2>Recent</h2>
+ <div class="card past ev"><div class="ev-date"><div class="m">JUN</div><div class="d">25</div></div><div><h3>ROAR! VBS</h3><div>June 25–27, 2026</div></div></div>
+ <div class="card past ev"><div class="ev-date"><div class="m">APR</div><div class="d">3</div></div><div><h3>Good Friday Worship Night</h3><div>April 3, 2026</div></div></div>
+ <div class="card past ev"><div class="ev-date"><div class="m">DEC</div><div class="d">'23</div></div><div><h3>Nepal Relief Drive</h3><div>December 2023</div></div></div>
+</div></section>
+
+<section class="screen" id="s-give"><div class="pad">
+ <h1>Give</h1><p class="muted">Thank you for supporting the ministry of Bethany Church.</p>
+ <div class="card"><div class="h3i"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg><b>Give online</b></div><p style="margin:4px 0">Secure giving through Tithe.ly. Set up a <b>one-time</b> or <b>recurring</b> gift.</p>
+  <a class="btn btn-gold" href="https://tithe.ly/give_new/www/#/tithely/give-one-time/1412967" target="_blank">Give with Tithe.ly</a>
+  <p class="muted" style="margin:6px 0 0">Or use the Tithe.ly app:</p>
+  <div class="grid"><a class="btn btn-out" style="font-size:17px" href="https://apps.apple.com/us/app/tithe-ly/id694740700" target="_blank">iPhone app</a><a class="btn btn-out" style="font-size:17px" href="https://play.google.com/store/apps/details?id=ly.tithe.tithely&hl=en" target="_blank">Android app</a></div></div>
+ <div class="card"><div class="h3i"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></svg><b>Venmo</b></div><p style="margin:6px 0">Send to: <b style="font-size:21px;color:var(--teal)">@Bethany_IMPACT</b></p><a class="btn btn-teal" href="https://venmo.com/u/Bethany_IMPACT" target="_blank">Open Venmo</a></div>
+ <div class="card"><div class="h3i"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg><b>Give by check</b></div>
+  <div class="row"><b>Payable to</b><span>Bethany Church</span></div>
+  <div style="padding:12px 0;border-bottom:1px solid #ece7d8"><b style="color:var(--teal)">Mail to</b><div style="font-weight:700">Bethany Church<br>15414 Ash Way<br>Lynnwood, WA 98087</div></div>
+  <div style="padding-top:12px"><b style="color:var(--teal)">Memo</b><div>For general offering, the memo line can be left blank. To give to a specific missionary or missional purpose, write where the gift should go in the memo line.</div></div></div>
+</div></section>
+
+<section class="screen" id="s-more"><div class="pad">
+ <h1>More</h1>
+ <a class="btn btn-gold" href="tel:+12065517321"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h4l2 5-3 2a11 11 0 0 0 6 6l2-3 5 2v4a2 2 0 0 1-2 2A17 17 0 0 1 3 5a2 2 0 0 1 2-2"/></svg>Call (206) 551-7321</a>
+ <a class="btn btn-out" href="mailto:bethanychurch.wa@gmail.com" style="font-size:17px"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>bethanychurch.wa@gmail.com</a>
+ <p style="text-align:center;margin:6px 0 4px;font-weight:700"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s7-7 7-12a7 7 0 0 0-14 0c0 5 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg> 15414 Ash Way, Lynnwood, WA 98087</p>
+
+ <details id="d-about"><summary>About Bethany</summary><div>
+  <img class="photo" src="assets/community.jpg" alt="Bethany Church gathering">
+  <p>Since 1982, Bethany Church has welcomed members of the greater Seattle community to join in song, service, worship and prayer. We are a multi-cultural, multi-ethnic church with English and Korean ministries.</p>
+  <p><b style="color:var(--teal)">Our mission:</b> To educate the next generation to grow in the love of Christ, to be God's witnesses to "the ends of the earth," and to be the salt and light of the earth, serving others in love and sharing the Gospel with our community.</p>
+  <p><a class="lnk" href="https://www.bethanychurchwa.org">bethanychurchwa.org</a></p></div></details>
+
+ <details id="d-times"><summary>Service times &amp; Bible studies</summary><div>
+  <div class="srow"><div><b>Sunday English (EM)</b><small>Sun 10:00 AM</small></div></div><div class="srow"><div><b>Sunday Korean</b><small>Sun 11:30 AM</small></div></div><div class="srow"><div><b>Wednesday Korean</b><small>Wed 7:00 PM</small></div></div><div class="srow"><div><b>Sat Morning Prayer (Korean)</b><small>Sat 7:00 AM</small></div></div>
+  <h3 style="margin:18px 0 0;color:var(--teal)">Bible studies</h3>
+  <div class="srow"><div><b>Women's</b><small>Tue 6:30 PM</small></div></div><div class="srow"><div><b>Men's</b><small>Wed 7:15 PM</small></div></div><div class="srow"><div><b>Young Adult Men's</b><small>Sat 7:00 PM</small></div></div><div class="srow"><div><b>Youth</b><small>Sun 11:40 AM</small></div></div></div></details>
+
+ <details id="d-lead"><summary>Leadership</summary><div>
+  <div class="card"><h3>Pastor Woori Cheh</h3><div class="muted">Senior Pastor · Korean &amp; EM ministries</div></div>
+  <div class="card"><h3>Christine Cheh</h3><div class="muted">Director of Youth, Children's &amp; Nursery</div></div></div></details>
+
+ <details id="d-min"><summary>Ministry teams</summary><div>
+  <div class="card"><h3>Worship Team</h3><div class="muted"><span class="ph">[ministry description needed]</span></div><div>Daniel Kim, Palmy Silarat, Pastor Woori Cheh</div></div>
+  <div class="card"><h3>Children's Ministry</h3><div class="muted"><span class="ph">[ministry description needed]</span></div><div>Judith Tweneboah</div><a class="lnk" href="https://www.youtube.com/channel/UCaGWjLYIOiZaAR4d76RlR9A">YouTube channel →</a></div>
+  <div class="card"><h3>Nursery</h3><div class="muted"><span class="ph">[ministry description needed]</span></div><div>Sophy Kim</div></div>
+  <div class="card"><h3>Youth</h3><div class="muted"><span class="ph">[ministry description needed]</span></div><div>Girls – Palmy Silarat<br>Boys – Steven Lee &amp; Abraham Ahn</div></div>
+  <div class="card"><h3>Missions</h3><div>Nepal · MorningStar <span class="ph">[description needed]</span></div><div style="margin-top:6px"><b>Bethany IMPACT</b> – a Community Development Hub supporting schools, families and leaders through financial literacy, health clinics, community nights, urban farming, and college and job readiness.</div></div></div></details>
+
+ <details id="d-install"><summary>Add app to Home Screen</summary><div>
+  <p style="margin-top:0">Put Bethany on your phone like an app. No app store needed.</p>
+  <div class="card"><div class="h3i"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg><b>iPhone (Safari)</b></div><ol><li>Open this page in <b>Safari</b>.</li><li>Tap the <b>Share</b> button (square with arrow).</li><li>Tap <b>Add to Home Screen</b>, then <b>Add</b>.</li></ol></div>
+  <div class="card"><div class="h3i"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg><b>Android (Chrome)</b></div><ol><li>Open this page in <b>Chrome</b>.</li><li>Tap the <b>⋮</b> menu (top right).</li><li>Tap <b>Add to Home screen</b> or <b>Install app</b>.</li></ol></div></div></details>
+
+ <h2>Follow us</h2>
+ <div class="grid"><a class="btn btn-out" style="font-size:17px" href="https://www.facebook.com/bethanychurch.WA">Facebook</a><a class="btn btn-out" style="font-size:17px" href="https://www.instagram.com/bethanychurch_em/">Instagram</a></div>
+ <a class="btn btn-out" style="font-size:17px" href="https://linktr.ee/bethanychurchlynnwood">All links (Linktree)</a>
+ <p class="note">Design preview v2 · not production</p>
+</div></section>
+
+<nav aria-label="Main">
+ <a href="#home" data-s="home"><svg class="" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>Home</a>
+ <a href="#watch" data-s="watch"><svg class="" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="4"/><path d="M10 9l5 3-5 3z" fill="currentColor"/></svg>Watch</a>
+ <a href="#events" data-s="events"><svg class="" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Events</a>
+ <a href="#give" data-s="give"><svg class="" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-8-5-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 6-8 11-8 11z"/></svg>Give</a>
+ <a href="#more" data-s="more"><svg class="" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="19" cy="12" r="1.6" fill="currentColor"/></svg>More</a>
+</nav></div>
+<script>
+const RSVP_ENDPOINT = '';
+// Schedule = church-info-for-app.md. dow: 0=Sun
+var SV={em:{n:"Sunday English (EM) Service",d:0,h:10,m:0},ko:{n:"Sunday Korean Service",d:0,h:11,m:30},wed:{n:"Wednesday Korean Service",d:3,h:19,m:0},sat:{n:"Saturday Morning Prayer (Korean)",d:6,h:7,m:0},
+women:{n:"Women's Bible Study",d:2,h:18,m:30},men:{n:"Men's Bible Study",d:3,h:19,m:15},yam:{n:"Young Adult Men's Bible Study",d:6,h:19,m:0},youth:{n:"Youth Bible Study",d:0,h:11,m:40}};
+var SERVICES=["em","ko","wed","sat"],DAYS=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],ADDR="15414 Ash Way, Lynnwood, WA 98087";
+function laNow(){var p={};new Intl.DateTimeFormat("en-US",{timeZone:"America/Los_Angeles",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hour12:false,weekday:"short"}).formatToParts(new Date()).forEach(x=>p[x.type]=x.value);
+ return {y:+p.year,mo:+p.month,d:+p.day,h:+p.hour%24,mi:+p.minute,dow:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].indexOf(p.weekday)}}
+function fmt(h,m){return (h%12||12)+":"+String(m).padStart(2,"0")+" "+(h<12?"AM":"PM")}
+var NEXT=null;
+function nextService(){var n=laNow(),now=n.dow*1440+n.h*60+n.mi,best=null;
+ SERVICES.forEach(k=>{var s=SV[k],t=s.d*1440+s.h*60+s.m,diff=(t-now+10080)%10080;if(diff===0)diff=10080;if(!best||diff<best.diff)best={k:k,diff:diff}});
+ var s=SV[best.k],dd=Math.floor((now+best.diff)/1440)-n.dow,label=dd===0?"Today":dd===1?"Tomorrow":DAYS[s.d];
+ var dt=new Date(Date.UTC(n.y,n.mo-1,n.d+dd));NEXT={k:best.k,date:dt};
+ document.getElementById("nx-when").textContent=label+" · "+fmt(s.h,s.m);document.getElementById("nx-name").textContent=s.n}
+function firstDate(d){var n=laNow(),add=(d-n.dow+7)%7;return new Date(Date.UTC(n.y,n.mo-1,n.d+add))}
+function ymd(dt){return dt.getUTCFullYear()+String(dt.getUTCMonth()+1).padStart(2,"0")+String(dt.getUTCDate()).padStart(2,"0")}
+function hm(h,m){return "T"+String(h).padStart(2,"0")+String(m).padStart(2,"0")+"00"}
+var VTZ="BEGIN:VTIMEZONE\r\nTZID:America/Los_Angeles\r\nBEGIN:DAYLIGHT\r\nTZOFFSETFROM:-0800\r\nTZOFFSETTO:-0700\r\nTZNAME:PDT\r\nDTSTART:19700308T020000\r\nRRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=2SU\r\nEND:DAYLIGHT\r\nBEGIN:STANDARD\r\nTZOFFSETFROM:-0700\r\nTZOFFSETTO:-0800\r\nTZNAME:PST\r\nDTSTART:19701101T020000\r\nRRULE:FREQ=YEARLY;BYMONTH=11;BYDAY=1SU\r\nEND:STANDARD\r\nEND:VTIMEZONE\r\n";
+function ics(key){var ev,fn;
+ if(key==="harvest"){ev={t:"Harvestfest – Bethany Church",start:"20261031T160000",end:"20261031T190000"};fn="harvestfest"}
+ else{if(key==="next")key=NEXT.k;var s=SV[key];ev={t:s.n+" – Bethany Church",start:ymd(firstDate(s.d))+hm(s.h,s.m),rr:"FREQ=WEEKLY"};fn=key}
+ var L=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Bethany Church//Member App Mockup//EN","CALSCALE:GREGORIAN"].join("\r\n")+"\r\n"+VTZ+
+ ["BEGIN:VEVENT","UID:"+fn+"-"+Date.now()+"@bethanychurchwa.org","DTSTAMP:"+new Date().toISOString().replace(/[-:]/g,"").split(".")[0]+"Z",
+  "SUMMARY:"+ev.t,"DTSTART;TZID=America/Los_Angeles:"+ev.start].concat(ev.end?["DTEND;TZID=America/Los_Angeles:"+ev.end]:[]).concat(ev.rr?["RRULE:"+ev.rr]:[])
+  .concat(["LOCATION:"+ADDR.replace(/,/g,"\\,"),"URL:https://www.youtube.com/@bethanychurch2134/streams","END:VEVENT","END:VCALENDAR"]).join("\r\n")+"\r\n";
+ var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([L],{type:"text/calendar"}));a.download="bethany-"+fn+".ics";document.body.appendChild(a);a.click();a.remove()}
+function go(){var h=(location.hash||"#home").slice(1);if(!document.getElementById("s-"+h))h="home";
+ document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("on",s.id=="s-"+h));
+ document.querySelectorAll("nav a").forEach(a=>{a.classList.toggle("on",a.dataset.s==h);a.toggleAttribute("aria-current",a.dataset.s==h)});scrollTo(0,0)}
+function openRsvp(){var r=document.getElementById("rsvp");var err=document.getElementById("r-err");err.textContent="Please enter your name.";err.hidden=true;r.hidden=false;document.getElementById("rsvp-form").hidden=false;document.getElementById("rsvp-ok").hidden=true;r.scrollIntoView({behavior:"smooth",block:"start"});setTimeout(()=>document.getElementById("r-name").focus({preventScroll:true}),300)}
+function closeRsvp(){document.getElementById("rsvp").hidden=true}
+function st(id,d){var i=document.getElementById(id);i.value=Math.max(0,(parseInt(i.value)||0)+d)}
+function sendRsvp(){var n=document.getElementById("r-name").value.trim();var err=document.getElementById("r-err");err.textContent="Please enter your name.";err.hidden=!!n;if(!n)return;
+ var a=parseInt(document.getElementById("r-ad").value)||0,k=parseInt(document.getElementById("r-kd").value)||0;
+ document.getElementById("r-sum").textContent=n+" · "+a+(a==1?" adult":" adults")+", "+k+(k==1?" kid":" kids");
+ if(!RSVP_ENDPOINT){err.textContent="RSVP isn't set up yet";err.hidden=false;return}
+ var b=event&&event.target;if(b){b.disabled=true;b.textContent="Sending…"}
+ fetch(RSVP_ENDPOINT,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain"},body:JSON.stringify({event:"Harvestfest 2026-10-31",name:n,adults:a,kids:k,contact:document.getElementById("r-ph").value.trim()})})
+ .then(function(){document.getElementById("rsvp-form").hidden=true;document.getElementById("rsvp-ok").hidden=false})
+ .catch(function(){err.textContent="Sorry, that didn't go through. Please try again.";err.hidden=false})
+ .finally(function(){if(b){b.disabled=false;b.textContent="Send RSVP"}})}
+addEventListener("hashchange",go);nextService();go();
+</script></body></html>
