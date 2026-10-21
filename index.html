@@ -2,6 +2,7 @@
 <title>Bethany Church – Member App (Mockup v2)</title>
 <link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#00303f">
 <link rel="apple-touch-icon" href="assets/icon-192.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Bethany">
+<script>try{var _m=JSON.parse(localStorage.getItem("bethany-demo-member")||"null");if(!(_m&&_m.signedIn&&_m.profileDone))document.documentElement.classList.add("need-auth")}catch(e){document.documentElement.classList.add("need-auth")}</script>
 <style>
 :root{--teal:#00303f;--teal2:#0b4a5c;--gold:#dcae1d;--cream:#f7f5ee;--ink:#1a2226;--mut:#4a5559}
 *{box-sizing:border-box}html,body{margin:0}
@@ -67,10 +68,89 @@ details[open] summary:after{content:"–"}
 details>div{padding:0 18px 18px}
 details .card{box-shadow:none;margin:10px 0;background:var(--cream)}
 ol{padding-left:24px;margin:6px 0}ol li{margin:6px 0}
+[hidden]{display:none !important}
+.welcome{background:var(--teal);color:#fff;text-align:center;padding:48px 24px 36px;position:relative}
+.welcome img{height:64px}.welcome h1{color:#fff;margin:22px 0 6px}.welcome p{margin:0;opacity:.85;font-size:18px}
+.center{text-align:center}
+.bigic{width:96px;height:96px;border-radius:50%;background:#fff;border:3px solid var(--gold);display:flex;align-items:center;justify-content:center;margin:8px auto 16px;color:var(--teal)}
+.tg{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.sw{width:60px;height:34px;border-radius:20px;background:var(--teal);position:relative;flex:none;border:0;padding:0;cursor:pointer}
+.sw:after{content:"";position:absolute;right:4px;top:4px;width:26px;height:26px;border-radius:50%;background:var(--gold)}
+.sw.off{background:#c9cfd1}.sw.off:after{right:auto;left:4px;background:#fff}
+.swl{font-size:13px;font-weight:800;color:var(--mut);text-align:center;margin-top:2px}
+.ann{background:var(--gold);color:var(--teal);padding:10px 18px;font-size:16px;font-weight:700;display:flex;gap:8px;align-items:flex-start}
+.ann .x{margin-left:auto;background:none;border:0;color:inherit;font-size:22px;line-height:1;cursor:pointer;padding:0 0 0 8px;font-family:inherit}
+.oauth{flex:1;display:flex;align-items:center;justify-content:center;height:58px;background:#fff;border:2px solid #9aa6a9;border-radius:12px;cursor:pointer;padding:0}
+.oauth:disabled{opacity:.55}
+.demo-badge{margin-left:auto;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);border:1px solid rgba(220,174,29,.7);background:rgba(220,174,29,.16);border-radius:999px;padding:2px 8px;line-height:1.4}
+.welcome .demo-badge{position:absolute;top:14px;right:14px;margin:0}
+.hi{font-size:30px;line-height:1.2;font-weight:800;margin:0 0 4px}
+.lnkbtn{background:none;border:0;padding:0;color:var(--teal);font-weight:700;font-size:inherit;cursor:pointer;font-family:inherit}
+.mail-preview{font-size:15px;color:#333}.mail-preview hr{border:0;border-top:1px solid #ddd;margin:14px 0}
+html.need-auth #s-auth{display:block}
+html.need-auth nav,body.locked nav{display:none}
+html.need-auth .app,body.locked .app{padding-bottom:28px}
+html.need-auth header{display:none}
+html.need-auth.show-bar header{display:flex}
+body.on-signin header{display:none}
+.row span.em{white-space:normal;word-break:break-word;font-size:16px}
 </style></head><body><div class="app">
-<header><img src="assets/logo-bethany-light.svg" alt="Bethany Church"><span class="t">Members</span></header>
+<header><img src="assets/logo-bethany-light.svg" alt="Bethany Church"><span class="demo-badge">Demo</span></header>
+
+<section class="screen" id="s-auth">
+ <div id="auth-signin">
+  <div class="welcome"><span class="demo-badge">Demo</span><img src="assets/logo-bethany-light.svg" alt="Bethany Church"><h1>Welcome to Bethany</h1><p>Member app</p></div>
+  <form class="pad" onsubmit="startEmail(event)">
+   <label for="login-email">Email</label>
+   <input id="login-email" type="email" autocomplete="email" placeholder="you@example.com">
+   <p id="login-err" style="color:#b00020;font-weight:700;margin:8px 0 0" hidden>Please enter your email.</p>
+   <button class="btn btn-gold" type="submit">Log in or Sign up</button>
+   <p class="muted center" style="margin:4px 0 0;font-size:15px">🔒 No password needed — we'll email you a sign-in link.</p>
+   <p class="muted center" style="margin:26px 0 10px;font-size:16px">Or continue with:</p>
+   <div style="display:flex;gap:12px">
+    <button type="button" class="oauth" id="oa-google" aria-label="Continue with Google" onclick="providerSignIn('google')"><svg width="26" height="26" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.5l6.7-6.7C35.6 2.4 30.2 0 24 0 14.6 0 6.6 5.4 2.7 13.3l7.8 6C12.4 13.7 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.4c-.5 2.9-2.2 5.3-4.6 6.9l7.5 5.8c4.4-4 6.8-10 6.8-17.2z"/><path fill="#FBBC05" d="M10.5 28.7c-.5-1.4-.8-3-.8-4.7s.3-3.2.8-4.7l-7.8-6C1 16.6 0 20.2 0 24s1 7.4 2.7 10.7l7.8-6z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.5-5.8c-2.1 1.4-4.8 2.3-8.4 2.3-6.3 0-11.6-4.2-13.5-9.9l-7.8 6C6.6 42.6 14.6 48 24 48z"/></svg></button>
+    <button type="button" class="oauth" id="oa-microsoft" aria-label="Continue with Microsoft" onclick="providerSignIn('microsoft')"><svg width="24" height="24" viewBox="0 0 22 22" aria-hidden="true"><rect width="10" height="10" fill="#F25022"/><rect x="12" width="10" height="10" fill="#7FBA00"/><rect y="12" width="10" height="10" fill="#00A4EF"/><rect x="12" y="12" width="10" height="10" fill="#FFB900"/></svg></button>
+    <button type="button" class="oauth" id="oa-apple" aria-label="Continue with Apple" onclick="providerSignIn('apple')"><svg width="24" height="27" viewBox="0 0 384 470" fill="#000" aria-hidden="true"><path d="M318 249c-1-56 46-83 48-84-26-38-67-44-81-44-35-4-68 20-85 20-18 0-45-20-74-19-38 1-73 22-92 56-40 69-10 170 28 226 19 27 41 57 70 56 28-1 39-18 73-18s44 18 74 17c31 0 50-28 68-55 22-31 30-61 31-63-1 0-59-23-60-92zM262 85c15-19 26-45 23-71-22 1-49 15-65 34-14 16-27 43-23 68 25 2 50-12 65-31z"/></svg></button>
+   </div>
+   <p id="oa-status" class="muted center" hidden>Signing in…</p>
+  </form>
+ </div>
+ <div id="auth-check" hidden>
+  <div class="pad center">
+   <div class="bigic"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 7l10 7 10-7"/></svg></div>
+   <h1>Check your email</h1>
+   <p class="muted">We sent a sign-in link to<br><b id="check-email" style="color:var(--ink)"></b></p>
+   <div class="card" style="text-align:left"><b style="color:var(--teal)">Tap the link in the email</b> to finish signing in. It works for 15 minutes.</div>
+   <button class="btn btn-gold" type="button" onclick="openDemoLink()">Demo: open sign-in link</button>
+   <p class="muted">This is a prototype. No email is sent.</p>
+   <p class="muted">Didn't get it? Check spam, or <button type="button" class="lnkbtn" onclick="sendAgainDemo()">send again</button>.</p>
+   <p id="check-again" class="muted" hidden>Demo only — no email is sent. Use the button above.</p>
+   <p class="muted"><button type="button" class="lnkbtn" onclick="useDifferentEmail()">Use a different email</button></p>
+  </div>
+ </div>
+ <div id="auth-profile" hidden>
+  <div class="pad">
+   <h1>Welcome! Tell us your name</h1>
+   <p class="muted" style="margin:0">Just once — so we know who you are.</p>
+   <label for="prof-name">Your name</label>
+   <input id="prof-name" autocomplete="name" placeholder="First and last name">
+   <label for="prof-phone">Phone <span class="muted">(optional)</span></label>
+   <input id="prof-phone" type="tel" autocomplete="tel" placeholder="(425) 555-0100">
+   <div class="card tg">
+    <div><b style="color:var(--teal)">Email me church updates</b><div class="muted" style="font-size:15px">News, announcements &amp; updates from Bethany · on by default, tap to turn off anytime</div></div>
+    <button type="button" class="sw" id="sw-prof" role="switch" aria-checked="true" aria-label="Email me church updates" onclick="togglePref('emailUpdates')"></button>
+   </div>
+   <p id="prof-err" style="color:#b00020;font-weight:700;margin:8px 0 0" hidden>Please enter your name.</p>
+   <button class="btn btn-teal" type="button" onclick="finishProfile()">Continue</button>
+   <p class="note">You can change this anytime in More → My Profile.</p>
+   <p class="muted center"><button type="button" class="lnkbtn" onclick="useDifferentEmail()">Use a different email</button></p>
+  </div>
+ </div>
+</section>
 
 <section class="screen" id="s-home">
+ <div class="ann" id="ann"><span aria-hidden="true">📢</span><span>[Placeholder] Sample announcement — fellowship lunch after service this Sunday.</span><button type="button" class="x" onclick="hideAnn()" aria-label="Dismiss announcement">×</button></div>
+ <div class="pad" style="padding-bottom:0"><p class="hi">Hi, <span id="hi-name">there</span> 👋</p><p class="muted" style="margin:0">Good to see you.</p></div>
  <div class="hero" style="background-image:url(assets/hero.jpg)"><div><h1>Welcome home.</h1><p>Bethany Church · Lynnwood, WA</p></div></div>
  <div class="pad">
   <div class="card next"><div class="label">Next service</div><div class="big" id="nx-when">Sunday · 10:00 AM</div><div id="nx-name">English (EM) Service</div><div class="muted">15414 Ash Way, Lynnwood</div></div>
@@ -137,7 +217,40 @@ ol{padding-left:24px;margin:6px 0}ol li{margin:6px 0}
 </div></section>
 
 <section class="screen" id="s-more"><div class="pad">
- <h1>More</h1>
+ <p class="muted" style="margin:0 0 4px">More ›</p>
+ <h1>My Profile</h1>
+ <div class="card">
+  <div class="row"><b>Name</b><span id="pf-name"></span></div>
+  <div class="row"><b>Email</b><span id="pf-email" class="em"></span></div>
+  <button type="button" class="lnkbtn" style="font-size:16px" onclick="editProfile()">Edit</button>
+  <div id="pf-edit" hidden>
+   <label for="pf-name-in">Name</label><input id="pf-name-in" autocomplete="name">
+   <label for="pf-phone-in">Phone <span class="muted">(optional)</span></label><input id="pf-phone-in" type="tel" autocomplete="tel">
+   <p id="pf-edit-err" style="color:#b00020;font-weight:700;margin:8px 0 0" hidden>Please enter your name.</p>
+   <button class="btn btn-teal" type="button" onclick="saveProfileEdit()">Save</button>
+  </div>
+ </div>
+ <h2>Notifications</h2>
+ <div class="card" id="notify-card" style="padding:4px 18px">
+  <div class="tg" style="margin:0;padding:12px 0;border-bottom:1px solid #ece7d8">
+   <div><b style="color:var(--teal)">Email me church updates</b><div class="muted" style="font-size:15px">News, announcements &amp; updates from Bethany</div></div>
+   <div><button type="button" class="sw" id="sw-email" role="switch" aria-checked="true" aria-label="Email me church updates" onclick="togglePref('emailUpdates')"></button><div class="swl" id="sw-email-l">ON</div></div>
+  </div>
+  <div class="tg" style="margin:0;padding:12px 0">
+   <div><b style="color:var(--teal)">Push notifications</b><div class="muted" style="font-size:15px">Alerts on this phone</div></div>
+   <div><button type="button" class="sw off" id="sw-push" role="switch" aria-checked="false" aria-label="Push notifications" onclick="togglePref('push')"></button><div class="swl" id="sw-push-l">OFF</div></div>
+  </div>
+ </div>
+ <p class="note" style="font-size:16px">✓ You can change this anytime.</p>
+ <button class="btn btn-out" type="button" style="min-height:52px;font-size:18px" onclick="signOut()">Sign out</button>
+ <details id="d-mail"><summary>Preview church email</summary><div class="mail-preview">
+  <div style="color:#222;font-size:15px"><b>[Placeholder] This week at Bethany</b><br>[Placeholder church announcement — news &amp; updates from Bethany go here…]</div>
+  <hr>
+  Bethany Church · 15414 Ash Way, Lynnwood, WA 98087<br>
+  <span id="mail-why">You're getting this because you turned on "Email me church updates."</span><br>
+  <button type="button" class="lnkbtn" id="mail-unsub" onclick="unsubscribeDemo()">Unsubscribe</button> · <button type="button" class="lnkbtn" onclick="document.getElementById('notify-card').scrollIntoView({behavior:'smooth',block:'start'})">Manage email preferences</button>
+ </div></details>
+ <h2>Church</h2>
  <a class="btn btn-gold" href="tel:+12065517321"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h4l2 5-3 2a11 11 0 0 0 6 6l2-3 5 2v4a2 2 0 0 1-2 2A17 17 0 0 1 3 5a2 2 0 0 1 2-2"/></svg>Call (206) 551-7321</a>
  <a class="btn btn-out" href="mailto:bethanychurch.wa@gmail.com" style="font-size:17px"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>bethanychurch.wa@gmail.com</a>
  <p style="text-align:center;margin:6px 0 4px;font-weight:700"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s7-7 7-12a7 7 0 0 0-14 0c0 5 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg> 15414 Ash Way, Lynnwood, WA 98087</p>
@@ -209,9 +322,81 @@ function ics(key){var ev,fn;
   "SUMMARY:"+ev.t,"DTSTART;TZID=America/Los_Angeles:"+ev.start].concat(ev.end?["DTEND;TZID=America/Los_Angeles:"+ev.end]:[]).concat(ev.rr?["RRULE:"+ev.rr]:[])
   .concat(["LOCATION:"+ADDR.replace(/,/g,"\\,"),"URL:https://www.youtube.com/@bethanychurch2134/streams","END:VEVENT","END:VCALENDAR"]).join("\r\n")+"\r\n";
  var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([L],{type:"text/calendar"}));a.download="bethany-"+fn+".ics";document.body.appendChild(a);a.click();a.remove()}
-function go(){var h=(location.hash||"#home").slice(1);if(!document.getElementById("s-"+h))h="home";
- document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("on",s.id=="s-"+h));
- document.querySelectorAll("nav a").forEach(a=>{a.classList.toggle("on",a.dataset.s==h);a.toggleAttribute("aria-current",a.dataset.s==h)});scrollTo(0,0)}
+var MEMBER_KEY="bethany-demo-member",authStep="signin",pendingEmail="";
+function session(){try{return JSON.parse(localStorage.getItem(MEMBER_KEY)||"null")}catch(e){return null}}
+function saveMember(s){localStorage.setItem(MEMBER_KEY,JSON.stringify(s))}
+function setSwitch(id,on,labelId){var el=document.getElementById(id);if(!el)return;el.classList.toggle("off",!on);el.setAttribute("aria-checked",on?"true":"false");if(labelId){var l=document.getElementById(labelId);if(l)l.textContent=on?"ON":"OFF"}}
+function paintMember(){var s=session();if(!s)return;
+ document.getElementById("hi-name").textContent=s.name||"there";
+ document.getElementById("pf-name").textContent=s.name||"";
+ document.getElementById("pf-email").textContent=s.email||"";
+ setSwitch("sw-prof",s.emailUpdates!==false);
+ setSwitch("sw-email",s.emailUpdates!==false,"sw-email-l");
+ setSwitch("sw-push",!!s.push,"sw-push-l");
+ document.getElementById("ann").hidden=!!s.annHidden;
+ var on=s.emailUpdates!==false;
+ document.getElementById("mail-why").textContent=on?'You\'re getting this because you turned on "Email me church updates."':"Email updates are off for this demo profile.";
+ document.getElementById("mail-unsub").hidden=!on}
+function showAuth(){
+ document.getElementById("auth-signin").hidden=authStep!=="signin";
+ document.getElementById("auth-check").hidden=authStep!=="check";
+ document.getElementById("auth-profile").hidden=authStep!=="profile";
+ document.body.classList.toggle("on-signin",authStep==="signin");
+ document.documentElement.classList.toggle("show-bar",authStep!=="signin");
+ if(authStep==="check")document.getElementById("check-email").textContent=pendingEmail||(session()&&session().email)||"";
+ if(authStep==="profile"){var s=session()||{};var n=document.getElementById("prof-name");if(!n.value)n.value=s.name||"";document.getElementById("prof-phone").value=s.phone||"";paintMember()}}
+function go(){var s=session(),ok=!!(s&&s.signedIn&&s.profileDone);
+ document.body.classList.toggle("locked",!ok);
+ document.documentElement.classList.toggle("need-auth",!ok);
+ var auth=document.getElementById("s-auth");
+ if(!ok){if(!(s&&s.signedIn))authStep=authStep||"signin";else authStep="profile";
+  auth.classList.add("on");
+  document.querySelectorAll(".screen").forEach(function(el){if(el!==auth)el.classList.remove("on")});
+  document.querySelectorAll("nav a").forEach(function(a){a.classList.remove("on");a.removeAttribute("aria-current")});
+  showAuth();scrollTo(0,0);return}
+ auth.classList.remove("on");
+ document.body.classList.remove("on-signin");
+ paintMember();
+ var h=(location.hash||"#home").slice(1);
+ if(h==="auth"||!document.getElementById("s-"+h))h="home";
+ document.querySelectorAll(".screen").forEach(function(el){el.classList.toggle("on",el.id==="s-"+h)});
+ document.querySelectorAll("nav a").forEach(function(a){a.classList.toggle("on",a.dataset.s===h);a.toggleAttribute("aria-current",a.dataset.s===h)});
+ scrollTo(0,0)}
+function startEmail(ev){if(ev)ev.preventDefault();
+ var email=document.getElementById("login-email").value.trim(),err=document.getElementById("login-err");
+ if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){err.textContent="Please enter your email.";err.hidden=false;return}
+ err.hidden=true;pendingEmail=email;document.getElementById("check-again").hidden=true;authStep="check";showAuth()}
+function sendAgainDemo(){var n=document.getElementById("check-again");n.hidden=false;n.textContent="Demo only — no email is sent. Use the button above."}
+function useDifferentEmail(){var s=session();if(s&&s.signedIn&&!s.profileDone){s.signedIn=false;saveMember(s)}authStep="signin";showAuth();document.getElementById("login-email").focus()}
+function openDemoLink(){continueWithEmail(pendingEmail||document.getElementById("check-email").textContent)}
+function providerSignIn(kind){var names={google:"Google",microsoft:"Microsoft",apple:"Apple"};
+ var emails={google:"jane.doe@gmail.com",microsoft:"jane.doe@outlook.com",apple:"jane.doe@icloud.com"};
+ var note=document.getElementById("oa-status");note.hidden=false;note.textContent="Signing in with "+names[kind]+"…";
+ document.querySelectorAll(".oauth").forEach(function(b){b.disabled=true});
+ setTimeout(function(){document.querySelectorAll(".oauth").forEach(function(b){b.disabled=false});note.hidden=true;continueWithEmail(emails[kind])},800)}
+function continueWithEmail(email){if(!email)return;var prev=session(),same=!!(prev&&prev.email===email);
+ var s={email:email,name:same?(prev.name||""):"",phone:same?(prev.phone||""):"",emailUpdates:same&&typeof prev.emailUpdates==="boolean"?prev.emailUpdates:true,push:same&&typeof prev.push==="boolean"?prev.push:false,profileDone:!!(same&&prev.profileDone&&prev.name),signedIn:true,annHidden:!!(prev&&prev.annHidden)};
+ saveMember(s);
+ if(s.profileDone){authStep="signin";if(location.hash!=="#home")location.hash="#home";else go();return}
+ authStep="profile";document.getElementById("prof-name").value=s.name||"";document.getElementById("prof-phone").value=s.phone||"";document.getElementById("prof-err").hidden=true;go()}
+function finishProfile(){var name=document.getElementById("prof-name").value.trim(),err=document.getElementById("prof-err");
+ if(!name){err.hidden=false;return}err.hidden=true;var s=session()||{};
+ s.name=name;s.phone=document.getElementById("prof-phone").value.trim();
+ s.emailUpdates=document.getElementById("sw-prof").getAttribute("aria-checked")==="true";
+ if(typeof s.push!=="boolean")s.push=false;s.profileDone=true;s.signedIn=true;saveMember(s);
+ if(location.hash!=="#home")location.hash="#home";else go()}
+function togglePref(key){var s=session()||{};if(key==="emailUpdates")s.emailUpdates=s.emailUpdates===false;else s.push=!s.push;saveMember(s);paintMember()}
+function hideAnn(){var s=session()||{};s.annHidden=true;saveMember(s);document.getElementById("ann").hidden=true}
+function unsubscribeDemo(){var s=session();if(!s)return;s.emailUpdates=false;saveMember(s);paintMember()}
+function editProfile(){var box=document.getElementById("pf-edit"),s=session()||{};
+ if(box.hidden){document.getElementById("pf-name-in").value=s.name||"";document.getElementById("pf-phone-in").value=s.phone||"";document.getElementById("pf-edit-err").hidden=true}
+ box.hidden=!box.hidden}
+function saveProfileEdit(){var name=document.getElementById("pf-name-in").value.trim(),err=document.getElementById("pf-edit-err");
+ if(!name){err.hidden=false;return}err.hidden=true;var s=session()||{};s.name=name;s.phone=document.getElementById("pf-phone-in").value.trim();saveMember(s);document.getElementById("pf-edit").hidden=true;paintMember()}
+function signOut(){var s=session();if(s){s.signedIn=false;saveMember(s);var input=document.getElementById("login-email");input.value=s.email||""}
+ document.getElementById("login-err").hidden=true;authStep="signin";
+ if(location.hash)history.replaceState(null,"",location.pathname+location.search);
+ go()}
 function openRsvp(){var r=document.getElementById("rsvp");var err=document.getElementById("r-err");err.textContent="Please enter your name.";err.hidden=true;r.hidden=false;document.getElementById("rsvp-form").hidden=false;document.getElementById("rsvp-ok").hidden=true;r.scrollIntoView({behavior:"smooth",block:"start"});setTimeout(()=>document.getElementById("r-name").focus({preventScroll:true}),300)}
 function closeRsvp(){document.getElementById("rsvp").hidden=true}
 function st(id,d){var i=document.getElementById(id);i.value=Math.max(0,(parseInt(i.value)||0)+d)}
