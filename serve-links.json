@@ -1,0 +1,10 @@
+{
+  "v": 1,
+  "kdf": "PBKDF2",
+  "hash": "SHA-256",
+  "iterations": 600000,
+  "salt": "yEyKgZGHoFckPy+lK4eg2w==",
+  "iv": "Uxdk477s6VThm/cO",
+  "ciphertext": "VNEeudcwYJ91W9hORonOoSYNwAkHGDhtHRooTIeqvBAxydPeuSZMQHg672EjBi1u4ie+jEToqgV1c7F8uQSzCpMbAtyFwMEP/Ru5I4dcaLRMTA7RBt9zqeXgBouBbRm7hARHFGdz1pWQFoGTdkrkHZommA0jo9HIDfnjP6CLAdDQFRpoeNfa2CGTDPvlOn//4sO0DFQW0dt8W/RwhsfyG3pg+BDuEud95LbckAG6c3W3KBVIzmTP6oh1ituFQ/gA2XZ/OM2fayO8JGDS7xIew1O9sXibIkkRcu0wt9qrRIAFpcWToupjE5u8JJ993UBWCofBs8sGfS45B7eg4lrQyV5taPJVRVdYEzlfhzG5UqJqtwh+r/lP3vTHoaefzDbxS9xYmyHIRkO6pmXOXPxd7PpB2FGw/JRUbJSv23GTzzfdQQk5NCUhD1tTnkZPz+A=",
+  "note": "Throwaway ciphertext. Re-encrypt with SERVE_PASSWORD before treating this as the team password."
+}

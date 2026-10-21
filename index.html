@@ -94,6 +94,8 @@ html.need-auth header{display:none}
 html.need-auth.show-bar header{display:flex}
 body.on-signin header{display:none}
 .row span.em{white-space:normal;word-break:break-word;font-size:16px}
+.chk{display:flex;align-items:center;gap:10px;font-weight:700;margin:14px 0}
+.chk input{width:22px;height:22px;padding:0;flex:none}
 </style></head><body><div class="app">
 <header><img src="assets/logo-bethany-light.svg" alt="Bethany Church"><span class="demo-badge">Demo</span></header>
 
@@ -161,6 +163,7 @@ body.on-signin header{display:none}
    <a class="ql" href="#give"><svg class="ico" style="width:34px;height:34px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-8-5-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 6-8 11-8 11z"/></svg>Give</a>
    <a class="ql" href="#watch"><svg class="ico" style="width:34px;height:34px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="4"/><path d="M10 9l5 3-5 3z" fill="currentColor"/></svg>Sermons</a>
    <a class="ql" href="#more"><svg class="ico" style="width:34px;height:34px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="19" cy="12" r="1.6" fill="currentColor"/></svg>About &amp; Times</a>
+   <a class="ql" href="#serve"><svg class="ico" style="width:34px;height:34px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 11a3 3 0 1 0-3-3 3 3 0 0 0 3 3zM16 11a3 3 0 1 0-3-3 3 3 0 0 0 3 3z"/><path d="M2 20a5 5 0 0 1 10 0M12 20a5 5 0 0 1 10 0"/></svg>Serve</a>
   </div>
   <h2>Coming up</h2>
   <div class="card"><div class="ev"><div class="ev-date"><div class="m">OCT</div><div class="d">31</div></div><div><h3>Harvestfest</h3><div>Saturday · 4–7 PM</div><a class="lnk" href="#events">Details →</a></div></div></div>
@@ -250,6 +253,19 @@ body.on-signin header{display:none}
   <span id="mail-why">You're getting this because you turned on "Email me church updates."</span><br>
   <button type="button" class="lnkbtn" id="mail-unsub" onclick="unsubscribeDemo()">Unsubscribe</button> · <button type="button" class="lnkbtn" onclick="document.getElementById('notify-card').scrollIntoView({behavior:'smooth',block:'start'})">Manage email preferences</button>
  </div></details>
+ <h2 id="serve">Serve</h2>
+ <div class="card" id="serve-card">
+  <form id="serve-form" onsubmit="unlockServe(event)">
+   <p class="muted" style="margin:0">Team links stay hidden until this password is entered.</p>
+   <label for="serve-pw">Team password</label>
+   <input id="serve-pw" type="password" autocomplete="current-password">
+   <label class="chk" for="serve-remember"><input id="serve-remember" type="checkbox"> Remember on this device</label>
+   <p id="serve-err" style="color:#b00020;font-weight:700;margin:8px 0 0" hidden>That password isn't right. Try again.</p>
+   <button class="btn btn-teal" type="submit">Unlock</button>
+  </form>
+  <div id="serve-links" hidden></div>
+  <p id="serve-lock-row" hidden style="margin:8px 0 0"><button type="button" class="lnkbtn" onclick="lockServe()">Lock</button></p>
+ </div>
  <h2>Church</h2>
  <a class="btn btn-gold" href="tel:+12065517321"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h4l2 5-3 2a11 11 0 0 0 6 6l2-3 5 2v4a2 2 0 0 1-2 2A17 17 0 0 1 3 5a2 2 0 0 1 2-2"/></svg>Call (206) 551-7321</a>
  <a class="btn btn-out" href="mailto:bethanychurch.wa@gmail.com" style="font-size:17px"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>bethanychurch.wa@gmail.com</a>
@@ -357,11 +373,13 @@ function go(){var s=session(),ok=!!(s&&s.signedIn&&s.profileDone);
  auth.classList.remove("on");
  document.body.classList.remove("on-signin");
  paintMember();
- var h=(location.hash||"#home").slice(1);
+ var h=(location.hash||"#home").slice(1),toServe=h==="serve";
+ if(toServe)h="more";
  if(h==="auth"||!document.getElementById("s-"+h))h="home";
  document.querySelectorAll(".screen").forEach(function(el){el.classList.toggle("on",el.id==="s-"+h)});
  document.querySelectorAll("nav a").forEach(function(a){a.classList.toggle("on",a.dataset.s===h);a.toggleAttribute("aria-current",a.dataset.s===h)});
- scrollTo(0,0)}
+ scrollTo(0,0);
+ if(toServe){var serve=document.getElementById("serve");if(serve)serve.scrollIntoView({block:"start"})}}
 function startEmail(ev){if(ev)ev.preventDefault();
  var email=document.getElementById("login-email").value.trim(),err=document.getElementById("login-err");
  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){err.textContent="Please enter your email.";err.hidden=false;return}
@@ -409,5 +427,31 @@ function sendRsvp(){var n=document.getElementById("r-name").value.trim();var err
  .then(function(){document.getElementById("rsvp-form").hidden=true;document.getElementById("rsvp-ok").hidden=false})
  .catch(function(){err.textContent="Sorry, that didn't go through. Please try again.";err.hidden=false})
  .finally(function(){if(b){b.disabled=false;b.textContent="Send RSVP"}})}
-addEventListener("hashchange",go);nextService();go();
+var SERVE_KEY="bethany-serve-key",serveMetaPromise=null;
+function b64ToBytes(s){var bin=atob(s),out=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)out[i]=bin.charCodeAt(i);return out}
+function bytesToB64(buf){var bytes=new Uint8Array(buf),s="";for(var i=0;i<bytes.length;i++)s+=String.fromCharCode(bytes[i]);return btoa(s)}
+function loadServeMeta(){if(!serveMetaPromise)serveMetaPromise=fetch("serve-links.json").then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(meta){if(!meta||meta.iterations<100000||meta.iterations>2000000)throw 0;return meta});return serveMetaPromise}
+function deriveServeKey(password,meta){return crypto.subtle.importKey("raw",new TextEncoder().encode(password),"PBKDF2",false,["deriveKey"]).then(function(material){return crypto.subtle.deriveKey({name:"PBKDF2",salt:b64ToBytes(meta.salt),iterations:meta.iterations,hash:"SHA-256"},material,{name:"AES-GCM",length:256},true,["decrypt"])})}
+function decryptServe(meta,key){return crypto.subtle.decrypt({name:"AES-GCM",iv:b64ToBytes(meta.iv)},key,b64ToBytes(meta.ciphertext)).then(function(plain){return JSON.parse(new TextDecoder().decode(plain))})}
+function showServeLinks(links){if(!Array.isArray(links)||!links.length)throw 0;
+ var box=document.getElementById("serve-links");box.replaceChildren();
+ links.forEach(function(item,i){if(!item||typeof item.href!=="string"||!/^https:\/\//.test(item.href))throw 0;
+  var a=document.createElement("a");a.className=i%2?"btn btn-out":"btn btn-teal";a.target="_blank";a.rel="noopener";a.href=item.href;a.textContent=item.title||"Open";
+  var p=document.createElement("p");p.className="muted";p.style.margin="0 0 4px";p.textContent=item.note||"";
+  box.appendChild(a);box.appendChild(p)});
+ document.getElementById("serve-form").hidden=true;box.hidden=false;document.getElementById("serve-lock-row").hidden=false}
+function lockServe(){localStorage.removeItem(SERVE_KEY);
+ var box=document.getElementById("serve-links");box.replaceChildren();box.hidden=true;
+ document.getElementById("serve-lock-row").hidden=true;document.getElementById("serve-form").hidden=false;
+ document.getElementById("serve-pw").value="";document.getElementById("serve-remember").checked=false;document.getElementById("serve-err").hidden=true}
+function unlockServe(ev){if(ev)ev.preventDefault();
+ var pw=document.getElementById("serve-pw").value,err=document.getElementById("serve-err"),btn=document.querySelector("#serve-form button");
+ if(!pw){err.textContent="Please enter the team password.";err.hidden=false;return}
+ btn.disabled=true;btn.textContent="Unlocking…";err.hidden=true;
+ loadServeMeta().then(function(meta){return deriveServeKey(pw,meta).then(function(key){return decryptServe(meta,key).then(function(links){return {key:key,links:links}})})}).then(function(res){
+  if(document.getElementById("serve-remember").checked)return crypto.subtle.exportKey("raw",res.key).then(function(raw){localStorage.setItem(SERVE_KEY,bytesToB64(raw));showServeLinks(res.links);document.getElementById("serve-pw").value=""});
+  showServeLinks(res.links);document.getElementById("serve-pw").value=""}).catch(function(){err.textContent="That password isn't right. Try again.";err.hidden=false}).finally(function(){btn.disabled=false;btn.textContent="Unlock"})}
+function tryRememberServe(){var saved;try{saved=localStorage.getItem(SERVE_KEY)}catch(e){return}if(!saved)return;
+ loadServeMeta().then(function(meta){return crypto.subtle.importKey("raw",b64ToBytes(saved),{name:"AES-GCM"},false,["decrypt"]).then(function(key){return decryptServe(meta,key)})}).then(showServeLinks).catch(function(){localStorage.removeItem(SERVE_KEY)})}
+addEventListener("hashchange",go);nextService();go();tryRememberServe();
 </script></body></html>
