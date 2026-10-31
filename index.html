@@ -118,7 +118,7 @@ body.on-signin header{display:none}
 #s-worship{overflow-x:hidden}
 #s-worship .pad,#s-worship .card,#s-worship .setcard,#s-worship .wtools{max-width:100%;min-width:0}
 #s-worship input,#s-worship textarea,#s-worship select,#s-worship button{max-width:100%}
-#wo-date,#wo-leader,#wo-change,#wo-pass,.setnote{width:100%;min-width:0}
+#wo-date,#wo-leader,#wo-change,.setnote{width:100%;min-width:0}
 .setcard{background:#fff;border:1px solid #e7e2d2;border-radius:14px;padding:12px;margin:10px 0}
 .setcard.dragging{opacity:.55}
 .setline{display:flex;align-items:center;gap:6px;min-width:0;margin-bottom:8px}
@@ -410,13 +410,6 @@ nav{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-rig
  <div id="wo-app">
   <div id="wo-lib" class="pad">
    <h1 style="margin:0">Library</h1>
-   <div id="wo-lock" class="card" hidden>
-    <label for="wo-team">Team password</label>
-    <input id="wo-team" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')woUnlock()">
-    <label class="chk" for="wo-team-remember"><input id="wo-team-remember" type="checkbox" checked> Remember on this device</label>
-    <p id="wo-team-msg" hidden style="color:#b00020;font-weight:700;margin:8px 0"></p>
-    <button class="btn btn-teal" type="button" onclick="woUnlock()">Unlock songs</button>
-   </div>
    <p id="wo-private-msg" class="muted" hidden></p>
    <button class="btn btn-teal" type="button" onclick="woThisSunday()">This Sunday</button>
    <div class="lang-switch" role="tablist" aria-label="Library language">
@@ -489,8 +482,6 @@ nav{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-rig
     <div id="wo-live-box">
      <label for="wo-change">What changed</label>
      <input id="wo-change" placeholder="Updated setlist">
-     <label for="wo-pass">Leader passphrase</label>
-     <input id="wo-pass" type="password" autocomplete="off">
      <p id="wo-live-msg" class="muted" hidden></p>
      <button class="btn btn-gold" type="button" onclick="woPublish()">Publish live</button>
     </div>

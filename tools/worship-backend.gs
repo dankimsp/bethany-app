@@ -1,6 +1,7 @@
 // Standalone Apps Script web app for Bethany Worship.
 // Deploy as Daniel (danielcyk123@gmail.com), execute as Me, access Anyone.
-// Script properties: TEAM_HASH, LEADER_HASH, EN_FOLDER_ID, KO_FOLDER_ID.
+// Script properties: EN_FOLDER_ID, KO_FOLDER_ID.
+// TEAM_HASH and LEADER_HASH are optional. When they are unset, songs and publishing are open.
 // SPREADSHEET_ID is saved automatically the first time a setlist is published or a song is requested.
 // Never put a password or a hash in this file.
 
@@ -15,10 +16,12 @@ function saveFolderIds() {
   Logger.log("Saved EN_FOLDER_ID and KO_FOLDER_ID.");
 }
 
+// Optional. The app does not send a password. Run this only if you want to turn TEAM_HASH or LEADER_HASH back on.
+// Do not leave a secret in this file.
 function hashPassword() {
   var password = "";
   if (!password) {
-    Logger.log("Type the password between the quotes, run this, copy the log into Script Properties, then make the quotes empty again.");
+    Logger.log("Optional. Leave this empty unless you are turning a hash check back on.");
     return;
   }
   Logger.log(hashPass_(password));
@@ -57,7 +60,7 @@ function handle_(params) {
 
 function auth_(token) {
   var expected = PropertiesService.getScriptProperties().getProperty("TEAM_HASH");
-  if (!expected) return { ok: false, status: 500, error: "config" };
+  if (!expected) return null;
   if (!token || String(token).toLowerCase() !== String(expected).toLowerCase()) {
     return { ok: false, status: 401, error: "unauthorized" };
   }
@@ -203,7 +206,8 @@ function request_(params) {
 
 function leaderOk_(passphrase) {
   var expected = PropertiesService.getScriptProperties().getProperty("LEADER_HASH");
-  if (!expected || !passphrase) return false;
+  if (!expected) return true;
+  if (!passphrase) return false;
   return hashPass_(String(passphrase)) === String(expected).toLowerCase();
 }
 

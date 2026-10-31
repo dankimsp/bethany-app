@@ -2,7 +2,7 @@
 
 Private ChordPro charts stay in Daniel’s Google Drive. This repo only ships public-domain songs. One Apps Script web app, deployed from **danielcyk123@gmail.com**, reads the Drive folders, publishes the live setlist, and emails song requests.
 
-The web app runs as Daniel and is open to anyone who has the team password. The password and its hash never go in this repo.
+The web app runs as Daniel. Songs and publishing are open. Do not set `TEAM_HASH` or `LEADER_HASH`. If those properties are already there, delete them and redeploy.
 
 ## 1. Create the script
 
@@ -23,21 +23,17 @@ That writes these Script Properties:
 
 Both folders need to be in that Google account, or shared with it. The script reads every `.cho` file in the folder and in subfolders up to four levels down. English files are the English library. Korean files are the Korean library.
 
-## 3. Hash the team password and the leader passphrase
+## 3. Remove the old password properties
 
-`hashPassword` is the only place a secret is typed, and only in the script editor. Do this twice: once for the team password, once for the leader passphrase.
+Worship no longer asks for a team password or a leader passphrase.
 
-1. Open `hashPassword`. Put the secret between the quotes: `var password = "type it here";`
-2. Select `hashPassword` and click **Run**.
-3. View > Execution log. Copy the hex line. That is a SHA-256 hash.
-4. Set the quotes back to empty (`var password = "";`) and save. Do not leave the secret in the file.
-5. Project Settings (gear) > Script properties > Add script property.
-   - Team password hash → property `TEAM_HASH`
-   - Leader passphrase hash → property `LEADER_HASH`
+1. Project Settings (gear) > Script properties.
+2. Delete `TEAM_HASH` and `LEADER_HASH` if they exist.
+3. Deploy > Manage deployments > pencil > Version: **New version** > Deploy. Use the same web app URL.
 
-`TEAM_HASH` is the team token. The app hashes the typed password and sends only that hash. `LEADER_HASH` is checked only when someone publishes a setlist. The app sends the leader passphrase, and the script hashes it before comparing.
+Until that new version is deployed, the previous script still rejects calls. The app then says the library is not open yet and keeps showing the public-domain songs.
 
-Do not commit either hash, and do not paste either secret into `index.html`.
+Leave both properties unset. The script skips each check when its property is missing. `hashPassword` is optional and only for turning a check back on. Do not leave a secret in the file.
 
 Optional: add `REQUEST_EMAIL` if requests should go somewhere other than danielcyk123@gmail.com.
 
@@ -51,11 +47,9 @@ Optional: add `REQUEST_EMAIL` if requests should go somewhere other than danielc
 
 The first published setlist or song request creates a spreadsheet named **Bethany Worship** in Daniel’s Drive. It has two sheets, **Live Setlists** and **Song Requests**. To copy the spreadsheet URL, run `showSpreadsheet` and read the log.
 
-Song requests append a row (`time`, `title`, `artist`, `name`) and email danielcyk123@gmail.com with the subject `Song request: <title> by <artist>`. The message includes the requester’s name. Publishing a setlist requires the leader passphrase. Every action, including reading songs and the live setlist, requires the team token.
+Song requests append a row (`time`, `title`, `artist`, `name`) and email danielcyk123@gmail.com. The subject starts with `[Song Request]`. Publishing a setlist does not ask for a passphrase.
 
 Drive listings are cached for about 10 minutes. Each response includes an `etag` / `version`. The app sends the etag it already has and skips the song bodies when nothing changed.
-
-A Google Apps Script web app cannot set the HTTP status code, so a rejected team token is HTTP 200 with a JSON body of `"status": 401`. The app treats that, and a real HTTP 401, as a wrong team password. Other errors are not shown as a wrong password.
 
 ## 5. Point the app at the web app
 
@@ -69,8 +63,6 @@ Leave it as `''` until the deployment above exists. An empty value keeps today�
 
 After the URL is set:
 
-- Worship asks once for the team password. **Remember on this device** stores the SHA-256 hash in the browser, not the password.
-- A rejected token (HTTP 401, or `"status": 401` from this script) clears that saved hash and shows “That password isn’t right.” A network failure or a server error does not.
-- Songs from Drive are merged with the bundled public-domain songs and saved in IndexedDB (localStorage if IndexedDB is unavailable) so the library still opens offline.
+- Songs from Drive load on their own and merge with the bundled public-domain songs. They are saved in IndexedDB (localStorage if IndexedDB is unavailable) so the library still opens offline.
 - **Add song** asks for a song title and an artist name, then posts a song request. The email subject starts with `[Song Request]`.
-- **Publish live** on a setlist uses this same URL and still asks for the leader passphrase.
+- **Publish live** on a setlist uses this same URL and does not ask for a passphrase.

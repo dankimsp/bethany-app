@@ -233,48 +233,22 @@ function woChart(song) {
   });
   return root;
 }
-var WO_TEAM = "bethany-worship-team";
 var WO_DRIVE = "bethany-worship-drive";
+var WO_CLOSED = "The song library isn't open yet. Delete TEAM_HASH and LEADER_HASH in the worship script, then redeploy that web app as a new version.";
 function woBackendEnabled() { return typeof WORSHIP_BACKEND_URL === "string" && WORSHIP_BACKEND_URL.length > 0; }
-function woTeamHash() {
-  if (wo.teamHash) return wo.teamHash;
-  try { return localStorage.getItem(WO_TEAM) || ""; } catch (e) { return ""; }
+function woStillLocked(data) {
+  return !!(data && (Number(data.status) === 401 || data.error === "unauthorized" || data.error === "pass"));
 }
-function woRememberTeam(hash) {
-  wo.teamHash = hash || "";
-  try {
-    if (hash) localStorage.setItem(WO_TEAM, hash);
-    else localStorage.removeItem(WO_TEAM);
-  } catch (e) {}
+function woLockedMessage(data) {
+  if (data && data.error === "pass") return "Publishing isn't open yet. Delete LEADER_HASH in the worship script and redeploy it as a new version.";
+  return WO_CLOSED;
 }
-function woClearTeam() {
-  wo.teamHash = "";
-  try { localStorage.removeItem(WO_TEAM); } catch (e) {}
-}
-function woSha256(text) {
-  var data = new TextEncoder().encode(String(text));
-  return crypto.subtle.digest("SHA-256", data).then(function (buf) {
-    return Array.from(new Uint8Array(buf)).map(function (b) { return (b < 16 ? "0" : "") + b.toString(16); }).join("");
-  });
-}
-function woAuthFailure(data, httpStatus) {
-  if (httpStatus === 401) return true;
-  return !!(data && Number(data.status) === 401);
-}
+try { localStorage.removeItem("bethany-worship-team"); } catch (e) {}
 function woPrivateMsg(text) {
   var el = document.getElementById("wo-private-msg");
   if (!el) return;
   el.hidden = !text;
   el.textContent = text || "";
-}
-function woSyncLock(message) {
-  var box = document.getElementById("wo-lock");
-  if (!box) return;
-  box.hidden = !(woBackendEnabled() && !woTeamHash());
-  var msg = document.getElementById("wo-team-msg");
-  if (!msg) return;
-  msg.hidden = !message;
-  msg.textContent = message || "";
 }
 function woSyncAdd() {
   var connected = woBackendEnabled();
@@ -343,8 +317,6 @@ function woBackendQuery(params) {
     if (params[key] == null || params[key] === "") return;
     q.push(encodeURIComponent(key) + "=" + encodeURIComponent(String(params[key])));
   });
-  var token = woTeamHash();
-  if (token) q.push("token=" + encodeURIComponent(token));
   var base = WORSHIP_BACKEND_URL;
   return base + (base.indexOf("?") >= 0 ? "&" : "?") + q.join("&");
 }
@@ -383,7 +355,7 @@ function woApiJsonp(params) {
   });
 }
 function woApiPost(params) {
-  var body = { token: woTeamHash() };
+  var body = {};
   Object.keys(params || {}).forEach(function (key) { body[key] = params[key]; });
   return fetch(WORSHIP_BACKEND_URL, {
     method: "POST",
@@ -403,9 +375,9 @@ function woApi(params) {
   return woApiFetch(params).catch(function () { return woApiJsonp(params); });
 }
 function woFetchSongs() {
-  if (!woBackendEnabled() || !woTeamHash()) return Promise.resolve("locked");
+  if (!woBackendEnabled()) return Promise.resolve("off");
   return woApi({ action: "getSongs", etag: wo.driveEtag || "" }).then(function (data) {
-    if (woAuthFailure(data)) return "unauthorized";
+    if (woStillLocked(data)) { woPrivateMsg(woLockedMessage(data)); return "locked"; }
     if (!data || data.ok === false) {
       woPrivateMsg(woBackendError(data, "Couldn't load the private songs."));
       return "error";
@@ -424,59 +396,14 @@ function woFetchSongs() {
   });
 }
 function woLoadPrivate() {
-  woSyncLock("");
   woSyncAdd();
   if (!woBackendEnabled()) return Promise.resolve();
-  try { if (!wo.teamHash) wo.teamHash = localStorage.getItem(WO_TEAM) || ""; } catch (e) {}
   return woCacheRead().then(function (cached) {
     if (cached && cached.songs) {
       wo.driveEtag = cached.etag || "";
       woApplyCatalog(cached.songs);
     }
-    woSyncLock("");
-    if (!woTeamHash()) return "locked";
     return woFetchSongs();
-  }).then(function (status) {
-    if (status === "unauthorized") {
-      woClearTeam();
-      woSyncLock("That password isn't right.");
-    }
-  });
-}
-function woUnlock() {
-  var input = document.getElementById("wo-team");
-  var password = input ? input.value : "";
-  var remember = !!(document.getElementById("wo-team-remember") && document.getElementById("wo-team-remember").checked);
-  if (!password) { woSyncLock("Enter the team password."); return; }
-  var previous = "";
-  try { previous = localStorage.getItem(WO_TEAM) || ""; } catch (e) {}
-  woSha256(password).then(function (hash) {
-    wo.teamHash = hash;
-    return woFetchSongs().then(function (status) { return { hash: hash, status: status }; });
-  }).then(function (result) {
-    if (result.status === "unauthorized") {
-      woClearTeam();
-      if (input) input.value = "";
-      woSyncLock("That password isn't right.");
-      return;
-    }
-    if (result.status === "ok") {
-      if (remember) woRememberTeam(result.hash);
-      else {
-        wo.teamHash = result.hash;
-        try { localStorage.removeItem(WO_TEAM); } catch (e) {}
-      }
-      if (input) input.value = "";
-      woSyncLock("");
-      return;
-    }
-    if (!previous) wo.teamHash = "";
-    else wo.teamHash = previous;
-    woSyncLock("");
-  }).catch(function (err) {
-    if (!previous) wo.teamHash = "";
-    woPrivateMsg(woBackendError(err, "Couldn't reach the song library."));
-    woSyncLock("");
   });
 }
 function woRequestSong(ev) {
@@ -493,12 +420,7 @@ function woRequestSong(ev) {
   var name = member && member.name ? String(member.name).trim() : "";
   say("Sending…");
   woApiPost({ action: "request", title: title, artist: artist, name: name }).then(function (res) {
-    if (woAuthFailure(res)) {
-      woClearTeam();
-      woSyncLock("That password isn't right.");
-      say("That password isn't right.");
-      return;
-    }
+    if (woStillLocked(res)) { say(woLockedMessage(res)); return; }
     if (!res || res.ok === false) { say("Couldn't send the request."); return; }
     if (titleEl) titleEl.value = "";
     if (artistEl) artistEl.value = "";
@@ -1549,10 +1471,9 @@ function woJsonp(params) {
 }
 function woLivePull() {
   if (!woLiveEnabled() || !wo.setId) return;
-  if (woBackendEnabled() && !woTeamHash()) return;
   var pull = woBackendEnabled() ? woApi({ action: "get", id: wo.setId }) : woJsonp({ id: wo.setId });
   pull.then(function (data) {
-    if (woAuthFailure(data)) { woClearTeam(); woSyncLock("That password isn't right."); return; }
+    if (woStillLocked(data)) { woPrivateMsg(woLockedMessage(data)); return; }
     if (!data || !data.found) return;
     var set = woGetSet(wo.setId);
     if (!set) return;
@@ -1577,22 +1498,17 @@ function woLiveWatch(on) {
 }
 function woPublish() {
   if (!woLiveEnabled()) { woLiveMsg("Live publishing isn't set up yet."); return; }
-  if (woBackendEnabled() && !woTeamHash()) { woLiveMsg("Unlock the library with the team password first."); return; }
-  var passEl = document.getElementById("wo-pass");
-  var pass = passEl ? passEl.value : "";
   var changeEl = document.getElementById("wo-change");
   var change = (changeEl && changeEl.value.trim()) || "Updated setlist";
-  if (!pass) { woLiveMsg("Enter the leader passphrase."); return; }
   var set = woLoadSet();
-  var body = { passphrase: pass, id: set.id, date: set.date, service: set.service || "", language: set.language || "", leaderNote: set.leaderNote || "", change: change, songs: set.songs || [] };
+  var body = { id: set.id, date: set.date, service: set.service || "", language: set.language || "", leader: set.leader || "", leaderNote: set.leaderNote || "", change: change, songs: set.songs || [] };
   var encoded = JSON.stringify(body);
   var done = function (res) {
-    if (woAuthFailure(res)) { woClearTeam(); woSyncLock("That password isn't right."); woLiveMsg("That password isn't right."); return; }
-    if (!res || !res.ok) { woLiveMsg(res && res.error === "pass" ? "That passphrase isn't right." : "Couldn't publish."); return; }
+    if (woStillLocked(res)) { woLiveMsg(woLockedMessage(res)); return; }
+    if (!res || !res.ok) { woLiveMsg(woBackendError(res, "Couldn't publish.")); return; }
     set.updatedAt = res.updatedAt;
     set.change = change;
     woSaveSet(set);
-    if (passEl) passEl.value = "";
     woLiveMsg("");
     woShowLiveBanner(res.updatedAt, change);
   };
@@ -1605,7 +1521,7 @@ function woPublish() {
     return;
   }
   fetch(LIVE_SETLIST_ENDPOINT, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain" }, body: encoded }).then(function () {
-    woLiveMsg("Sent. If the passphrase is wrong, the sheet will not update.");
+    woLiveMsg("Sent.");
   }).catch(function () { woLiveMsg("Couldn't reach the live sheet."); });
 }
 function woThisSunday() {
