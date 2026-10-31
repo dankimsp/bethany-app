@@ -102,8 +102,8 @@ body.on-signin header{display:none}
 .wsec{margin:16px 0 4px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;font-size:13px;color:var(--teal)}
 .wline{line-height:1.25;margin:8px 0}
 .wseg{display:inline-block;vertical-align:bottom;margin:0 .15em .1em 0}
-.wch{display:block;min-height:1.05em;font-size:13px;font-weight:800;color:#1a2226;background:transparent;white-space:nowrap;border-radius:4px}
-.wch.on{background:#ffe58a;padding:0 3px}
+.wch{display:block;min-height:1.05em;font-size:13px;line-height:1.2;font-weight:400;background:none;padding:0;white-space:nowrap}
+.chord{display:inline;font-weight:800;color:#1a2226;background:#ffe58a;padding:0 2px;border-radius:3px}
 .wtools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0}
 .wmini{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px 12px;border-radius:12px;border:2px solid var(--teal);background:#fff;color:var(--teal);font:inherit;font-weight:800;text-decoration:none;cursor:pointer}
 .wmini.on{background:var(--teal);color:#fff}
@@ -127,8 +127,8 @@ body.on-signin header{display:none}
 .chip.on{background:var(--teal);color:#fff}
 #wo-filter-n{display:inline-block;min-width:1.4em;margin-left:6px;background:var(--gold);color:var(--teal);border-radius:999px;font-size:14px;line-height:1.4;padding:0 6px}
 #wo-play{position:fixed;inset:0;z-index:40;background:#041820;color:#f7f5ee;display:flex;flex-direction:column}
-#wo-play .wch{color:#041820;background:transparent;font-size:16px}
-#wo-play .wch.on{background:#dcae1d;color:#041820}
+#wo-play .wch{background:none;font-size:16px;color:inherit}
+#wo-play .chord{color:#041820;background:#dcae1d}
 #wo-play .wline{font-size:26px;margin:14px 0}
 #wo-play .wsec{color:var(--gold)}
 #wo-play-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 12px;background:#00303f}
@@ -426,7 +426,8 @@ nav{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-rig
      <button class="chip" id="wo-az" type="button">A–Z</button>
      <button class="chip" id="wo-titleonly" type="button">Title only</button>
     </div>
-    <div id="wo-themes" class="chips"></div>
+    <label for="wo-theme">Theme</label>
+    <select id="wo-theme"></select>
     <p class="flab" id="wo-moment-lab">Moment</p>
     <div id="wo-moment" class="chips"></div>
     <p class="flab" id="wo-season-lab">Season</p>
@@ -448,6 +449,20 @@ nav{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-rig
   <div id="wo-sets" class="pad" hidden>
    <h1 style="margin:0">Setlists</h1>
    <p id="wo-import" class="muted" hidden></p>
+   <div id="wo-new" class="card" hidden>
+    <label for="wo-new-date">Date</label>
+    <input id="wo-new-date" type="date">
+    <label for="wo-new-service">Service</label>
+    <input id="wo-new-service" list="wo-services" placeholder="English Service" autocomplete="off">
+    <label for="wo-new-lang">Language</label>
+    <select id="wo-new-lang">
+     <option value="en">English</option>
+     <option value="ko">Korean</option>
+    </select>
+    <p id="wo-new-err" hidden style="color:#b00020;font-weight:700;margin:8px 0"></p>
+    <button class="btn btn-teal" type="button" onclick="woCreateSet()">Create setlist</button>
+    <button class="btn btn-out" type="button" onclick="woCancelNew()">Cancel</button>
+   </div>
    <div id="wo-sets-list"></div>
    <button class="btn btn-teal" type="button" onclick="woNewSet()">New setlist</button>
    <input id="wo-share-list" hidden readonly onclick="this.select()">
@@ -469,8 +484,16 @@ nav{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-rig
      <button class="btn btn-gold" type="button" onclick="woPublish()">Publish live</button>
     </div>
     <p id="wo-live-off" class="muted" hidden>Live publishing isn't set up yet.</p>
-    <label for="wo-date">Sunday</label>
+    <label for="wo-date">Date</label>
     <input id="wo-date" type="date">
+    <label for="wo-service">Service</label>
+    <input id="wo-service" list="wo-services" placeholder="English Service" autocomplete="off">
+    <label for="wo-set-lang">Language</label>
+    <select id="wo-set-lang">
+     <option value="">No language tag</option>
+     <option value="en">English</option>
+     <option value="ko">Korean</option>
+    </select>
     <div id="wo-set"></div>
     <button class="btn btn-teal" type="button" onclick="woEnterPlay(true)">Play set</button>
     <button class="btn btn-out" type="button" style="min-height:52px;font-size:18px" onclick="woShare()">Share link</button>
@@ -514,7 +537,6 @@ nav{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-rig
    <button type="button" class="wmini" id="wo-play-num" onclick="woTogglePlayNumbers()">Numbers</button>
    <button type="button" class="wmini" id="wo-play-lyrics" onclick="woTogglePlayLyrics()">Lyrics only</button>
    <button type="button" class="wmini" onclick="woToggleJump()">Songs</button>
-   <button type="button" class="wmini" id="wo-play-auto" onclick="woAuto(!wo.auto)">Auto-scroll</button>
    <button type="button" class="wmini" onclick="woExitPlay()">Exit</button>
    <span id="wo-play-pos" style="margin-left:auto;font-weight:800"></span>
   </div>
@@ -525,6 +547,11 @@ nav{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-rig
   <h1 id="wo-play-title" style="margin:0;padding:8px 16px 0;font-size:34px"></h1>
   <div id="wo-play-body"></div>
  </div>
+ <datalist id="wo-services">
+  <option value="English Service"></option>
+  <option value="Korean Service"></option>
+  <option value="Youth"></option>
+ </datalist>
 </section>
 <nav aria-label="Main">
  <a href="#home" data-s="home"><svg class="" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>Home</a>

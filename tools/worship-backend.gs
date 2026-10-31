@@ -153,9 +153,9 @@ function publish_(data) {
     data.id || "",
     data.change || "",
     data.leaderNote || "",
-    JSON.stringify({ date: data.date || "", songs: songs })
+    JSON.stringify({ date: data.date || "", service: data.service || "", language: data.language || "", songs: songs })
   ]);
-  return { ok: true, status: 200, found: true, id: data.id || "", updatedAt: updatedAt, change: data.change || "", leaderNote: data.leaderNote || "", date: data.date || "", songs: songs };
+  return { ok: true, status: 200, found: true, id: data.id || "", updatedAt: updatedAt, change: data.change || "", leaderNote: data.leaderNote || "", date: data.date || "", service: data.service || "", language: data.language || "", songs: songs };
 }
 
 function readSet_(id) {
@@ -174,6 +174,8 @@ function readSet_(id) {
       change: rows[i][2] || "",
       leaderNote: rows[i][3] || "",
       date: extra.date || "",
+      service: extra.service || "",
+      language: extra.language || "",
       songs: extra.songs || []
     };
   }
