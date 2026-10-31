@@ -24,18 +24,15 @@ Do not commit the plaintext JSON file. `serve-links.plain.json` is gitignored if
 
 # Worship charts
 
-Worship uses its own password, separate from Serve. Charts ship only as `songs.enc.json` (AES-GCM, PBKDF2-SHA-256, 600,000 iterations). The `songs/` folder is gitignored. Do not commit `.cho` files.
-
-The worship password is set by Daniel.
+Worship charts are public in this build. `songs.json` is plain JSON built from the ChordPro files in `songs/`. Serve still has its own password.
 
 1. Put ChordPro files in `songs/` (one song per `.cho` file). The in-app **Add song** page can check a paste and download a `.cho` file. It does not upload anything. Drop that file into `songs/`.
 2. From the repo root:
 
 ```sh
-export WORSHIP_PASSWORD='the worship password'
 node tools/encrypt-songs.mjs
 ```
 
-3. Commit `songs.enc.json` only, and push to `main`. People who checked "Remember on this device" will need to unlock again.
+3. Commit `songs.json` and the `.cho` files, then push to `main`.
 
-A shared setlist link looks like `#worship/set/...`. After the worship password is entered, the app saves a copy of that setlist on the device.
+A shared setlist link looks like `#worship/set/...`. Opening it saves a copy of that setlist on the device.

@@ -1,4 +1,3 @@
-var WO_KEY = "bethany-worship-key";
 var WO_NUM = "bethany-worship-numbers";
 var WO_SET = "bethany-worship-set";
 var SHARP = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
@@ -137,86 +136,18 @@ function woChart(song) {
   });
   return root;
 }
-function woB64(buf) {
-  var bytes = new Uint8Array(buf), s = "";
-  for (var i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
-  return btoa(s);
-}
-function woFromB64(s) {
-  var bin = atob(s), out = new Uint8Array(bin.length);
-  for (var i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
-  return out;
-}
-function woLoadMeta() {
-  if (wo.meta) return Promise.resolve(wo.meta);
-  return fetch("songs.enc.json").then(function (r) { if (!r.ok) throw 0; return r.json(); }).then(function (meta) {
-    if (!meta || meta.iterations < 100000 || meta.iterations > 2000000) throw 0;
-    wo.meta = meta;
-    return meta;
-  });
-}
-function woDerive(pw, meta) {
-  return crypto.subtle.importKey("raw", new TextEncoder().encode(pw), "PBKDF2", false, ["deriveKey"]).then(function (mat) {
-    return crypto.subtle.deriveKey(
-      { name: "PBKDF2", salt: woFromB64(meta.salt), iterations: meta.iterations, hash: "SHA-256" },
-      mat, { name: "AES-GCM", length: 256 }, true, ["decrypt"]
-    );
-  });
-}
-function woDecrypt(meta, key) {
-  return crypto.subtle.decrypt({ name: "AES-GCM", iv: woFromB64(meta.iv) }, key, woFromB64(meta.ciphertext)).then(function (buf) {
-    var list = JSON.parse(new TextDecoder().decode(buf));
+function woLoadSongs() {
+  return fetch("songs.json").then(function (r) { if (!r.ok) throw 0; return r.json(); }).then(function (list) {
     if (!Array.isArray(list)) throw 0;
     wo.songs = list.map(function (item) { return woParseCho(item.cho, item.id); });
     wo.byId = {};
     wo.songs.forEach(function (s) { wo.byId[s.id] = s; });
-  });
-}
-function woShowApp() {
-  document.getElementById("wo-lock").hidden = true;
-  document.getElementById("wo-app").hidden = false;
-  woShow("lib");
-  if (woPending) { woImport(woPending); woPending = null; }
-}
-function woUnlock(ev) {
-  if (ev) ev.preventDefault();
-  var pw = document.getElementById("wo-pw").value;
-  var err = document.getElementById("wo-err");
-  var btn = document.querySelector("#wo-form button");
-  if (!pw) { err.textContent = "Please enter the worship password."; err.hidden = false; return; }
-  btn.disabled = true; btn.textContent = "Unlocking…"; err.hidden = true;
-  woLoadMeta().then(function (meta) {
-    return woDerive(pw, meta).then(function (key) { return woDecrypt(meta, key).then(function () { return key; }); });
-  }).then(function (key) {
-    if (document.getElementById("wo-remember").checked) {
-      return crypto.subtle.exportKey("raw", key).then(function (raw) { localStorage.setItem(WO_KEY, woB64(raw)); });
-    }
-  }).then(function () {
-    document.getElementById("wo-pw").value = "";
-    woShowApp();
+    woShow("lib");
+    if (woPending) { var pending = woPending; woPending = null; woImport(pending); }
   }).catch(function () {
-    err.textContent = "That password isn't right. Try again.";
-    err.hidden = false;
-  }).finally(function () { btn.disabled = false; btn.textContent = "Unlock"; });
-}
-function woTryRemember() {
-  var saved; try { saved = localStorage.getItem(WO_KEY); } catch (e) { return; }
-  if (!saved) return;
-  woLoadMeta().then(function (meta) {
-    return crypto.subtle.importKey("raw", woFromB64(saved), { name: "AES-GCM" }, false, ["decrypt"]).then(function (key) {
-      return woDecrypt(meta, key);
-    });
-  }).then(woShowApp).catch(function () { localStorage.removeItem(WO_KEY); });
-}
-function woLock() {
-  localStorage.removeItem(WO_KEY);
-  wo.songs = []; wo.byId = {}; wo.cur = null;
-  woExitPlay();
-  document.getElementById("wo-app").hidden = true;
-  document.getElementById("wo-lock").hidden = false;
-  document.getElementById("wo-pw").value = "";
-  document.getElementById("wo-remember").checked = false;
-  document.getElementById("wo-err").hidden = true;
+    var box = document.getElementById("wo-list");
+    if (box) box.textContent = "Couldn't load songs.";
+  });
 }
 function woShow(view) {
   wo.view = view;
@@ -510,7 +441,7 @@ function woPreviewAdd() {
 function woCopyCho() {
   var text = document.getElementById("wo-paste").value;
   var note = document.getElementById("wo-add-note");
-  if (navigator.clipboard) navigator.clipboard.writeText(text).then(function () { note.textContent = "Copied. Save it as a .cho file in songs/ and re-encrypt."; }).catch(function () { note.textContent = "Select the text and copy it, then save a .cho file in songs/."; });
+  if (navigator.clipboard) navigator.clipboard.writeText(text).then(function () { note.textContent = "Copied. Save it as a .cho file in songs/ and rebuild songs.json."; }).catch(function () { note.textContent = "Select the text and copy it, then save a .cho file in songs/."; });
   else note.textContent = "Select the text and copy it, then save a .cho file in songs/.";
 }
 function woDownloadCho() {
@@ -521,7 +452,7 @@ function woDownloadCho() {
   a.href = URL.createObjectURL(new Blob([text], { type: "text/plain" }));
   a.download = name + ".cho";
   document.body.appendChild(a); a.click(); a.remove();
-  document.getElementById("wo-add-note").textContent = "Downloaded " + name + ".cho. Put it in songs/ and run the encrypt script. Nothing is uploaded.";
+  document.getElementById("wo-add-note").textContent = "Downloaded " + name + ".cho. Put it in songs/ and run node tools/encrypt-songs.mjs. Nothing is uploaded.";
 }
 document.addEventListener("visibilitychange", function () {
   if (document.visibilityState === "visible" && document.body.classList.contains("wo-playing")) woWake(true);
@@ -532,10 +463,9 @@ function worshipRoute() {
   if (wo.songs.length) woImport(data);
   else woPending = data;
 }
-document.getElementById("wo-form").onsubmit = woUnlock;
 document.getElementById("wo-q").addEventListener("input", woRenderLib);
 document.getElementById("wo-date").addEventListener("change", woDateChanged);
 document.getElementById("wo-paste").addEventListener("input", woPreviewAdd);
 addEventListener("hashchange", worshipRoute);
 worshipRoute();
-woTryRemember();
+woLoadSongs();

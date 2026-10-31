@@ -1,0 +1,14 @@
+[
+ {
+  "id": "amazing-grace",
+  "cho": "{title: Amazing Grace}\n{artist: John Newton}\n{key: G}\n{youtube: https://www.youtube.com/results?search_query=Amazing+Grace+hymn}\n\n{start_of_verse: Verse 1}\n[G]Amazing [Em]grace how [C]sweet the [G]sound\nThat [G]saved a [D/F#]wretch like [G]me\nI [G]once was [Em]lost but [C]now am [G]found\nWas [G]blind but [D]now I [G]see\n{end_of_verse}\n\n{start_of_verse: Verse 2}\n'Twas [G]grace that [Am]taught my [C]heart to [G]fear\nAnd [G]grace my [D]fears re[G]lieved\nHow [G]precious [Em]did that [C]grace ap[G]pear\nThe [G]hour I [D]first be[G]lieved\n{end_of_verse}\n\n{comment: Tag}\n[G]Praise [F]God, [C]praise [G]God\n"
+ },
+ {
+  "id": "come-thou-fount",
+  "cho": "{title: Come Thou Fount}\n{artist: Robert Robinson}\n{key: D}\n{youtube: https://www.youtube.com/results?search_query=Come+Thou+Fount+hymn}\n\n{start_of_verse: Verse 1}\n[D]Come thou [A]Fount of [Bm]every [G]blessing\n[D]Tune my [A]heart to [G]sing thy [D]grace\n[D]Streams of [A]mercy, [Bm]never [G]ceasing\n[D]Call for [A]songs of [G]loudest [D]praise\n[D]Teach me [A]some me[Bm]lodious [G]sonnet\n[D]Sung by [A]flaming [G]tongues a[D]bove\n[D]Praise the [A]mount, I'm [Bm]fixed up[G]on it\n[D]Mount of [A]Thy re[G]deeming [D]love\n{end_of_verse}\n\n{start_of_chorus: Chorus}\n[G]Come thou [D]Fount of [A]every [D]blessing\n[G]Tune my [D]heart to [A]sing thy [D]grace\n{end_of_chorus}\n"
+ },
+ {
+  "id": "holy-holy-holy",
+  "cho": "{title: Holy, Holy, Holy}\n{artist: Reginald Heber}\n{key: D}\n{youtube: https://www.youtube.com/results?search_query=Holy+Holy+Holy+hymn}\n\n{start_of_verse: Verse 1}\n[D]Holy, holy, [G]holy! [D]Lord God Al[A]mighty!\n[D]Early in the [Bm]morning our [Em]song shall rise to [A7]Thee\n[D]Holy, holy, [G]holy, [D]merciful and [A]mighty!\n[G]God in three [D]Persons, [A]blessed [D]Trinity\n{end_of_verse}\n\n{start_of_verse: Verse 2}\n[D]Holy, holy, [G]holy! [D]All the saints a[A]dore Thee\n[D]Casting down their [Bm]golden crowns a[Em]round the glassy [A]sea\n[D]Cherubim and [G]seraphim [D]falling down be[A]fore Thee\n[G]Who was and [D]is and [A]ever[D]more shall be\n{end_of_verse}\n"
+ }
+]

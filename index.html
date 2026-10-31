@@ -286,7 +286,7 @@ body.wo-playing .app{padding-bottom:0}
  </div>
  <h2>Worship</h2>
  <div class="card">
-  <p class="muted" style="margin:0">Chord charts for the team. Separate password from Serve.</p>
+  <p class="muted" style="margin:0">Chord charts for the team.</p>
   <a class="btn btn-teal" href="#worship">Open worship charts</a>
  </div>
  <h2>Church</h2>
@@ -328,20 +328,9 @@ body.wo-playing .app{padding-bottom:0}
 </div></section>
 
 <section class="screen" id="s-worship">
- <div id="wo-lock" class="pad">
-  <h1>Worship</h1>
-  <form id="wo-form">
-   <p class="muted" style="margin:0">Charts stay hidden until this password is entered.</p>
-   <label for="wo-pw">Worship password</label>
-   <input id="wo-pw" type="password" autocomplete="current-password">
-   <label class="chk" for="wo-remember"><input id="wo-remember" type="checkbox"> Remember on this device</label>
-   <p id="wo-err" style="color:#b00020;font-weight:700;margin:8px 0 0" hidden>That password isn't right. Try again.</p>
-   <button class="btn btn-teal" type="submit">Unlock</button>
-  </form>
- </div>
- <div id="wo-app" hidden>
+ <div id="wo-app">
   <div id="wo-lib" class="pad">
-   <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h1 style="margin:0">Worship</h1><button type="button" class="lnkbtn" onclick="woLock()">Lock</button></div>
+   <h1 style="margin:0">Worship</h1>
    <p class="muted" style="margin:6px 0">English</p>
    <p id="wo-import" class="muted" hidden></p>
    <label for="wo-q">Search</label>
