@@ -102,7 +102,8 @@ body.on-signin header{display:none}
 .wsec{margin:16px 0 4px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;font-size:13px;color:var(--teal)}
 .wline{line-height:1.25;margin:8px 0}
 .wseg{display:inline-block;vertical-align:bottom;margin:0 .15em .1em 0}
-.wch{display:block;min-height:1.05em;font-size:13px;font-weight:800;color:#0b4a5c;white-space:nowrap}
+.wch{display:block;min-height:1.05em;font-size:13px;font-weight:800;color:#1a2226;background:transparent;white-space:nowrap;border-radius:4px}
+.wch.on{background:#ffe58a;padding:0 3px}
 .wtools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0}
 .wmini{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px 12px;border-radius:12px;border:2px solid var(--teal);background:#fff;color:var(--teal);font:inherit;font-weight:800;text-decoration:none;cursor:pointer}
 .wmini.on{background:var(--teal);color:#fff}
@@ -122,11 +123,12 @@ body.on-signin header{display:none}
 .setline .wkeyname{min-width:1.4em;font-size:18px;flex:none}
 .setnote{margin:0}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0;max-width:100%}
-.chip{min-height:36px;padding:6px 10px;border-radius:999px;border:2px solid var(--teal);background:#fff;color:var(--teal);font:inherit;font-weight:800;font-size:15px;cursor:pointer}
+.chip{min-height:44px;padding:6px 12px;border-radius:999px;border:2px solid var(--teal);background:#fff;color:var(--teal);font:inherit;font-weight:800;font-size:15px;cursor:pointer}
 .chip.on{background:var(--teal);color:#fff}
 #wo-filter-n{display:inline-block;min-width:1.4em;margin-left:6px;background:var(--gold);color:var(--teal);border-radius:999px;font-size:14px;line-height:1.4;padding:0 6px}
 #wo-play{position:fixed;inset:0;z-index:40;background:#041820;color:#f7f5ee;display:flex;flex-direction:column}
-#wo-play .wch{color:var(--gold);font-size:16px}
+#wo-play .wch{color:#041820;background:transparent;font-size:16px}
+#wo-play .wch.on{background:#dcae1d;color:#041820}
 #wo-play .wline{font-size:26px;margin:14px 0}
 #wo-play .wsec{color:var(--gold)}
 #wo-play-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 12px;background:#00303f}
@@ -145,6 +147,47 @@ body.in-worship .demo-badge{margin-left:8px}
 .wo-edge.left{left:0}.wo-edge.right{right:0}
 #wo-jump{position:absolute;left:12px;right:12px;top:96px;z-index:6;background:#fff;color:var(--ink);border-radius:14px;max-height:70%;overflow:auto;padding:8px;box-shadow:0 8px 30px rgba(0,0,0,.35)}
 #wo-jump button{display:block;width:100%;text-align:left;min-height:48px;border:0;border-bottom:1px solid #ece7d8;background:#fff;font:inherit;font-weight:800;color:var(--teal);padding:8px}
+header{padding-top:max(14px,env(safe-area-inset-top))}
+#s-worship{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
+#wo-play{padding-top:env(safe-area-inset-top);padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right);padding-bottom:env(safe-area-inset-bottom)}
+nav{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
+.lang-switch{display:flex;margin:10px 0;border:2px solid var(--teal);border-radius:14px;overflow:hidden}
+.lang-switch button{flex:1;min-height:48px;border:0;background:#fff;color:var(--teal);font:inherit;font-weight:800;font-size:16px;cursor:pointer;padding:8px}
+.lang-switch button+button{border-left:2px solid var(--teal)}
+.lang-switch button.on{background:var(--teal);color:#fff}
+.flab{font-weight:800;font-size:14px;letter-spacing:.04em;text-transform:uppercase;margin:12px 0 0;color:var(--teal)}
+.meta-chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.meta-chip{display:inline-block;background:#fff3c4;color:#1a2226;border-radius:999px;padding:4px 10px;font-size:14px;font-weight:800;line-height:1.3}
+@media (min-width:768px){
+ .app,nav{max-width:900px}
+ body{font-size:20px}
+ .wline{font-size:22px}
+ .wch{font-size:16px}
+ .wrow b{font-size:21px}
+ .chip{min-height:48px;font-size:17px}
+ .lang-switch button{min-height:52px;font-size:18px}
+ #wo-play .wline{font-size:32px}
+ #wo-play .wch{font-size:20px}
+ #wo-play-title{font-size:42px !important}
+}
+@media (min-width:1024px){
+ .app,nav{max-width:1120px}
+ .wline{font-size:24px}
+ .wch{font-size:18px}
+ #wo-play .wline{font-size:38px}
+ #wo-play .wch{font-size:22px}
+}
+@media (min-width:768px){
+ body.wo-split .app,body.wo-split nav{max-width:1120px}
+ body.wo-split #wo-app{display:grid;grid-template-columns:minmax(280px,380px) minmax(0,1fr);align-items:start}
+ body.wo-split #wo-lib{position:sticky;top:66px;max-height:calc(100vh - 66px - 72px - env(safe-area-inset-bottom));overflow:auto}
+ body.wo-split #wo-song{min-width:0;border-left:1px solid #e7e2d2}
+}
+@media (orientation:landscape) and (max-height:500px){
+ #wo-play-title{font-size:26px !important}
+ #wo-play .wline{font-size:22px;margin:8px 0}
+ #wo-play-bar{padding:6px 8px}
+}
 </style></head><body><div class="app">
 <header><img src="assets/logo-bethany-light.svg" alt="Bethany Church"><span class="wo-mode" id="wo-mode" hidden>Worship</span><span class="demo-badge">Demo</span></header>
 
@@ -360,7 +403,10 @@ body.in-worship .demo-badge{margin-left:8px}
   <div id="wo-lib" class="pad">
    <h1 style="margin:0">Library</h1>
    <button class="btn btn-teal" type="button" onclick="woThisSunday()">This Sunday</button>
-   <p class="muted" style="margin:6px 0">English</p>
+   <div class="lang-switch" role="tablist" aria-label="Library language">
+    <button type="button" id="wo-lang-en" class="on" role="tab" aria-selected="true">English CCM</button>
+    <button type="button" id="wo-lang-ko" role="tab" aria-selected="false">Korean CCM</button>
+   </div>
    <label for="wo-q">Song name</label>
    <input id="wo-q" placeholder="Title or artist" autocomplete="off">
    <button class="btn btn-out" id="wo-filter-btn" type="button" aria-expanded="false">Filters <span id="wo-filter-n" hidden>0</span></button>
@@ -373,6 +419,18 @@ body.in-worship .demo-badge{margin-left:8px}
      <button class="chip" id="wo-titleonly" type="button">Title only</button>
     </div>
     <div id="wo-themes" class="chips"></div>
+    <p class="flab" id="wo-moment-lab">Moment</p>
+    <div id="wo-moment" class="chips"></div>
+    <p class="flab" id="wo-season-lab">Season</p>
+    <div id="wo-season" class="chips"></div>
+    <p class="flab" id="wo-range-lab">Range</p>
+    <div id="wo-range" class="chips"></div>
+    <p class="flab" id="wo-time-lab">Time</p>
+    <div id="wo-time" class="chips"></div>
+    <p class="flab" id="wo-difficulty-lab">Difficulty</p>
+    <div id="wo-difficulty" class="chips"></div>
+    <label for="wo-scripture">Scripture</label>
+    <input id="wo-scripture" placeholder="Ephesians 2" autocomplete="off">
     <button class="btn btn-out" id="wo-clear" type="button">Clear filters</button>
    </div>
    <p id="wo-count" class="muted" style="margin:8px 0"></p>
@@ -415,7 +473,7 @@ body.in-worship .demo-badge{margin-left:8px}
   <div id="wo-add" class="pad" hidden>
    <button type="button" class="lnkbtn" onclick="location.hash='#/worship/library'">← Library</button>
    <h1>Add song</h1>
-   <p class="muted">Paste ChordPro. Nothing is saved on a server. Copy or download a .cho file into <b>songs/</b>, then re-encrypt.</p>
+   <p class="muted">Paste ChordPro. Nothing is saved on a server. Copy or download a .cho file into <b>songs/</b>, then rebuild songs.json. Number chords such as [1] [6m] [5/7] follow the {key:} line.</p>
    <label for="wo-paste">ChordPro</label>
    <textarea id="wo-paste" placeholder="{title: Song Name}&#10;{key: G}&#10;[G]First [C]line"></textarea>
    <div id="wo-add-err"></div>
@@ -513,7 +571,7 @@ function go(){var s=session(),ok=!!(s&&s.signedIn&&s.profileDone);
  var auth=document.getElementById("s-auth");
  if(!ok){if(!(s&&s.signedIn))authStep=authStep||"signin";else authStep="profile";
   auth.classList.add("on");
-  document.body.classList.remove("in-worship");
+  document.body.classList.remove("in-worship","wo-split");
   var woMode=document.getElementById("wo-mode");if(woMode)woMode.hidden=true;
   document.querySelectorAll(".screen").forEach(function(el){if(el!==auth)el.classList.remove("on")});
   document.querySelectorAll("nav a").forEach(function(a){a.classList.remove("on");a.removeAttribute("aria-current")});
@@ -530,6 +588,7 @@ function go(){var s=session(),ok=!!(s&&s.signedIn&&s.profileDone);
  var mark=h;
  if(inWo)mark=/^worship\/setlists/.test(raw)||/^worship\/set\//.test(raw)?"setlists":"library";
  document.body.classList.toggle("in-worship",h==="worship");
+ if(h!=="worship")document.body.classList.remove("wo-split");
  var woMode=document.getElementById("wo-mode");if(woMode)woMode.hidden=h!=="worship";
  document.querySelectorAll(".screen").forEach(function(el){el.classList.toggle("on",el.id==="s-"+h)});
  document.querySelectorAll("nav a").forEach(function(a){a.classList.toggle("on",a.dataset.s===mark);a.toggleAttribute("aria-current",a.dataset.s===mark)});

@@ -1,8 +1,14 @@
 {title: Amazing Grace}
 {artist: John Newton}
+{language: en}
 {key: G}
 {speed: slow}
 {themes: Grace, Salvation}
+{time: 3/4}
+{moment: Response}
+{range: medium}
+{difficulty: easy}
+{scripture: Ephesians 2:8}
 {youtube: https://www.youtube.com/results?search_query=Amazing+Grace+hymn}
 
 {start_of_verse: Verse 1}

@@ -1,4 +1,4 @@
-var CACHE = "bethany-worship-v2";
+var CACHE = "bethany-worship-v3";
 var FILES = [
   "./",
   "index.html",
@@ -7,8 +7,14 @@ var FILES = [
   "manifest.webmanifest",
   "robots.txt",
   "songs/amazing-grace.cho",
+  "songs/angels-we-have-heard-on-high.cho",
   "songs/come-thou-fount.cho",
+  "songs/georuk-georuk-georuk.cho",
   "songs/holy-holy-holy.cho",
+  "songs/i-surrender-all.cho",
+  "songs/na-gateun-joein.cho",
+  "songs/nae-jureul-gakkai.cho",
+  "songs/o-for-a-thousand-tongues.cho",
   "assets/logo-bethany-light.svg",
   "assets/icon-192.png",
   "assets/icon-512.png",

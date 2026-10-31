@@ -29,12 +29,24 @@ Worship charts are public in this build. `songs.json` is plain JSON built from t
 Optional directives on each song:
 
 ```
+{language: en}
+{key: G}
+{time: 3/4}
 {speed: slow}
 {tempo: 76}
+{moment: Response}
+{season: Christmas}
+{range: medium}
+{difficulty: easy}
+{scripture: Ephesians 2:8}
 {themes: Grace, Salvation}
 ```
 
-`speed` is `slow`, `medium`, or `fast`. If it is omitted, a `{tempo}` under 80 is slow, 80–110 is medium, and over 110 is fast. A song with neither is listed only when the Speed filter is All. Themes are a comma-separated list. The Add song page previews both fields.
+`language` is `en` or `ko`. It defaults to English. The Library switch shows one language at a time. A setlist can mix both.
+
+`speed` is `slow`, `medium`, or `fast`. If it is omitted, a `{tempo}` under 80 is slow, 80–110 is medium, and over 110 is fast. A song with neither is listed only when the Speed filter is All. Themes are a comma-separated list. The same list form is used for `time`, `moment` (Opener, Response, Communion, Offering, Closing), `season`, `range` (low, medium, high), and `difficulty` (easy, medium, hard). `scripture` is a single reference. The song page shows these as chips. The Filters panel matches moment, season, range, time, and difficulty as chips (any selected value in that group) and scripture as text. Every active group must match. The Add song page previews the same chips.
+
+Chords can be letters (`[G]`, `[D/F#]`) or Nashville numbers (`[1]`, `[6m]`, `[5/7]`, `[b7]`, `[3(7)]`, `[4maj7]`, `[5sus4]`). A number chord is stored as written. Numbers mode shows that text. Letters mode spells it in the current key, and transpose or capo changes that key. Letter chords still transpose, and Numbers mode turns them into degrees of the current key.
 
 1. Put ChordPro files in `songs/` (one song per `.cho` file). The in-app **Add song** page can check a paste and download a `.cho` file. It does not upload anything. Drop that file into `songs/`.
 2. From the repo root:

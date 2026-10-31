@@ -25,13 +25,13 @@ function woParseChord(ch) {
 function woQuality(q) {
   var r = q || "", out = "";
   if (/^m(?!aj)/.test(r) || /^min\b/.test(r)) out += "m";
-  if (/maj7|ma7|M7/.test(r)) out += "maj7";
-  else if (/7/.test(r)) out += "7";
+  if (/dim/.test(r)) out += "dim";
+  if (/aug/.test(r)) out += "aug";
   if (/sus4/.test(r)) out += "sus4";
   else if (/sus2/.test(r)) out += "sus2";
   else if (/sus/.test(r)) out += "sus";
-  if (/dim/.test(r)) out += "dim";
-  if (/aug/.test(r)) out += "aug";
+  if (/maj7|ma7|M7/.test(r)) out += "maj7";
+  else if (/7/.test(r)) out += "7";
   return out;
 }
 function woDegree(interval) {
@@ -66,8 +66,18 @@ function woParseLyric(line) {
   if (!segs.length) segs.push({ c: null, t: line });
   return segs;
 }
+function woSplitList(val) {
+  return String(val || "").split(",").map(function (part) { return part.trim(); }).filter(Boolean);
+}
+function woNormList(val, allowed, message, errors) {
+  return woSplitList(val).map(function (part) {
+    var canon = allowed[part.toLowerCase()];
+    if (!canon) errors.push(message);
+    return canon || part;
+  });
+}
 function woParseCho(text, id) {
-  var song = { id: id || "song", title: "", artist: "", key: "C", youtube: "", speed: "", themes: [], sections: [] };
+  var song = { id: id || "song", title: "", artist: "", key: "C", youtube: "", language: "en", speed: "", themes: [], moment: [], season: [], range: [], time: [], difficulty: [], scripture: "", sections: [] };
   var cur = null, errors = [];
   function open(label) { cur = { label: label, lines: [] }; song.sections.push(cur); }
   String(text || "").split(/\r?\n/).forEach(function (line) {
@@ -85,7 +95,17 @@ function woParseCho(text, id) {
         if (sp === "slow" || sp === "medium" || sp === "fast") song.speed = sp;
         else errors.push("Speed must be slow, medium, or fast.");
       }
-      else if (name === "themes") song.themes = val.split(",").map(function (part) { return part.trim(); }).filter(Boolean);
+      else if (name === "themes") song.themes = woSplitList(val);
+      else if (name === "language") {
+        var lang = val.toLowerCase();
+        song.language = (lang === "ko" || lang === "korean" || lang === "kr") ? "ko" : "en";
+      }
+      else if (name === "time") song.time = woSplitList(val);
+      else if (name === "moment") song.moment = woNormList(val, { opener: "Opener", response: "Response", communion: "Communion", offering: "Offering", closing: "Closing" }, "Moment must be Opener, Response, Communion, Offering, or Closing.", errors);
+      else if (name === "season") song.season = woSplitList(val);
+      else if (name === "range") song.range = woNormList(val, { low: "low", medium: "medium", high: "high" }, "Range must be low, medium, or high.", errors);
+      else if (name === "difficulty") song.difficulty = woNormList(val, { easy: "easy", medium: "medium", hard: "hard" }, "Difficulty must be easy, medium, or hard.", errors);
+      else if (name === "scripture") song.scripture = val;
       else if (name === "start_of_verse" || name === "sov") open(val || "Verse");
       else if (name === "start_of_chorus" || name === "soc") open(val || "Chorus");
       else if (name === "start_of_bridge" || name === "sob") open(val || "Bridge");
@@ -97,7 +117,7 @@ function woParseCho(text, id) {
     if (!cur) open("");
     var lyric = woParseLyric(line);
     lyric.forEach(function (seg) {
-      if (seg.c && !woParseChord(seg.c)) errors.push("Unrecognized chord: " + seg.c);
+      if (seg.c && !woParseChord(seg.c) && !woParseNum(seg.c)) errors.push("Unrecognized chord: " + seg.c);
     });
     cur.lines.push(lyric);
   });
@@ -124,10 +144,57 @@ function woSongNote(id, val) {
   all[id] = val;
   try { localStorage.setItem(WO_NOTES, JSON.stringify(all)); } catch (e) {}
 }
+function woDegSemi(token) {
+  var m = String(token || "").match(/^([#b]?)([1-7])$/);
+  if (!m) return null;
+  var base = [0, 0, 2, 4, 5, 7, 9, 11][+m[2]];
+  if (m[1] === "b") base -= 1;
+  if (m[1] === "#") base += 1;
+  return (base + 12) % 12;
+}
+function woParseNum(ch) {
+  var m = String(ch || "").trim().match(/^([#b]?)([1-7])(.*)$/);
+  if (!m) return null;
+  var rest = m[3], bass = null;
+  var slash = rest.match(/^(.*)\/([#b]?[1-7])$/);
+  if (slash) { rest = slash[1]; bass = slash[2]; }
+  if (/[^majsu\d()#]/.test(rest)) return null;
+  var semi = woDegSemi(m[1] + m[2]);
+  if (semi == null) return null;
+  return { semi: semi, rest: rest, bass: bass ? woDegSemi(bass) : null };
+}
+function woNumSuffix(rest) {
+  var r = rest || "", out = "";
+  if (/^m(?!aj)/.test(r) || /^min/.test(r)) out += "m";
+  if (/dim/.test(r)) out += "dim";
+  if (/aug/.test(r)) out += "aug";
+  if (/sus4/.test(r) || /\(4\)/.test(r)) out += "sus4";
+  else if (/sus2/.test(r)) out += "sus2";
+  else if (/sus/.test(r)) out += "sus";
+  if (/\(2\)/.test(r) || (/2/.test(r) && !/sus2/.test(r))) out += "2";
+  if (/11/.test(r)) out += "11";
+  if (/maj7/i.test(r)) out += "maj7";
+  else if (/#7/.test(r)) out += "#7";
+  else if (/7/.test(r)) out += "7";
+  else if (/#$/.test(r)) out += "#";
+  return out;
+}
+function woNumToLetter(ch, keyPc, flats, capo) {
+  var p = woParseNum(ch);
+  if (!p) return ch;
+  var shift = (keyPc - (capo || 0) + 12) % 12;
+  var root = woSpell(p.semi + shift, flats);
+  var bass = p.bass == null ? "" : "/" + woSpell(p.bass + shift, flats);
+  return root + woNumSuffix(p.rest) + bass;
+}
 function woKeyFor(song) { return woSpell(woPc(song.key) + wo.semi, wo.flats); }
 function woKeyNow() { return wo.cur ? woKeyFor(wo.cur) : "C"; }
 function woLabel(ch, song) {
   if (!ch || woLyricsOn()) return "";
+  if (woParseNum(ch)) {
+    if (woNumbersOn()) return ch;
+    return woNumToLetter(ch, woPc(woKeyNow()), wo.flats, wo.capo || 0);
+  }
   if (woNumbersOn()) return woNashville(woTranspose(ch, wo.semi, wo.flats), woPc(woKeyFor(song)));
   return woTranspose(ch, wo.semi - (wo.capo || 0), wo.flats);
 }
@@ -149,7 +216,9 @@ function woChart(song) {
         s.className = "wseg";
         var c = document.createElement("span");
         c.className = "wch";
-        c.textContent = seg.c ? woLabel(seg.c, song) : "\u00a0";
+        var label = seg.c ? woLabel(seg.c, song) : "";
+        c.textContent = label || "\u00a0";
+        if (label) c.classList.add("on");
         var t = document.createElement("span");
         t.textContent = seg.t || "\u00a0";
         s.appendChild(c);
@@ -175,21 +244,37 @@ function woLoadSongs() {
     if (box) box.textContent = "Couldn't load songs.";
   });
 }
+function woTablet() {
+  return !!(window.matchMedia && window.matchMedia("(min-width: 768px)").matches);
+}
 function woShow(view) {
   wo.view = view;
+  woWasTablet = woTablet();
+  var split = woWasTablet && (view === "lib" || view === "song");
+  document.body.classList.toggle("wo-split", split);
   ["lib", "sets", "edit", "song", "add"].forEach(function (name) {
-    document.getElementById("wo-" + name).hidden = name !== view;
+    var el = document.getElementById("wo-" + name);
+    el.hidden = split ? !(name === "lib" || name === "song") : name !== view;
   });
-  if (view === "lib") woRenderLib();
+  if (view === "lib" || split) woRenderLib();
   if (view === "sets") woRenderSets();
   if (view === "edit") woRenderSet();
-  if (view === "song") woRenderSong();
+  if (view === "song" || (split && wo.cur)) woRenderSong();
+  else if (split) {
+    var empty = document.getElementById("wo-song");
+    empty.replaceChildren();
+    var hint = document.createElement("p");
+    hint.className = "muted";
+    hint.textContent = "Select a song.";
+    empty.appendChild(hint);
+  }
   if (view === "add") woPreviewAdd();
   woLiveWatch(view === "edit");
 }
-var woF = { speed: "all", artist: "", themes: [], az: false, titleOnly: false, open: false, ready: false };
+var woWasTablet = null;
+var woF = { speed: "all", artist: "", themes: [], moment: [], season: [], range: [], time: [], difficulty: [], scripture: "", az: false, titleOnly: false, open: false, lang: "en", speedReady: false };
 function woActiveFilters() {
-  return (woF.speed !== "all" ? 1 : 0) + (woF.artist ? 1 : 0) + woF.themes.length + (woF.az ? 1 : 0) + (woF.titleOnly ? 1 : 0);
+  return (woF.speed !== "all" ? 1 : 0) + (woF.artist ? 1 : 0) + woF.themes.length + (woF.az ? 1 : 0) + (woF.titleOnly ? 1 : 0) + woF.moment.length + woF.season.length + woF.range.length + woF.time.length + woF.difficulty.length + (woF.scripture ? 1 : 0);
 }
 function woSpeedOf(song) {
   if (song.speed === "slow" || song.speed === "medium" || song.speed === "fast") return song.speed;
@@ -262,7 +347,8 @@ function woInitFilters() {
     document.getElementById("wo-filter-btn").setAttribute("aria-expanded", woF.open ? "true" : "false");
   };
   document.getElementById("wo-clear").onclick = function () {
-    woF.speed = "all"; woF.artist = ""; woF.themes = []; woF.az = false; woF.titleOnly = false;
+    woF.speed = "all"; woF.artist = ""; woF.themes = []; woF.moment = []; woF.season = []; woF.range = []; woF.time = []; woF.difficulty = []; woF.scripture = ""; woF.az = false; woF.titleOnly = false;
+    var scripture = document.getElementById("wo-scripture"); if (scripture) scripture.value = "";
     document.getElementById("wo-q").value = "";
     document.getElementById("wo-q").placeholder = "Title or artist";
     document.getElementById("wo-artist").value = "";
@@ -272,11 +358,19 @@ function woInitFilters() {
     document.getElementById("wo-titleonly").classList.remove("on");
     woRenderLib();
   };
+  document.getElementById("wo-lang-en").onclick = function () { woF.lang = "en"; woRenderLib(); };
+  document.getElementById("wo-lang-ko").onclick = function () { woF.lang = "ko"; woRenderLib(); };
+  document.getElementById("wo-scripture").addEventListener("input", function () {
+    woF.scripture = document.getElementById("wo-scripture").value.trim().toLowerCase();
+    woRenderLib();
+  });
   }
+  woSyncLang();
+  ["themes", "moment", "season", "range", "time", "difficulty"].forEach(woPruneField);
   var themeBox = document.getElementById("wo-themes");
   themeBox.replaceChildren();
   var themeNames = {};
-  wo.songs.forEach(function (s) { (s.themes || []).forEach(function (t) { themeNames[t] = 1; }); });
+  woLangSongs().forEach(function (s) { (s.themes || []).forEach(function (t) { themeNames[t] = 1; }); });
   Object.keys(themeNames).sort(function (a, b) { return a.localeCompare(b); }).forEach(function (theme) {
     var b = document.createElement("button");
     b.type = "button";
@@ -298,7 +392,7 @@ function woInitFilters() {
   allOpt.textContent = "All artists";
   artist.appendChild(allOpt);
   var names = {};
-  wo.songs.forEach(function (s) { if (s.artist) names[s.artist] = 1; });
+  woLangSongs().forEach(function (s) { if (s.artist) names[s.artist] = 1; });
   Object.keys(names).sort(function (a, b) { return a.localeCompare(b); }).forEach(function (name) {
     var o = document.createElement("option");
     o.value = name;
@@ -307,14 +401,90 @@ function woInitFilters() {
   });
   if (chosen && names[chosen]) artist.value = chosen;
   else { woF.artist = ""; artist.value = ""; }
+  woFillChoice("wo-moment", "moment");
+  woFillChoice("wo-season", "season");
+  woFillChoice("wo-range", "range");
+  woFillChoice("wo-time", "time");
+  woFillChoice("wo-difficulty", "difficulty");
+}
+function woSyncLang() {
+  var en = document.getElementById("wo-lang-en");
+  var ko = document.getElementById("wo-lang-ko");
+  if (!en || !ko) return;
+  en.classList.toggle("on", woF.lang !== "ko");
+  ko.classList.toggle("on", woF.lang === "ko");
+  en.setAttribute("aria-selected", woF.lang !== "ko" ? "true" : "false");
+  ko.setAttribute("aria-selected", woF.lang === "ko" ? "true" : "false");
+}
+function woPruneField(field) {
+  var known = {};
+  woLangSongs().forEach(function (s) { (s[field] || []).forEach(function (v) { known[v] = 1; }); });
+  woF[field] = (woF[field] || []).filter(function (v) { return known[v]; });
+}
+function woMetaChips(song) {
+  var row = document.createElement("div");
+  row.className = "meta-chips";
+  function add(text) {
+    if (!text) return;
+    var chip = document.createElement("span");
+    chip.className = "meta-chip";
+    chip.textContent = text;
+    row.appendChild(chip);
+  }
+  (song.moment || []).forEach(add);
+  (song.season || []).forEach(add);
+  (song.range || []).forEach(function (v) { add("Range " + v); });
+  (song.time || []).forEach(add);
+  (song.difficulty || []).forEach(function (v) { add(v.charAt(0).toUpperCase() + v.slice(1)); });
+  if (song.scripture) add(song.scripture);
+  return row;
+}
+function woMatchAny(values, selected) {
+  if (!selected.length) return true;
+  var have = values || [];
+  return selected.some(function (item) { return have.indexOf(item) >= 0; });
+}
+function woLangSongs() {
+  return wo.songs.filter(function (s) { return (s.language || "en") === woF.lang; });
+}
+function woFillChoice(id, field) {
+  var box = document.getElementById(id);
+  var lab = document.getElementById(id + "-lab");
+  if (!box) return;
+  box.replaceChildren();
+  var values = {};
+  woLangSongs().forEach(function (s) { (s[field] || []).forEach(function (v) { values[v] = 1; }); });
+  var keys = Object.keys(values).sort(function (a, b) { return a.localeCompare(b); });
+  if (lab) lab.hidden = !keys.length;
+  box.hidden = !keys.length;
+  keys.forEach(function (val) {
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "chip" + (woF[field].indexOf(val) >= 0 ? " on" : "");
+    b.textContent = val;
+    b.onclick = function () {
+      var at = woF[field].indexOf(val);
+      if (at >= 0) woF[field].splice(at, 1); else woF[field].push(val);
+      b.classList.toggle("on");
+      woRenderLib();
+    };
+    box.appendChild(b);
+  });
 }
 function woFilteredSongs() {
   var q = (document.getElementById("wo-q").value || "").trim().toLowerCase();
   var list = wo.songs.filter(function (s) {
+    if ((s.language || "en") !== woF.lang) return false;
     var speed = woSpeedOf(s);
     if (woF.speed !== "all" && speed !== woF.speed) return false;
     if (woF.artist && s.artist !== woF.artist) return false;
     if (woF.themes.length && !woF.themes.some(function (t) { return (s.themes || []).indexOf(t) >= 0; })) return false;
+    if (!woMatchAny(s.moment, woF.moment)) return false;
+    if (!woMatchAny(s.season, woF.season)) return false;
+    if (!woMatchAny(s.range, woF.range)) return false;
+    if (!woMatchAny(s.time, woF.time)) return false;
+    if (!woMatchAny(s.difficulty, woF.difficulty)) return false;
+    if (woF.scripture && String(s.scripture || "").toLowerCase().indexOf(woF.scripture) < 0) return false;
     if (!q) return true;
     var hay = woF.titleOnly ? s.title : s.title + " " + (s.artist || "");
     return hay.toLowerCase().indexOf(q) >= 0;
@@ -392,7 +562,7 @@ function woRenderSong() {
   back.onclick = function () { location.hash = "#/worship/library"; };
   var h = document.createElement("h1"); h.textContent = s.title;
   var sub = document.createElement("p"); sub.className = "muted"; sub.style.margin = "0";
-  sub.textContent = (s.artist || "English") + " · original key " + s.key + (s.tempo ? " · " + s.tempo + " BPM" : "");
+  sub.textContent = [s.artist, "original key " + s.key, s.tempo ? s.tempo + " BPM" : ""].filter(Boolean).join(" · ");
   var concert = document.createElement("p");
   concert.className = "muted"; concert.style.margin = "4px 0 0";
   concert.textContent = "Concert key: " + woKeyNow() + (wo.capo ? " · capo " + wo.capo : "");
@@ -429,7 +599,10 @@ function woRenderSong() {
   note.placeholder = "Personal note for this song";
   note.value = woSongNote(s.id);
   note.addEventListener("input", function () { woSongNote(s.id, note.value); });
-  box.appendChild(back); box.appendChild(h); box.appendChild(sub); box.appendChild(concert); box.appendChild(tools); box.appendChild(note);
+  var chips = woMetaChips(s);
+  box.appendChild(back); box.appendChild(h); box.appendChild(sub); box.appendChild(concert);
+  if (chips.childElementCount) box.appendChild(chips);
+  box.appendChild(tools); box.appendChild(note);
   box.appendChild(woChart(s));
 }
 function woId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
@@ -936,8 +1109,10 @@ function woPreviewAdd() {
     var h = document.createElement("h2"); h.textContent = song.title; prev.appendChild(h);
     var meta = document.createElement("p");
     meta.className = "muted";
-    meta.textContent = [woSpeedOf(song), (song.themes || []).join(", ")].filter(Boolean).join(" · ");
+    meta.textContent = [song.language === "ko" ? "Korean" : "English", song.key ? "Key " + song.key : "", woSpeedOf(song), (song.themes || []).join(", ")].filter(Boolean).join(" · ");
     if (meta.textContent) prev.appendChild(meta);
+    var chips = woMetaChips(song);
+    if (chips.childElementCount) prev.appendChild(chips);
     prev.appendChild(woChart(song));
     wo.cur = prevCur; wo.semi = prevSemi; wo.flats = prevFlats;
   }
@@ -990,6 +1165,11 @@ document.getElementById("wo-date").addEventListener("change", woDateChanged);
 document.getElementById("wo-leader").addEventListener("change", woLeaderChanged);
 document.getElementById("wo-paste").addEventListener("input", woPreviewAdd);
 addEventListener("hashchange", worshipRoute);
+addEventListener("resize", function () {
+  if (!document.body.classList.contains("in-worship")) return;
+  if (woTablet() === woWasTablet) return;
+  woShow(wo.view);
+});
 var woPlayBody = document.getElementById("wo-play-body");
 if (woPlayBody) {
   woPlayBody.addEventListener("touchstart", function (e) {
