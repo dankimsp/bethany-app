@@ -610,13 +610,9 @@ function woInitFilters() {
   };
   document.getElementById("wo-lang-en").onclick = function () { woF.lang = "en"; woRenderLib(); };
   document.getElementById("wo-lang-ko").onclick = function () { woF.lang = "ko"; woRenderLib(); };
-  document.getElementById("wo-scripture").addEventListener("input", function () {
-    woF.scripture = document.getElementById("wo-scripture").value.trim().toLowerCase();
-    woRenderLib();
-  });
   }
   woSyncLang();
-  ["moment", "season", "range", "time", "difficulty"].forEach(woPruneField);
+  ["moment", "time"].forEach(woPruneField);
   woSyncTheme();
   var artist = document.getElementById("wo-artist");
   var chosen = woF.artist;
@@ -636,10 +632,7 @@ function woInitFilters() {
   if (chosen && names[chosen]) artist.value = chosen;
   else { woF.artist = ""; artist.value = ""; }
   woFillChoice("wo-moment", "moment");
-  woFillChoice("wo-season", "season");
-  woFillChoice("wo-range", "range");
   woFillChoice("wo-time", "time");
-  woFillChoice("wo-difficulty", "difficulty");
 }
 function woSyncTheme() {
   var theme = document.getElementById("wo-theme");
@@ -873,13 +866,21 @@ function woShortDate(iso) {
   var d = new Date(+parts[0], +parts[1] - 1, +parts[2]);
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
-function woLeaderName() {
-  var member = typeof session === "function" ? session() : null;
-  var name = member && member.name ? String(member.name).trim() : "";
-  return name || "Leader";
+var WO_LEADERS = ["Pastor Woori", "Palmy", "Daniel"];
+function woDefaultLeader() { return WO_LEADERS[0]; }
+function woDefaultTitle(iso, leader) {
+  return "EM Setlist - " + woShortDate(iso || woNextSunday()) + " - " + (leader || woDefaultLeader());
 }
-function woDefaultTitle(iso) {
-  return "EM Setlist - " + woShortDate(iso || woNextSunday()) + " - " + woLeaderName();
+function woTitleIsAuto(title, iso) {
+  if (!title) return true;
+  var prefix = "EM Setlist - " + woShortDate(iso || woNextSunday()) + " - ";
+  return title.indexOf(prefix) === 0;
+}
+function woTitleWasEdited(set) {
+  if (!set) return false;
+  if (set.titleEdited === true) return true;
+  if (!set.title) return !!set.service;
+  return !woTitleIsAuto(set.title, set.date);
 }
 function woSetTitle(set) {
   if (set && set.title) return set.title;
@@ -897,8 +898,10 @@ function woNormalizeSet(set) {
     id: set.id || woId(),
     date: set.date || "",
     title: set.title || "",
-    service: set.service || "",
+    titleEdited: set.titleEdited === true,
+    service: set.service === "Korean Service" ? "Korean Service" : (set.service === "English Service" ? "English Service" : (set.service || "")),
     language: set.language === "ko" || set.language === "en" ? set.language : "",
+    leader: WO_LEADERS.indexOf(set.leader) >= 0 ? set.leader : "",
     leaderNote: set.leaderNote || "",
     songs: Array.isArray(set.songs) ? set.songs : [],
     updatedAt: set.updatedAt || "",
@@ -906,7 +909,7 @@ function woNormalizeSet(set) {
   };
 }
 function woBlankSet() {
-  return { id: woId(), date: woNextSunday(), service: "", language: woF.lang === "ko" ? "ko" : "en", leaderNote: "", songs: [] };
+  return { id: woId(), date: woNextSunday(), title: "", titleEdited: false, service: "English Service", language: "en", leader: woDefaultLeader(), leaderNote: "", songs: [] };
 }
 function woLoadSets() {
   var list = null;
@@ -921,7 +924,7 @@ function woLoadSets() {
   var changed = false;
   var out = list.map(function (set) {
     var next = woNormalizeSet(set);
-    if (!set || !set.id || set.title == null || set.service == null || set.language == null || !Array.isArray(set.songs)) changed = true;
+    if (!set || !set.id || set.title == null || set.leader == null || set.service == null || set.language == null || !Array.isArray(set.songs)) changed = true;
     return next;
   });
   if (changed) localStorage.setItem("bethany-worship-sets", JSON.stringify(out));
@@ -1000,7 +1003,9 @@ function woShowAddPicker(songId) {
   created.textContent = "New setlist";
   created.onclick = function () {
     var set = woBlankSet();
-    set.title = woDefaultTitle(set.date);
+    set.title = woDefaultTitle(set.date, woDefaultLeader());
+    set.leader = woDefaultLeader();
+    set.titleEdited = false;
     var sets = woLoadSets();
     sets.unshift(set);
     woSaveSets(sets);
@@ -1020,14 +1025,17 @@ function woOpenNew(date) {
   wo.newDate = date || woNextSunday();
   var dateEl = document.getElementById("wo-new-date");
   var titleEl = document.getElementById("wo-new-title");
+  var leaderEl = document.getElementById("wo-new-leader");
   var service = document.getElementById("wo-new-service");
   var lang = document.getElementById("wo-new-lang");
   var err = document.getElementById("wo-new-err");
   if (dateEl) dateEl.value = wo.newDate;
-  wo.titleDefault = woDefaultTitle(wo.newDate);
+  if (leaderEl) leaderEl.value = woDefaultLeader();
+  wo.titleEdited = false;
+  wo.titleDefault = woDefaultTitle(wo.newDate, woDefaultLeader());
   if (titleEl) titleEl.value = wo.titleDefault;
-  if (service) service.value = "";
-  if (lang) lang.value = woF.lang === "ko" ? "ko" : "en";
+  if (service) service.value = "English Service";
+  if (lang) lang.value = "en";
   if (err) { err.hidden = true; err.textContent = ""; }
 }
 function woNewSet() {
@@ -1042,20 +1050,24 @@ function woCancelNew() {
 function woCreateSet() {
   var dateEl = document.getElementById("wo-new-date");
   var titleEl = document.getElementById("wo-new-title");
+  var leaderEl = document.getElementById("wo-new-leader");
   var serviceEl = document.getElementById("wo-new-service");
   var langEl = document.getElementById("wo-new-lang");
   var err = document.getElementById("wo-new-err");
   var date = dateEl && dateEl.value ? dateEl.value : woNextSunday();
+  var leader = leaderEl && WO_LEADERS.indexOf(leaderEl.value) >= 0 ? leaderEl.value : woDefaultLeader();
   var title = titleEl ? titleEl.value.trim() : "";
-  var service = serviceEl ? serviceEl.value.trim() : "";
-  var language = langEl ? langEl.value : "";
-  if (!title) title = woDefaultTitle(date);
+  var service = serviceEl && serviceEl.value === "Korean Service" ? "Korean Service" : "English Service";
+  var language = langEl && langEl.value === "ko" ? "ko" : "en";
+  if (!title) title = woDefaultTitle(date, leader);
   if (err) err.hidden = true;
   var set = woBlankSet();
   set.date = date;
+  set.leader = leader;
   set.title = title;
+  set.titleEdited = title !== woDefaultTitle(date, leader);
   set.service = service;
-  set.language = language === "ko" || language === "en" ? language : "";
+  set.language = language;
   var sets = woLoadSets();
   sets.unshift(set);
   woSaveSets(sets);
@@ -1137,10 +1149,12 @@ function woRenderSet() {
   var heading = document.querySelector("#wo-edit h1");
   if (heading) heading.textContent = woSetTitle(set);
   var titleInput = document.getElementById("wo-title");
-  if (titleInput && document.activeElement !== titleInput) titleInput.value = set.title || set.service || "";
+  if (titleInput && document.activeElement !== titleInput) titleInput.value = set.title || "";
+  var leaderPick = document.getElementById("wo-set-leader");
+  if (leaderPick && document.activeElement !== leaderPick) leaderPick.value = WO_LEADERS.indexOf(set.leader) >= 0 ? set.leader : woDefaultLeader();
   document.getElementById("wo-date").value = set.date || "";
   var service = document.getElementById("wo-service");
-  if (service && document.activeElement !== service) service.value = set.service || "";
+  if (service && document.activeElement !== service) service.value = set.service === "Korean Service" ? "Korean Service" : "English Service";
   var lang = document.getElementById("wo-set-lang");
   if (lang && document.activeElement !== lang) lang.value = set.language || "";
   var lead = document.getElementById("wo-leader");
@@ -1281,18 +1295,62 @@ function woServiceChanged() {
 function woTitleChanged() {
   var set = woLoadSet();
   var input = document.getElementById("wo-title");
+  var leaderEl = document.getElementById("wo-set-leader");
   set.title = input ? input.value.trim() : "";
+  var leader = leaderEl && WO_LEADERS.indexOf(leaderEl.value) >= 0 ? leaderEl.value : (set.leader || woDefaultLeader());
+  set.titleEdited = set.title !== woDefaultTitle(set.date, leader);
   woSaveSet(set);
   var heading = document.querySelector("#wo-edit h1");
   if (heading) heading.textContent = woSetTitle(set);
 }
+function woApplyAutoTitle(titleEl, iso, leader) {
+  if (!titleEl || wo.titleEdited) return;
+  var next = woDefaultTitle(iso, leader);
+  titleEl.value = next;
+  wo.titleDefault = next;
+}
 function woNewDateChanged() {
   var dateEl = document.getElementById("wo-new-date");
   var titleEl = document.getElementById("wo-new-title");
+  var leaderEl = document.getElementById("wo-new-leader");
   if (!dateEl || !titleEl) return;
-  var next = woDefaultTitle(dateEl.value);
-  if (!titleEl.value.trim() || titleEl.value === wo.titleDefault) titleEl.value = next;
-  wo.titleDefault = next;
+  var leader = leaderEl ? leaderEl.value : woDefaultLeader();
+  if (!titleEl.value.trim() || titleEl.value === wo.titleDefault) wo.titleEdited = false;
+  woApplyAutoTitle(titleEl, dateEl.value, leader);
+  wo.titleDefault = woDefaultTitle(dateEl.value, leader);
+}
+function woNewLeaderChanged() {
+  var dateEl = document.getElementById("wo-new-date");
+  var titleEl = document.getElementById("wo-new-title");
+  var leaderEl = document.getElementById("wo-new-leader");
+  if (!titleEl || !leaderEl) return;
+  var iso = dateEl && dateEl.value ? dateEl.value : woNextSunday();
+  woApplyAutoTitle(titleEl, iso, leaderEl.value);
+  wo.titleDefault = woDefaultTitle(iso, leaderEl.value);
+}
+function woNewTitleInput() {
+  var dateEl = document.getElementById("wo-new-date");
+  var titleEl = document.getElementById("wo-new-title");
+  var leaderEl = document.getElementById("wo-new-leader");
+  if (!titleEl) return;
+  var iso = dateEl && dateEl.value ? dateEl.value : woNextSunday();
+  var leader = leaderEl ? leaderEl.value : woDefaultLeader();
+  wo.titleEdited = titleEl.value.trim() !== woDefaultTitle(iso, leader);
+}
+function woSetLeaderChanged() {
+  var set = woLoadSet();
+  var leaderEl = document.getElementById("wo-set-leader");
+  var titleEl = document.getElementById("wo-title");
+  var leader = leaderEl && WO_LEADERS.indexOf(leaderEl.value) >= 0 ? leaderEl.value : woDefaultLeader();
+  set.leader = leader;
+  if (!woTitleWasEdited(set)) {
+    set.title = woDefaultTitle(set.date, leader);
+    set.titleEdited = false;
+    if (titleEl) titleEl.value = set.title;
+    var heading = document.querySelector("#wo-edit h1");
+    if (heading) heading.textContent = woSetTitle(set);
+  }
+  woSaveSet(set);
 }
 function woSetLangChanged() {
   var set = woLoadSet();
@@ -1309,7 +1367,7 @@ function woLeaderChanged() {
   if (banner) { banner.hidden = !set.leaderNote; banner.textContent = set.leaderNote || ""; }
 }
 function woShareUrl(set) {
-  var payload = { id: set.id, d: set.date, t: set.title || "", svc: set.service || "", lang: set.language || "", n: set.leaderNote || "", s: (set.songs || []).map(function (x) { return [x.id, x.key, x.note || ""]; }) };
+  var payload = { id: set.id, d: set.date, t: set.title || "", svc: set.service || "", lang: set.language || "", ldr: set.leader || "", n: set.leaderNote || "", s: (set.songs || []).map(function (x) { return [x.id, x.key, x.note || ""]; }) };
   var enc = btoa(unescape(encodeURIComponent(JSON.stringify(payload)))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
   return location.origin + location.pathname + location.search + "#/worship/set/" + enc;
 }
@@ -1342,7 +1400,7 @@ function woImport(data) {
     if (!pair || !wo.byId[pair[0]]) { missing++; return; }
     songs.push({ id: pair[0], key: pair[1] || wo.byId[pair[0]].key, note: pair[2] || "" });
   });
-  var set = { id: data.id || woId(), date: data.d || woBlankSet().date, title: data.t || "", service: data.svc || "", language: data.lang === "ko" || data.lang === "en" ? data.lang : "", leaderNote: data.n || "", songs: songs };
+  var set = { id: data.id || woId(), date: data.d || woBlankSet().date, title: data.t || "", titleEdited: !!(data.t && !woTitleIsAuto(data.t, data.d || "")), service: data.svc || "", language: data.lang === "ko" || data.lang === "en" ? data.lang : "", leader: WO_LEADERS.indexOf(data.ldr) >= 0 ? data.ldr : "", leaderNote: data.n || "", songs: songs };
   var sets = woLoadSets().filter(function (s) { return s.id !== set.id; });
   sets.unshift(set);
   woSaveSets(sets);
@@ -1617,10 +1675,12 @@ document.getElementById("wo-q").addEventListener("input", woRenderLib);
 document.getElementById("wo-date").addEventListener("change", woDateChanged);
 document.getElementById("wo-title").addEventListener("change", woTitleChanged);
 document.getElementById("wo-new-date").addEventListener("change", woNewDateChanged);
+document.getElementById("wo-new-title").addEventListener("input", woNewTitleInput);
+document.getElementById("wo-new-leader").addEventListener("change", woNewLeaderChanged);
+document.getElementById("wo-set-leader").addEventListener("change", woSetLeaderChanged);
 document.getElementById("wo-service").addEventListener("change", woServiceChanged);
-document.getElementById("wo-service").addEventListener("input", function () { woSyncServiceLang(document.getElementById("wo-service"), document.getElementById("wo-set-lang")); });
 document.getElementById("wo-set-lang").addEventListener("change", woSetLangChanged);
-document.getElementById("wo-new-service").addEventListener("input", function () { woSyncServiceLang(document.getElementById("wo-new-service"), document.getElementById("wo-new-lang")); });
+document.getElementById("wo-new-service").addEventListener("change", function () { woSyncServiceLang(document.getElementById("wo-new-service"), document.getElementById("wo-new-lang")); });
 document.getElementById("wo-leader").addEventListener("change", woLeaderChanged);
 document.getElementById("wo-paste").addEventListener("input", woPreviewAdd);
 addEventListener("hashchange", worshipRoute);

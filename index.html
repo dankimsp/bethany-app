@@ -434,16 +434,8 @@ nav{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-rig
     <select id="wo-theme"></select>
     <p class="flab" id="wo-moment-lab">Moment</p>
     <div id="wo-moment" class="chips"></div>
-    <p class="flab" id="wo-season-lab">Season</p>
-    <div id="wo-season" class="chips"></div>
-    <p class="flab" id="wo-range-lab">Range</p>
-    <div id="wo-range" class="chips"></div>
     <p class="flab" id="wo-time-lab">Time</p>
     <div id="wo-time" class="chips"></div>
-    <p class="flab" id="wo-difficulty-lab">Difficulty</p>
-    <div id="wo-difficulty" class="chips"></div>
-    <label for="wo-scripture">Scripture</label>
-    <input id="wo-scripture" placeholder="Ephesians 2" autocomplete="off">
     <button class="btn btn-out" id="wo-clear" type="button">Clear filters</button>
    </div>
    <p id="wo-count" class="muted" style="margin:8px 0"></p>
@@ -458,8 +450,17 @@ nav{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-rig
     <input id="wo-new-date" type="date">
     <label for="wo-new-title">Title</label>
     <input id="wo-new-title" autocomplete="off">
+    <label for="wo-new-leader">Leader</label>
+    <select id="wo-new-leader">
+     <option>Pastor Woori</option>
+     <option>Palmy</option>
+     <option>Daniel</option>
+    </select>
     <label for="wo-new-service">Service</label>
-    <input id="wo-new-service" list="wo-services" placeholder="English Service" autocomplete="off">
+    <select id="wo-new-service">
+     <option>English Service</option>
+     <option>Korean Service</option>
+    </select>
     <label for="wo-new-lang">Language</label>
     <select id="wo-new-lang">
      <option value="en">English</option>
@@ -492,10 +493,19 @@ nav{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-rig
     <p id="wo-live-off" class="muted" hidden>Live publishing isn't set up yet.</p>
     <label for="wo-title">Title</label>
     <input id="wo-title" autocomplete="off">
+    <label for="wo-set-leader">Leader</label>
+    <select id="wo-set-leader">
+     <option>Pastor Woori</option>
+     <option>Palmy</option>
+     <option>Daniel</option>
+    </select>
     <label for="wo-date">Date</label>
     <input id="wo-date" type="date">
     <label for="wo-service">Service</label>
-    <input id="wo-service" list="wo-services" placeholder="English Service" autocomplete="off">
+    <select id="wo-service">
+     <option>English Service</option>
+     <option>Korean Service</option>
+    </select>
     <label for="wo-set-lang">Language</label>
     <select id="wo-set-lang">
      <option value="">No language tag</option>
@@ -555,11 +565,6 @@ nav{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-rig
   <h1 id="wo-play-title" style="margin:0;padding:8px 16px 0;font-size:34px"></h1>
   <div id="wo-play-body"></div>
  </div>
- <datalist id="wo-services">
-  <option value="English Service"></option>
-  <option value="Korean Service"></option>
-  <option value="Youth"></option>
- </datalist>
 </section>
 <nav aria-label="Main">
  <a href="#home" data-s="home"><svg class="" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>Home</a>
