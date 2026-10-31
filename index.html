@@ -402,6 +402,14 @@ nav{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-rig
  <div id="wo-app">
   <div id="wo-lib" class="pad">
    <h1 style="margin:0">Library</h1>
+   <div id="wo-lock" class="card" hidden>
+    <label for="wo-team">Team password</label>
+    <input id="wo-team" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')woUnlock()">
+    <label class="chk" for="wo-team-remember"><input id="wo-team-remember" type="checkbox" checked> Remember on this device</label>
+    <p id="wo-team-msg" hidden style="color:#b00020;font-weight:700;margin:8px 0"></p>
+    <button class="btn btn-teal" type="button" onclick="woUnlock()">Unlock songs</button>
+   </div>
+   <p id="wo-private-msg" class="muted" hidden></p>
    <button class="btn btn-teal" type="button" onclick="woThisSunday()">This Sunday</button>
    <div class="lang-switch" role="tablist" aria-label="Library language">
     <button type="button" id="wo-lang-en" class="on" role="tab" aria-selected="true">English CCM</button>
@@ -473,6 +481,18 @@ nav{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-rig
   <div id="wo-add" class="pad" hidden>
    <button type="button" class="lnkbtn" onclick="location.hash='#/worship/library'">← Library</button>
    <h1>Add song</h1>
+   <div id="wo-request" hidden>
+    <p class="muted">Request a song. Daniel gets an email. The chart stays out of the app repo.</p>
+    <label for="wo-req-title">Title</label>
+    <input id="wo-req-title" autocomplete="off">
+    <label for="wo-req-artist">Artist</label>
+    <input id="wo-req-artist" autocomplete="off">
+    <label for="wo-req-name">Your name</label>
+    <input id="wo-req-name" autocomplete="name">
+    <p id="wo-req-msg" class="muted" hidden></p>
+    <button class="btn btn-teal" type="button" onclick="woRequestSong()">Send request</button>
+   </div>
+   <div id="wo-paste-tools">
    <p class="muted">Paste ChordPro. Nothing is saved on a server. Copy or download a .cho file into <b>songs/</b>, then rebuild songs.json. Number chords such as [1] [6m] [5/7] follow the {key:} line.</p>
    <label for="wo-paste">ChordPro</label>
    <textarea id="wo-paste" placeholder="{title: Song Name}&#10;{key: G}&#10;[G]First [C]line"></textarea>
@@ -483,6 +503,7 @@ nav{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-rig
    </div>
    <p id="wo-add-note" class="muted"></p>
    <div id="wo-add-prev"></div>
+   </div>
   </div>
  </div>
  <div id="wo-play" hidden>
@@ -517,6 +538,7 @@ nav{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-rig
 <script>
 const RSVP_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzlNMiNYPc-5jImVg_vvOwQnECRvJ18WKSmQ7bzSCz84LQhlTy68WICnmkXeXqkN0Fi/exec';
 const LIVE_SETLIST_ENDPOINT = '';
+const WORSHIP_BACKEND_URL = '';
 // Schedule = church-info-for-app.md. dow: 0=Sun
 var SV={em:{n:"Sunday English (EM) Service",d:0,h:10,m:0},ko:{n:"Sunday Korean Service",d:0,h:11,m:30},wed:{n:"Wednesday Korean Service",d:3,h:19,m:0},sat:{n:"Saturday Morning Prayer (Korean)",d:6,h:7,m:0},
 women:{n:"Women's Bible Study",d:2,h:18,m:30},men:{n:"Men's Bible Study",d:3,h:19,m:15},yam:{n:"Young Adult Men's Bible Study",d:6,h:19,m:0},youth:{n:"Youth Bible Study",d:0,h:11,m:40}};

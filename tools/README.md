@@ -24,7 +24,7 @@ Do not commit the plaintext JSON file. `serve-links.plain.json` is gitignored if
 
 # Worship charts
 
-Worship charts are public in this build. `songs.json` is plain JSON built from the ChordPro files in `songs/`. Serve still has its own password.
+Worship charts in this repo are public. `songs.json` is plain JSON built from the ChordPro files in `songs/`. Private charts stay in Drive. Serve still has its own password.
 
 Optional directives on each song:
 
@@ -59,9 +59,13 @@ node tools/encrypt-songs.mjs
 
 A shared setlist link looks like `#/worship/set/...`. Opening it saves a copy of that setlist on the device. The link includes each song's key, note, and the leader note.
 
+# Worship backend
+
+Private charts, live setlists, and song requests share one Apps Script web app. Follow `README/docs/worship-setup.md`. Leave `WORSHIP_BACKEND_URL` in `index.html` empty until that web app is deployed. The library then keeps using only the public-domain songs in this repo.
+
 # Live setlist
 
-Publish live sends the open setlist to a Google Sheet. The web app URL is `LIVE_SETLIST_ENDPOINT` in `index.html`. It is empty until the church deploys the script, and the app hides publishing and does not poll while it is empty.
+When `WORSHIP_BACKEND_URL` is set, Publish live and the 30-second refresh use that web app. When it is empty, Publish live still uses `LIVE_SETLIST_ENDPOINT` in `index.html`. That older URL can stay empty, and the app hides publishing and does not poll while both are empty.
 
 1. Create a Google Sheet for live setlists.
 2. Extensions > Apps Script. Paste `tools/live-setlist-apps-script.gs` and save.

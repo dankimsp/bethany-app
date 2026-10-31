@@ -230,15 +230,273 @@ function woChart(song) {
   });
   return root;
 }
+var WO_TEAM = "bethany-worship-team";
+var WO_DRIVE = "bethany-worship-drive";
+function woBackendEnabled() { return typeof WORSHIP_BACKEND_URL === "string" && WORSHIP_BACKEND_URL.length > 0; }
+function woTeamHash() {
+  if (wo.teamHash) return wo.teamHash;
+  try { return localStorage.getItem(WO_TEAM) || ""; } catch (e) { return ""; }
+}
+function woRememberTeam(hash) {
+  wo.teamHash = hash || "";
+  try {
+    if (hash) localStorage.setItem(WO_TEAM, hash);
+    else localStorage.removeItem(WO_TEAM);
+  } catch (e) {}
+}
+function woClearTeam() {
+  wo.teamHash = "";
+  try { localStorage.removeItem(WO_TEAM); } catch (e) {}
+}
+function woSha256(text) {
+  var data = new TextEncoder().encode(String(text));
+  return crypto.subtle.digest("SHA-256", data).then(function (buf) {
+    return Array.from(new Uint8Array(buf)).map(function (b) { return (b < 16 ? "0" : "") + b.toString(16); }).join("");
+  });
+}
+function woAuthFailure(data, httpStatus) {
+  if (httpStatus === 401) return true;
+  return !!(data && Number(data.status) === 401);
+}
+function woPrivateMsg(text) {
+  var el = document.getElementById("wo-private-msg");
+  if (!el) return;
+  el.hidden = !text;
+  el.textContent = text || "";
+}
+function woSyncLock(message) {
+  var box = document.getElementById("wo-lock");
+  if (!box) return;
+  box.hidden = !(woBackendEnabled() && !woTeamHash());
+  var msg = document.getElementById("wo-team-msg");
+  if (!msg) return;
+  msg.hidden = !message;
+  msg.textContent = message || "";
+}
+function woSyncAdd() {
+  var remote = woBackendEnabled();
+  var req = document.getElementById("wo-request");
+  var paste = document.getElementById("wo-paste-tools");
+  if (req) req.hidden = !remote;
+  if (paste) paste.hidden = remote;
+  var name = document.getElementById("wo-req-name");
+  if (remote && name && !name.value && typeof session === "function") {
+    var member = session();
+    if (member && member.name) name.value = member.name;
+  }
+}
+function woIdb() {
+  return new Promise(function (resolve, reject) {
+    if (!window.indexedDB) { reject(); return; }
+    var req = indexedDB.open("bethany-worship", 1);
+    req.onupgradeneeded = function () {
+      if (!req.result.objectStoreNames.contains("songs")) req.result.createObjectStore("songs");
+    };
+    req.onsuccess = function () { resolve(req.result); };
+    req.onerror = function () { reject(req.error); };
+  });
+}
+function woCacheLocal() {
+  try { return JSON.parse(localStorage.getItem(WO_DRIVE) || "null"); } catch (e) { return null; }
+}
+function woCacheRead() {
+  var idb = woIdb().then(function (db) {
+    return new Promise(function (resolve, reject) {
+      var get = db.transaction("songs", "readonly").objectStore("songs").get("drive");
+      get.onsuccess = function () { resolve(get.result || null); };
+      get.onerror = function () { reject(get.error); };
+    });
+  }).catch(function () { return null; });
+  var timeout = new Promise(function (resolve) { setTimeout(function () { resolve(null); }, 2000); });
+  return Promise.race([idb, timeout]).then(function (record) { return record || woCacheLocal(); });
+}
+function woCacheWrite(record) {
+  try { localStorage.setItem(WO_DRIVE, JSON.stringify(record)); } catch (e) {}
+  return woIdb().then(function (db) {
+    return new Promise(function (resolve, reject) {
+      var tx = db.transaction("songs", "readwrite");
+      tx.objectStore("songs").put(record, "drive");
+      tx.oncomplete = function () { resolve(); };
+      tx.onerror = function () { reject(tx.error); };
+    });
+  }).catch(function () {});
+}
+function woApplyCatalog(driveItems) {
+  var extra = [];
+  (driveItems || []).forEach(function (item) {
+    if (!item || !item.cho) return;
+    var song = woParseCho(item.cho, item.id || "drive-song");
+    if (item.language && !/\{language\s*:/i.test(item.cho)) song.language = item.language === "ko" ? "ko" : "en";
+    extra.push(song);
+  });
+  wo.songs = (wo.bundled || []).concat(extra);
+  wo.byId = {};
+  wo.songs.forEach(function (s) { wo.byId[s.id] = s; });
+  woInitFilters();
+  if (wo.view === "lib" || document.body.classList.contains("wo-split")) woRenderLib();
+  if (wo.view === "song" && wo.cur && wo.byId[wo.cur.id]) {
+    wo.cur = wo.byId[wo.cur.id];
+    woRenderSong();
+  }
+}
+function woBackendQuery(params) {
+  var q = [];
+  Object.keys(params || {}).forEach(function (key) {
+    if (params[key] == null || params[key] === "") return;
+    q.push(encodeURIComponent(key) + "=" + encodeURIComponent(String(params[key])));
+  });
+  var token = woTeamHash();
+  if (token) q.push("token=" + encodeURIComponent(token));
+  var base = WORSHIP_BACKEND_URL;
+  return base + (base.indexOf("?") >= 0 ? "&" : "?") + q.join("&");
+}
+function woApiFetch(params) {
+  return fetch(woBackendQuery(params), { method: "GET", cache: "no-store", credentials: "omit" }).then(function (res) {
+    if (res.status === 401) return { ok: false, status: 401, error: "unauthorized" };
+    return res.text().then(function (text) { return JSON.parse(text); });
+  });
+}
+function woApiJsonp(params) {
+  return new Promise(function (resolve, reject) {
+    var cb = "woApi_" + Date.now() + Math.floor(Math.random() * 1000);
+    var script = document.createElement("script");
+    var timer = setTimeout(function () { cleanup(); reject(); }, 20000);
+    function cleanup() { clearTimeout(timer); try { delete window[cb]; } catch (e) { window[cb] = undefined; } script.remove(); }
+    window[cb] = function (data) { cleanup(); resolve(data); };
+    script.onerror = function () { cleanup(); reject(); };
+    script.src = woBackendQuery(params) + "&callback=" + cb;
+    document.body.appendChild(script);
+  });
+}
+function woApiPost(params) {
+  var body = { token: woTeamHash() };
+  Object.keys(params || {}).forEach(function (key) { body[key] = params[key]; });
+  return fetch(WORSHIP_BACKEND_URL, {
+    method: "POST",
+    mode: "cors",
+    credentials: "omit",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify(body)
+  }).then(function (res) {
+    if (res.status === 401) return { ok: false, status: 401, error: "unauthorized" };
+    return res.text().then(function (text) { return JSON.parse(text); });
+  });
+}
+function woApi(params) {
+  var url = woBackendQuery(params);
+  if (url.length > 7000) return woApiPost(params);
+  return woApiFetch(params).catch(function () { return woApiJsonp(params); });
+}
+function woFetchSongs() {
+  if (!woBackendEnabled() || !woTeamHash()) return Promise.resolve("locked");
+  return woApi({ action: "getSongs", etag: wo.driveEtag || "" }).then(function (data) {
+    if (woAuthFailure(data)) return "unauthorized";
+    if (!data || data.ok === false) {
+      woPrivateMsg("Couldn't load the private songs.");
+      return "error";
+    }
+    woPrivateMsg("");
+    if (data.unchanged) return "ok";
+    wo.driveEtag = data.etag || "";
+    return woCacheWrite({ etag: data.etag || "", version: data.version || data.etag || "", songs: data.songs || [] }).then(function () {
+      woApplyCatalog(data.songs || []);
+      return "ok";
+    });
+  }).catch(function () {
+    woPrivateMsg(wo.driveEtag ? "Couldn't reach Drive. Showing saved songs." : "Couldn't reach the song library.");
+    return "error";
+  });
+}
+function woLoadPrivate() {
+  woSyncLock("");
+  woSyncAdd();
+  if (!woBackendEnabled()) return Promise.resolve();
+  try { if (!wo.teamHash) wo.teamHash = localStorage.getItem(WO_TEAM) || ""; } catch (e) {}
+  return woCacheRead().then(function (cached) {
+    if (cached && cached.songs) {
+      wo.driveEtag = cached.etag || "";
+      woApplyCatalog(cached.songs);
+    }
+    woSyncLock("");
+    if (!woTeamHash()) return "locked";
+    return woFetchSongs();
+  }).then(function (status) {
+    if (status === "unauthorized") {
+      woClearTeam();
+      woSyncLock("That password isn't right.");
+    }
+  });
+}
+function woUnlock() {
+  var input = document.getElementById("wo-team");
+  var password = input ? input.value : "";
+  var remember = !!(document.getElementById("wo-team-remember") && document.getElementById("wo-team-remember").checked);
+  if (!password) { woSyncLock("Enter the team password."); return; }
+  var previous = "";
+  try { previous = localStorage.getItem(WO_TEAM) || ""; } catch (e) {}
+  woSha256(password).then(function (hash) {
+    wo.teamHash = hash;
+    return woFetchSongs().then(function (status) { return { hash: hash, status: status }; });
+  }).then(function (result) {
+    if (result.status === "unauthorized") {
+      woClearTeam();
+      if (input) input.value = "";
+      woSyncLock("That password isn't right.");
+      return;
+    }
+    if (result.status === "ok") {
+      if (remember) woRememberTeam(result.hash);
+      else {
+        wo.teamHash = result.hash;
+        try { localStorage.removeItem(WO_TEAM); } catch (e) {}
+      }
+      if (input) input.value = "";
+      woSyncLock("");
+      return;
+    }
+    if (!previous) wo.teamHash = "";
+    else wo.teamHash = previous;
+    woSyncLock("");
+  }).catch(function () {
+    if (!previous) wo.teamHash = "";
+    woPrivateMsg("Couldn't reach the song library.");
+    woSyncLock("");
+  });
+}
+function woRequestSong() {
+  var title = document.getElementById("wo-req-title").value.trim();
+  var artist = document.getElementById("wo-req-artist").value.trim();
+  var name = document.getElementById("wo-req-name").value.trim();
+  var msg = document.getElementById("wo-req-msg");
+  function say(text) { if (!msg) return; msg.hidden = !text; msg.textContent = text || ""; }
+  if (!woBackendEnabled()) { say("Song requests aren't set up yet."); return; }
+  if (!title || !artist || !name) { say("Add a title, artist, and your name."); return; }
+  if (!woTeamHash()) { say("Unlock the library with the team password first."); return; }
+  say("Sending…");
+  woApi({ action: "request", title: title, artist: artist, name: name }).then(function (res) {
+    if (woAuthFailure(res)) {
+      woClearTeam();
+      woSyncLock("That password isn't right.");
+      say("That password isn't right.");
+      return;
+    }
+    if (!res || res.ok === false) { say("Couldn't send the request."); return; }
+    document.getElementById("wo-req-title").value = "";
+    document.getElementById("wo-req-artist").value = "";
+    say(res.mailed === false ? "Saved. The email could not be sent." : "Request sent.");
+  }).catch(function () { say("Couldn't reach the song library."); });
+}
 function woLoadSongs() {
   return fetch("songs.json").then(function (r) { if (!r.ok) throw 0; return r.json(); }).then(function (list) {
     if (!Array.isArray(list)) throw 0;
-    wo.songs = list.map(function (item) { return woParseCho(item.cho, item.id); });
+    wo.bundled = list.map(function (item) { return woParseCho(item.cho, item.id); });
+    wo.songs = wo.bundled.slice();
     wo.byId = {};
     wo.songs.forEach(function (s) { wo.byId[s.id] = s; });
     woInitFilters();
     woApplyRoute();
     if (!wo.songsRouted) woShow("lib");
+    return woLoadPrivate();
   }).catch(function () {
     var box = document.getElementById("wo-list");
     if (box) box.textContent = "Couldn't load songs.";
@@ -268,7 +526,7 @@ function woShow(view) {
     hint.textContent = "Select a song.";
     empty.appendChild(hint);
   }
-  if (view === "add") woPreviewAdd();
+  if (view === "add") { woSyncAdd(); woPreviewAdd(); }
   woLiveWatch(view === "edit");
 }
 var woWasTablet = null;
@@ -952,7 +1210,10 @@ function woSwipePlay(e) {
   if (Math.abs(dx) < 48 || Math.abs(dx) < Math.abs(dy)) return;
   woPlayStep(dx < 0 ? 1 : -1);
 }
-function woLiveEnabled() { return typeof LIVE_SETLIST_ENDPOINT === "string" && LIVE_SETLIST_ENDPOINT.length > 0; }
+function woLiveEnabled() {
+  if (woBackendEnabled()) return true;
+  return typeof LIVE_SETLIST_ENDPOINT === "string" && LIVE_SETLIST_ENDPOINT.length > 0;
+}
 function woLiveMsg(text) {
   var el = document.getElementById("wo-live-msg");
   if (!el) return;
@@ -986,7 +1247,10 @@ function woJsonp(params) {
 }
 function woLivePull() {
   if (!woLiveEnabled() || !wo.setId) return;
-  woJsonp({ id: wo.setId }).then(function (data) {
+  if (woBackendEnabled() && !woTeamHash()) return;
+  var pull = woBackendEnabled() ? woApi({ action: "get", id: wo.setId }) : woJsonp({ id: wo.setId });
+  pull.then(function (data) {
+    if (woAuthFailure(data)) { woClearTeam(); woSyncLock("That password isn't right."); return; }
     if (!data || !data.found) return;
     var set = woGetSet(wo.setId);
     if (!set) return;
@@ -1009,6 +1273,7 @@ function woLiveWatch(on) {
 }
 function woPublish() {
   if (!woLiveEnabled()) { woLiveMsg("Live publishing isn't set up yet."); return; }
+  if (woBackendEnabled() && !woTeamHash()) { woLiveMsg("Unlock the library with the team password first."); return; }
   var passEl = document.getElementById("wo-pass");
   var pass = passEl ? passEl.value : "";
   var changeEl = document.getElementById("wo-change");
@@ -1018,6 +1283,7 @@ function woPublish() {
   var body = { passphrase: pass, id: set.id, date: set.date, leaderNote: set.leaderNote || "", change: change, songs: set.songs || [] };
   var encoded = JSON.stringify(body);
   var done = function (res) {
+    if (woAuthFailure(res)) { woClearTeam(); woSyncLock("That password isn't right."); woLiveMsg("That password isn't right."); return; }
     if (!res || !res.ok) { woLiveMsg(res && res.error === "pass" ? "That passphrase isn't right." : "Couldn't publish."); return; }
     set.updatedAt = res.updatedAt;
     set.change = change;
@@ -1026,6 +1292,10 @@ function woPublish() {
     woLiveMsg("");
     woShowLiveBanner(res.updatedAt, change);
   };
+  if (woBackendEnabled()) {
+    woApi({ action: "publish", payload: encoded }).then(done).catch(function () { woLiveMsg("Couldn't reach the live sheet."); });
+    return;
+  }
   if (encoded.length < 6000) {
     woJsonp({ action: "publish", payload: encoded }).then(done).catch(function () { woLiveMsg("Couldn't reach the live sheet."); });
     return;
