@@ -234,14 +234,10 @@ function woChart(song) {
   return root;
 }
 var WO_DRIVE = "bethany-worship-drive";
-var WO_CLOSED = "The song library isn't open yet. Delete TEAM_HASH and LEADER_HASH in the worship script, then redeploy that web app as a new version.";
+var WO_UNAVAILABLE = "Couldn't load songs right now.";
 function woBackendEnabled() { return typeof WORSHIP_BACKEND_URL === "string" && WORSHIP_BACKEND_URL.length > 0; }
 function woStillLocked(data) {
   return !!(data && (Number(data.status) === 401 || data.error === "unauthorized" || data.error === "pass"));
-}
-function woLockedMessage(data) {
-  if (data && data.error === "pass") return "Publishing isn't open yet. Delete LEADER_HASH in the worship script and redeploy it as a new version.";
-  return WO_CLOSED;
 }
 try { localStorage.removeItem("bethany-worship-team"); } catch (e) {}
 function woPrivateMsg(text) {
@@ -377,10 +373,10 @@ function woApi(params) {
 function woFetchSongs() {
   if (!woBackendEnabled()) return Promise.resolve("off");
   return woApi({ action: "getSongs", etag: wo.driveEtag || "" }).then(function (data) {
-    if (woStillLocked(data)) { woPrivateMsg(woLockedMessage(data)); return "locked"; }
-    if (!data || data.ok === false) {
-      woPrivateMsg(woBackendError(data, "Couldn't load the private songs."));
-      return "error";
+    if (woStillLocked(data) || !data || data.ok === false) {
+      console.warn("Worship library:", woBackendError(data, WO_UNAVAILABLE));
+      woPrivateMsg(WO_UNAVAILABLE);
+      return woStillLocked(data) ? "locked" : "error";
     }
     woPrivateMsg("");
     if (data.unchanged) return "ok";
@@ -390,8 +386,8 @@ function woFetchSongs() {
       return "ok";
     });
   }).catch(function (err) {
-    var fallback = wo.driveEtag ? "Couldn't reach Drive. Showing saved songs." : "Couldn't reach the song library.";
-    woPrivateMsg(woBackendError(err, fallback));
+    console.warn("Worship library:", woBackendError(err, WO_UNAVAILABLE));
+    woPrivateMsg(WO_UNAVAILABLE);
     return "error";
   });
 }
@@ -416,11 +412,12 @@ function woRequestSong(ev) {
   function say(text) { if (!msg) return; msg.hidden = !text; msg.textContent = text || ""; }
   if (!woBackendEnabled()) { say("Song requests aren't connected yet."); return false; }
   if (!title || !artist) { say("Add a song title and an artist name."); return false; }
+  if (!confirm("Send this request?")) return false;
   var member = typeof session === "function" ? session() : null;
   var name = member && member.name ? String(member.name).trim() : "";
   say("Sending…");
   woApiPost({ action: "request", title: title, artist: artist, name: name }).then(function (res) {
-    if (woStillLocked(res)) { say(woLockedMessage(res)); return; }
+    if (woStillLocked(res)) { console.warn("Worship request:", woBackendError(res, "Couldn't send the request.")); say("Couldn't send the request."); return; }
     if (!res || res.ok === false) { say("Couldn't send the request."); return; }
     if (titleEl) titleEl.value = "";
     if (artistEl) artistEl.value = "";
@@ -547,8 +544,14 @@ function woInitFilters() {
     document.getElementById("wo-titleonly").classList.remove("on");
     woRenderLib();
   };
-  document.getElementById("wo-lang-en").onclick = function () { woF.lang = "en"; woRenderLib(); };
-  document.getElementById("wo-lang-ko").onclick = function () { woF.lang = "ko"; woRenderLib(); };
+  function woPickLang(lang) {
+    woF.lang = lang;
+    var q = document.getElementById("wo-q");
+    if (q) q.value = "";
+    woRenderLib();
+  }
+  document.getElementById("wo-lang-en").onclick = function () { woPickLang("en"); };
+  document.getElementById("wo-lang-ko").onclick = function () { woPickLang("ko"); };
   }
   woSyncLang();
   ["moment", "time"].forEach(woPruneField);
@@ -1320,13 +1323,24 @@ function woShareUrl(set) {
 function woShare(id, field) {
   var set = woGetSet(id || wo.setId) || woLoadSet();
   var url = woShareUrl(set);
-  var out = document.getElementById(field || "wo-share");
-  if (!out) return;
-  out.hidden = false;
-  out.value = url;
-  out.focus();
-  out.select();
-  if (navigator.clipboard) navigator.clipboard.writeText(url).catch(function () {});
+  var title = woSetTitle(set);
+  function fallback() {
+    var out = document.getElementById(field || "wo-share");
+    if (!out) return;
+    out.hidden = false;
+    out.value = url;
+    out.focus();
+    out.select();
+    if (navigator.clipboard) navigator.clipboard.writeText(url).catch(function () {});
+  }
+  if (navigator.share) {
+    navigator.share({ title: title, text: set.leaderNote || title, url: url }).catch(function (err) {
+      if (err && err.name === "AbortError") return;
+      fallback();
+    });
+    return;
+  }
+  fallback();
 }
 function woReadHash() {
   var h = location.hash || "";
@@ -1367,7 +1381,7 @@ function woEnterPlay(fromSet) {
   if (!list.length) return;
   wo.playList = list;
   wo.playIndex = 0;
-  list.forEach(function (item, i) { if (wo.cur && item.song.id === wo.cur.id) wo.playIndex = i; });
+  if (!fromSet) list.forEach(function (item, i) { if (wo.cur && item.song.id === wo.cur.id) wo.playIndex = i; });
   document.getElementById("wo-play").hidden = false;
   document.body.classList.add("wo-playing");
   woRenderPlay();
@@ -1401,7 +1415,9 @@ function woRenderPlay() {
 }
 function woPlayStep(dir) {
   if (!wo.playList || !wo.playList.length) return;
-  wo.playIndex = (wo.playIndex + dir + wo.playList.length) % wo.playList.length;
+  var next = wo.playIndex + dir;
+  if (next < 0 || next >= wo.playList.length) return;
+  wo.playIndex = next;
   woRenderPlay();
 }
 function woTogglePlayNumbers() {
@@ -1473,7 +1489,7 @@ function woLivePull() {
   if (!woLiveEnabled() || !wo.setId) return;
   var pull = woBackendEnabled() ? woApi({ action: "get", id: wo.setId }) : woJsonp({ id: wo.setId });
   pull.then(function (data) {
-    if (woStillLocked(data)) { woPrivateMsg(woLockedMessage(data)); return; }
+    if (woStillLocked(data)) { console.warn("Worship setlist:", woBackendError(data, WO_UNAVAILABLE)); return; }
     if (!data || !data.found) return;
     var set = woGetSet(wo.setId);
     if (!set) return;
@@ -1504,7 +1520,7 @@ function woPublish() {
   var body = { id: set.id, date: set.date, service: set.service || "", language: set.language || "", leader: set.leader || "", leaderNote: set.leaderNote || "", change: change, songs: set.songs || [] };
   var encoded = JSON.stringify(body);
   var done = function (res) {
-    if (woStillLocked(res)) { woLiveMsg(woLockedMessage(res)); return; }
+    if (woStillLocked(res)) { console.warn("Worship publish:", woBackendError(res, "Couldn't publish.")); woLiveMsg("Couldn't publish right now."); return; }
     if (!res || !res.ok) { woLiveMsg(woBackendError(res, "Couldn't publish.")); return; }
     set.updatedAt = res.updatedAt;
     set.change = change;
