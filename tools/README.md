@@ -26,6 +26,16 @@ Do not commit the plaintext JSON file. `serve-links.plain.json` is gitignored if
 
 Worship charts are public in this build. `songs.json` is plain JSON built from the ChordPro files in `songs/`. Serve still has its own password.
 
+Optional directives on each song:
+
+```
+{speed: slow}
+{tempo: 76}
+{themes: Grace, Salvation}
+```
+
+`speed` is `slow`, `medium`, or `fast`. If it is omitted, a `{tempo}` under 80 is slow, 80–110 is medium, and over 110 is fast. A song with neither is listed only when the Speed filter is All. Themes are a comma-separated list. The Add song page previews both fields.
+
 1. Put ChordPro files in `songs/` (one song per `.cho` file). The in-app **Add song** page can check a paste and download a `.cho` file. It does not upload anything. Drop that file into `songs/`.
 2. From the repo root:
 

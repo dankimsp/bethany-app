@@ -121,6 +121,10 @@ body.on-signin header{display:none}
 .setx,.wicon{width:36px;height:36px;flex:none;padding:0;min-height:36px}
 .setline .wkeyname{min-width:1.4em;font-size:18px;flex:none}
 .setnote{margin:0}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0;max-width:100%}
+.chip{min-height:36px;padding:6px 10px;border-radius:999px;border:2px solid var(--teal);background:#fff;color:var(--teal);font:inherit;font-weight:800;font-size:15px;cursor:pointer}
+.chip.on{background:var(--teal);color:#fff}
+#wo-filter-n{display:inline-block;min-width:1.4em;margin-left:6px;background:var(--gold);color:var(--teal);border-radius:999px;font-size:14px;line-height:1.4;padding:0 6px}
 #wo-play{position:fixed;inset:0;z-index:40;background:#041820;color:#f7f5ee;display:flex;flex-direction:column}
 #wo-play .wch{color:var(--gold);font-size:16px}
 #wo-play .wline{font-size:26px;margin:14px 0}
@@ -357,8 +361,21 @@ body.in-worship .demo-badge{margin-left:8px}
    <h1 style="margin:0">Library</h1>
    <button class="btn btn-teal" type="button" onclick="woThisSunday()">This Sunday</button>
    <p class="muted" style="margin:6px 0">English</p>
-   <label for="wo-q">Search</label>
+   <label for="wo-q">Song name</label>
    <input id="wo-q" placeholder="Title or artist" autocomplete="off">
+   <button class="btn btn-out" id="wo-filter-btn" type="button" aria-expanded="false">Filters <span id="wo-filter-n" hidden>0</span></button>
+   <div id="wo-filters" hidden>
+    <div id="wo-speed" class="chips"></div>
+    <label for="wo-artist">Artist</label>
+    <select id="wo-artist"></select>
+    <div class="chips">
+     <button class="chip" id="wo-az" type="button">A–Z</button>
+     <button class="chip" id="wo-titleonly" type="button">Title only</button>
+    </div>
+    <div id="wo-themes" class="chips"></div>
+    <button class="btn btn-out" id="wo-clear" type="button">Clear filters</button>
+   </div>
+   <p id="wo-count" class="muted" style="margin:8px 0"></p>
    <div id="wo-list"></div>
    <button class="btn btn-out" type="button" onclick="location.hash='#/worship/add'">Add song</button>
   </div>

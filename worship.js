@@ -67,7 +67,7 @@ function woParseLyric(line) {
   return segs;
 }
 function woParseCho(text, id) {
-  var song = { id: id || "song", title: "", artist: "", key: "C", youtube: "", sections: [] };
+  var song = { id: id || "song", title: "", artist: "", key: "C", youtube: "", speed: "", themes: [], sections: [] };
   var cur = null, errors = [];
   function open(label) { cur = { label: label, lines: [] }; song.sections.push(cur); }
   String(text || "").split(/\r?\n/).forEach(function (line) {
@@ -80,6 +80,12 @@ function woParseCho(text, id) {
       else if (name === "key") song.key = val.replace(/\s+/g, "") || song.key;
       else if (name === "youtube") song.youtube = val;
       else if (name === "tempo") { var bpm = parseInt(val, 10); if (bpm > 0) song.tempo = bpm; }
+      else if (name === "speed") {
+        var sp = val.toLowerCase();
+        if (sp === "slow" || sp === "medium" || sp === "fast") song.speed = sp;
+        else errors.push("Speed must be slow, medium, or fast.");
+      }
+      else if (name === "themes") song.themes = val.split(",").map(function (part) { return part.trim(); }).filter(Boolean);
       else if (name === "start_of_verse" || name === "sov") open(val || "Verse");
       else if (name === "start_of_chorus" || name === "soc") open(val || "Chorus");
       else if (name === "start_of_bridge" || name === "sob") open(val || "Bridge");
@@ -161,6 +167,7 @@ function woLoadSongs() {
     wo.songs = list.map(function (item) { return woParseCho(item.cho, item.id); });
     wo.byId = {};
     wo.songs.forEach(function (s) { wo.byId[s.id] = s; });
+    woInitFilters();
     woApplyRoute();
     if (!wo.songsRouted) woShow("lib");
   }).catch(function () {
@@ -180,19 +187,159 @@ function woShow(view) {
   if (view === "add") woPreviewAdd();
   woLiveWatch(view === "edit");
 }
-function woRenderLib() {
+var woF = { speed: "all", artist: "", themes: [], az: false, titleOnly: false, open: false, ready: false };
+function woActiveFilters() {
+  return (woF.speed !== "all" ? 1 : 0) + (woF.artist ? 1 : 0) + woF.themes.length + (woF.az ? 1 : 0) + (woF.titleOnly ? 1 : 0);
+}
+function woSpeedOf(song) {
+  if (song.speed === "slow" || song.speed === "medium" || song.speed === "fast") return song.speed;
+  if (!song.tempo) return "";
+  if (song.tempo < 80) return "slow";
+  if (song.tempo <= 110) return "medium";
+  return "fast";
+}
+function woInitFilters() {
+  if (!woF.speedReady) {
+  woF.speedReady = true;
+  var speedBox = document.getElementById("wo-speed");
+  ["all", "slow", "medium", "fast"].forEach(function (sp) {
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "chip" + (sp === "all" ? " on" : "");
+    b.dataset.speed = sp;
+    b.textContent = sp.charAt(0).toUpperCase() + sp.slice(1);
+    b.onclick = function () {
+      woF.speed = sp;
+      speedBox.querySelectorAll("button").forEach(function (x) { x.classList.toggle("on", x.dataset.speed === sp); });
+      woRenderLib();
+    };
+    speedBox.appendChild(b);
+  });
+  var themeNames = {};
+  wo.songs.forEach(function (s) { (s.themes || []).forEach(function (t) { themeNames[t] = 1; }); });
+  var themeBox = document.getElementById("wo-themes");
+  Object.keys(themeNames).sort(function (a, b) { return a.localeCompare(b); }).forEach(function (theme) {
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "chip";
+    b.textContent = theme;
+    b.onclick = function () {
+      var at = woF.themes.indexOf(theme);
+      if (at >= 0) woF.themes.splice(at, 1); else woF.themes.push(theme);
+      b.classList.toggle("on");
+      woRenderLib();
+    };
+    themeBox.appendChild(b);
+  });
+  var artist = document.getElementById("wo-artist");
+  var names = {};
+  wo.songs.forEach(function (s) { if (s.artist) names[s.artist] = 1; });
+  var all = document.createElement("option");
+  all.value = "";
+  all.textContent = "All artists";
+  artist.appendChild(all);
+  Object.keys(names).sort(function (a, b) { return a.localeCompare(b); }).forEach(function (name) {
+    var o = document.createElement("option");
+    o.value = name;
+    o.textContent = name;
+    artist.appendChild(o);
+  });
+  artist.onchange = function () { woF.artist = artist.value; woRenderLib(); };
+  document.getElementById("wo-az").onclick = function () {
+    woF.az = !woF.az;
+    document.getElementById("wo-az").classList.toggle("on", woF.az);
+    woRenderLib();
+  };
+  document.getElementById("wo-titleonly").onclick = function () {
+    woF.titleOnly = !woF.titleOnly;
+    document.getElementById("wo-titleonly").classList.toggle("on", woF.titleOnly);
+    document.getElementById("wo-q").placeholder = woF.titleOnly ? "Title" : "Title or artist";
+    woRenderLib();
+  };
+  document.getElementById("wo-filter-btn").onclick = function () {
+    woF.open = !woF.open;
+    document.getElementById("wo-filters").hidden = !woF.open;
+    document.getElementById("wo-filter-btn").setAttribute("aria-expanded", woF.open ? "true" : "false");
+  };
+  document.getElementById("wo-clear").onclick = function () {
+    woF.speed = "all"; woF.artist = ""; woF.themes = []; woF.az = false; woF.titleOnly = false;
+    document.getElementById("wo-q").value = "";
+    document.getElementById("wo-q").placeholder = "Title or artist";
+    document.getElementById("wo-artist").value = "";
+    document.querySelectorAll("#wo-speed button").forEach(function (b) { b.classList.toggle("on", b.dataset.speed === "all"); });
+    document.querySelectorAll("#wo-themes button").forEach(function (b) { b.classList.remove("on"); });
+    document.getElementById("wo-az").classList.remove("on");
+    document.getElementById("wo-titleonly").classList.remove("on");
+    woRenderLib();
+  };
+  }
+  var themeBox = document.getElementById("wo-themes");
+  themeBox.replaceChildren();
+  var themeNames = {};
+  wo.songs.forEach(function (s) { (s.themes || []).forEach(function (t) { themeNames[t] = 1; }); });
+  Object.keys(themeNames).sort(function (a, b) { return a.localeCompare(b); }).forEach(function (theme) {
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "chip" + (woF.themes.indexOf(theme) >= 0 ? " on" : "");
+    b.textContent = theme;
+    b.onclick = function () {
+      var at = woF.themes.indexOf(theme);
+      if (at >= 0) woF.themes.splice(at, 1); else woF.themes.push(theme);
+      b.classList.toggle("on");
+      woRenderLib();
+    };
+    themeBox.appendChild(b);
+  });
+  var artist = document.getElementById("wo-artist");
+  var chosen = woF.artist;
+  artist.replaceChildren();
+  var allOpt = document.createElement("option");
+  allOpt.value = "";
+  allOpt.textContent = "All artists";
+  artist.appendChild(allOpt);
+  var names = {};
+  wo.songs.forEach(function (s) { if (s.artist) names[s.artist] = 1; });
+  Object.keys(names).sort(function (a, b) { return a.localeCompare(b); }).forEach(function (name) {
+    var o = document.createElement("option");
+    o.value = name;
+    o.textContent = name;
+    artist.appendChild(o);
+  });
+  if (chosen && names[chosen]) artist.value = chosen;
+  else { woF.artist = ""; artist.value = ""; }
+}
+function woFilteredSongs() {
   var q = (document.getElementById("wo-q").value || "").trim().toLowerCase();
+  var list = wo.songs.filter(function (s) {
+    var speed = woSpeedOf(s);
+    if (woF.speed !== "all" && speed !== woF.speed) return false;
+    if (woF.artist && s.artist !== woF.artist) return false;
+    if (woF.themes.length && !woF.themes.some(function (t) { return (s.themes || []).indexOf(t) >= 0; })) return false;
+    if (!q) return true;
+    var hay = woF.titleOnly ? s.title : s.title + " " + (s.artist || "");
+    return hay.toLowerCase().indexOf(q) >= 0;
+  });
+  if (woF.az) list = list.slice().sort(function (a, b) { return a.title.localeCompare(b.title); });
+  return list;
+}
+function woRenderLib() {
+  woInitFilters();
   var box = document.getElementById("wo-list");
   box.replaceChildren();
-  wo.songs.filter(function (s) {
-    return !q || (s.title + " " + s.artist).toLowerCase().indexOf(q) >= 0;
-  }).forEach(function (s) {
+  var list = woFilteredSongs();
+  var count = document.getElementById("wo-count");
+  if (count) count.textContent = list.length + (list.length === 1 ? " song" : " songs");
+  var badge = document.getElementById("wo-filter-n");
+  var active = woActiveFilters();
+  if (badge) { badge.hidden = active === 0; badge.textContent = String(active); }
+  list.forEach(function (s) {
     var b = document.createElement("button");
     b.type = "button";
     b.className = "wrow";
     b.innerHTML = "<b></b><span></span>";
     b.querySelector("b").textContent = s.title;
-    b.querySelector("span").textContent = (s.artist ? s.artist + " · " : "") + "Key " + s.key + (s.tempo ? " · " + s.tempo + " BPM" : "");
+    var speed = woSpeedOf(s);
+    b.querySelector("span").textContent = (s.artist ? s.artist + " · " : "") + "Key " + s.key + (speed ? " · " + speed.charAt(0).toUpperCase() + speed.slice(1) : "") + (s.tempo ? " · " + s.tempo + " BPM" : "");
     b.onclick = function () { location.hash = "#/worship/song/" + encodeURIComponent(s.id); };
     box.appendChild(b);
   });
@@ -787,6 +934,10 @@ function woPreviewAdd() {
     var prevCur = wo.cur, prevSemi = wo.semi, prevFlats = wo.flats;
     wo.semi = 0; wo.flats = /b/.test(song.key);
     var h = document.createElement("h2"); h.textContent = song.title; prev.appendChild(h);
+    var meta = document.createElement("p");
+    meta.className = "muted";
+    meta.textContent = [woSpeedOf(song), (song.themes || []).join(", ")].filter(Boolean).join(" · ");
+    if (meta.textContent) prev.appendChild(meta);
     prev.appendChild(woChart(song));
     wo.cur = prevCur; wo.semi = prevSemi; wo.flats = prevFlats;
   }

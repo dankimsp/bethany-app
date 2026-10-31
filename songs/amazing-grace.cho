@@ -1,6 +1,8 @@
 {title: Amazing Grace}
 {artist: John Newton}
 {key: G}
+{speed: slow}
+{themes: Grace, Salvation}
 {youtube: https://www.youtube.com/results?search_query=Amazing+Grace+hymn}
 
 {start_of_verse: Verse 1}
