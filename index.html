@@ -522,29 +522,17 @@ nav{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-rig
   <div id="wo-add" class="pad" hidden>
    <button type="button" class="lnkbtn" onclick="location.hash='#/worship/library'">← Library</button>
    <h1>Add song</h1>
-   <div id="wo-request" hidden>
-    <p class="muted">Request a song. Daniel gets an email. The chart stays out of the app repo.</p>
-    <label for="wo-req-title">Title</label>
-    <input id="wo-req-title" autocomplete="off">
-    <label for="wo-req-artist">Artist</label>
-    <input id="wo-req-artist" autocomplete="off">
-    <label for="wo-req-name">Your name</label>
-    <input id="wo-req-name" autocomplete="name">
-    <p id="wo-req-msg" class="muted" hidden></p>
-    <button class="btn btn-teal" type="button" onclick="woRequestSong()">Send request</button>
-   </div>
-   <div id="wo-paste-tools">
-   <p class="muted">Paste ChordPro. Nothing is saved on a server. Copy or download a .cho file into <b>songs/</b>, then rebuild songs.json. Number chords such as [1] [6m] [5/7] follow the {key:} line.</p>
-   <label for="wo-paste">ChordPro</label>
-   <textarea id="wo-paste" placeholder="{title: Song Name}&#10;{key: G}&#10;[G]First [C]line"></textarea>
-   <div id="wo-add-err"></div>
-   <div class="wtools">
-    <button class="btn btn-teal" type="button" style="margin:0" onclick="woCopyCho()">Copy ChordPro</button>
-    <button class="btn btn-out" type="button" style="margin:0" onclick="woDownloadCho()">Download .cho</button>
-   </div>
-   <p id="wo-add-note" class="muted"></p>
-   <div id="wo-add-prev"></div>
-   </div>
+   <form id="wo-request" onsubmit="return woRequestSong(event)">
+    <p id="wo-req-off" class="muted" hidden>Song requests aren't connected yet.</p>
+    <div id="wo-req-fields">
+     <label for="wo-req-title">Song title</label>
+     <input id="wo-req-title" autocomplete="off">
+     <label for="wo-req-artist">Artist name</label>
+     <input id="wo-req-artist" autocomplete="off">
+     <p id="wo-req-msg" class="muted" hidden></p>
+     <button class="btn btn-teal" type="submit">Send request</button>
+    </div>
+   </form>
   </div>
  </div>
  <div id="wo-play" hidden>

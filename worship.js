@@ -277,16 +277,11 @@ function woSyncLock(message) {
   msg.textContent = message || "";
 }
 function woSyncAdd() {
-  var remote = woBackendEnabled();
-  var req = document.getElementById("wo-request");
-  var paste = document.getElementById("wo-paste-tools");
-  if (req) req.hidden = !remote;
-  if (paste) paste.hidden = remote;
-  var name = document.getElementById("wo-req-name");
-  if (remote && name && !name.value && typeof session === "function") {
-    var member = session();
-    if (member && member.name) name.value = member.name;
-  }
+  var connected = woBackendEnabled();
+  var off = document.getElementById("wo-req-off");
+  var fields = document.getElementById("wo-req-fields");
+  if (off) off.hidden = connected;
+  if (fields) fields.hidden = !connected;
 }
 function woIdb() {
   return new Promise(function (resolve, reject) {
@@ -466,17 +461,20 @@ function woUnlock() {
     woSyncLock("");
   });
 }
-function woRequestSong() {
-  var title = document.getElementById("wo-req-title").value.trim();
-  var artist = document.getElementById("wo-req-artist").value.trim();
-  var name = document.getElementById("wo-req-name").value.trim();
+function woRequestSong(ev) {
+  if (ev && ev.preventDefault) ev.preventDefault();
+  var titleEl = document.getElementById("wo-req-title");
+  var artistEl = document.getElementById("wo-req-artist");
+  var title = titleEl ? titleEl.value.trim() : "";
+  var artist = artistEl ? artistEl.value.trim() : "";
   var msg = document.getElementById("wo-req-msg");
   function say(text) { if (!msg) return; msg.hidden = !text; msg.textContent = text || ""; }
-  if (!woBackendEnabled()) { say("Song requests aren't set up yet."); return; }
-  if (!title || !artist || !name) { say("Add a title, artist, and your name."); return; }
-  if (!woTeamHash()) { say("Unlock the library with the team password first."); return; }
+  if (!woBackendEnabled()) { say("Song requests aren't connected yet."); return false; }
+  if (!title || !artist) { say("Add a song title and an artist name."); return false; }
+  var member = typeof session === "function" ? session() : null;
+  var name = member && member.name ? String(member.name).trim() : "";
   say("Sending…");
-  woApi({ action: "request", title: title, artist: artist, name: name }).then(function (res) {
+  woApiPost({ action: "request", title: title, artist: artist, name: name }).then(function (res) {
     if (woAuthFailure(res)) {
       woClearTeam();
       woSyncLock("That password isn't right.");
@@ -484,10 +482,11 @@ function woRequestSong() {
       return;
     }
     if (!res || res.ok === false) { say("Couldn't send the request."); return; }
-    document.getElementById("wo-req-title").value = "";
-    document.getElementById("wo-req-artist").value = "";
-    say(res.mailed === false ? "Saved. The email could not be sent." : "Request sent.");
+    if (titleEl) titleEl.value = "";
+    if (artistEl) artistEl.value = "";
+    say("Thanks! Your request was sent.");
   }).catch(function () { say("Couldn't reach the song library."); });
+  return false;
 }
 function woLoadSongs() {
   return fetch("songs.json").then(function (r) { if (!r.ok) throw 0; return r.json(); }).then(function (list) {
@@ -530,7 +529,7 @@ function woShow(view) {
     hint.textContent = "Select a song.";
     empty.appendChild(hint);
   }
-  if (view === "add") { woSyncAdd(); woPreviewAdd(); }
+  if (view === "add") woSyncAdd();
   woLiveWatch(view === "edit");
 }
 var woWasTablet = null;
@@ -1601,49 +1600,6 @@ function woWake(on) {
   if (!navigator.wakeLock) return;
   navigator.wakeLock.request("screen").then(function (lock) { wo.wake = lock; }).catch(function () {});
 }
-function woPreviewAdd() {
-  var text = document.getElementById("wo-paste").value;
-  var song = woParseCho(text, "preview");
-  var errs = document.getElementById("wo-add-err");
-  var prev = document.getElementById("wo-add-prev");
-  errs.replaceChildren();
-  prev.replaceChildren();
-  if (!text.trim()) return;
-  if (song.errors.length) {
-    song.errors.forEach(function (e) {
-      var p = document.createElement("p"); p.style.color = "#b00020"; p.style.fontWeight = "700"; p.style.margin = "4px 0"; p.textContent = e; errs.appendChild(p);
-    });
-  }
-  if (song.title && song.sections.some(function (s) { return s.lines.length; })) {
-    var prevCur = wo.cur, prevSemi = wo.semi, prevFlats = wo.flats;
-    wo.semi = 0; wo.flats = false;
-    var h = document.createElement("h2"); h.textContent = song.title; prev.appendChild(h);
-    var meta = document.createElement("p");
-    meta.className = "muted";
-    meta.textContent = [song.language === "ko" ? "Korean" : "English", song.key ? "Key " + song.key : "", woSpeedOf(song), (song.themes || []).join(", ")].filter(Boolean).join(" · ");
-    if (meta.textContent) prev.appendChild(meta);
-    var chips = woMetaChips(song);
-    if (chips.childElementCount) prev.appendChild(chips);
-    prev.appendChild(woChart(song));
-    wo.cur = prevCur; wo.semi = prevSemi; wo.flats = prevFlats;
-  }
-}
-function woCopyCho() {
-  var text = document.getElementById("wo-paste").value;
-  var note = document.getElementById("wo-add-note");
-  if (navigator.clipboard) navigator.clipboard.writeText(text).then(function () { note.textContent = "Copied. Save it as a .cho file in songs/ and rebuild songs.json."; }).catch(function () { note.textContent = "Select the text and copy it, then save a .cho file in songs/."; });
-  else note.textContent = "Select the text and copy it, then save a .cho file in songs/.";
-}
-function woDownloadCho() {
-  var text = document.getElementById("wo-paste").value;
-  var song = woParseCho(text, "song");
-  var name = (song.title || "song").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "song";
-  var a = document.createElement("a");
-  a.href = URL.createObjectURL(new Blob([text], { type: "text/plain" }));
-  a.download = name + ".cho";
-  document.body.appendChild(a); a.click(); a.remove();
-  document.getElementById("wo-add-note").textContent = "Downloaded " + name + ".cho. Put it in songs/ and run node tools/encrypt-songs.mjs. Nothing is uploaded.";
-}
 document.addEventListener("visibilitychange", function () {
   if (document.visibilityState === "visible" && document.body.classList.contains("wo-playing")) woWake(true);
 });
@@ -1682,7 +1638,6 @@ document.getElementById("wo-service").addEventListener("change", woServiceChange
 document.getElementById("wo-set-lang").addEventListener("change", woSetLangChanged);
 document.getElementById("wo-new-service").addEventListener("change", function () { woSyncServiceLang(document.getElementById("wo-new-service"), document.getElementById("wo-new-lang")); });
 document.getElementById("wo-leader").addEventListener("change", woLeaderChanged);
-document.getElementById("wo-paste").addEventListener("input", woPreviewAdd);
 addEventListener("hashchange", worshipRoute);
 addEventListener("resize", function () {
   if (!document.body.classList.contains("in-worship")) return;

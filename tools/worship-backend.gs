@@ -186,13 +186,14 @@ function request_(params) {
   var title = String(params.title || "").trim();
   var artist = String(params.artist || "").trim();
   var name = String(params.name || "").trim();
-  if (!title || !artist || !name) return { ok: false, status: 400, error: "fields" };
+  if (!title || !artist) return { ok: false, status: 400, error: "fields" };
   var when = Utilities.formatDate(new Date(), "America/Los_Angeles", "yyyy-MM-dd'T'HH:mm:ssXXX");
   book_().getSheetByName("Song Requests").appendRow([when, title, artist, name]);
   var mailed = false;
   try {
     var to = PropertiesService.getScriptProperties().getProperty("REQUEST_EMAIL") || "danielcyk123@gmail.com";
-    MailApp.sendEmail(to, "Song request: " + title + " by " + artist, name + " requested this song.\n\nTitle: " + title + "\nArtist: " + artist + "\nFrom: " + name);
+    var note = "Title: " + title + "\nArtist: " + artist + (name ? "\nFrom: " + name : "");
+    MailApp.sendEmail(to, "[Song Request] " + title + " by " + artist, note);
     mailed = true;
   } catch (err) {
     mailed = false;

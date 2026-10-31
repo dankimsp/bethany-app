@@ -65,12 +65,12 @@ In `index.html`, set the one config constant:
 const WORSHIP_BACKEND_URL = 'https://script.google.com/macros/s/…/exec';
 ```
 
-Leave it as `''` until the deployment above exists. An empty value keeps today’s Worship section: public-domain songs only, the ChordPro paste page, and the older `LIVE_SETLIST_ENDPOINT` if that is set.
+Leave it as `''` until the deployment above exists. An empty value keeps today’s Worship section on the public-domain songs, and Add song says requests aren't connected yet. The older `LIVE_SETLIST_ENDPOINT` still works if it is set.
 
 After the URL is set:
 
 - Worship asks once for the team password. **Remember on this device** stores the SHA-256 hash in the browser, not the password.
 - A rejected token (HTTP 401, or `"status": 401` from this script) clears that saved hash and shows “That password isn’t right.” A network failure or a server error does not.
 - Songs from Drive are merged with the bundled public-domain songs and saved in IndexedDB (localStorage if IndexedDB is unavailable) so the library still opens offline.
-- **Add song** asks for title, artist, and name, and posts a song request.
+- **Add song** asks for a song title and an artist name, then posts a song request. The email subject starts with `[Song Request]`.
 - **Publish live** on a setlist uses this same URL and still asks for the leader passphrase.
