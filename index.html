@@ -182,10 +182,14 @@ nav{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-rig
  #wo-play .wch{font-size:22px}
 }
 @media (min-width:768px){
+ body.wo-split{overflow:hidden;height:100vh;height:100dvh}
  body.wo-split .app,body.wo-split nav{max-width:1120px}
- body.wo-split #wo-app{display:grid;grid-template-columns:minmax(280px,380px) minmax(0,1fr);align-items:start}
- body.wo-split #wo-lib{position:sticky;top:66px;max-height:calc(100vh - 66px - 72px - env(safe-area-inset-bottom));overflow:auto}
- body.wo-split #wo-song{min-width:0;border-left:1px solid #e7e2d2}
+ body.wo-split .app{height:100vh;height:100dvh;max-height:100dvh;overflow:hidden;display:flex;flex-direction:column;padding-bottom:calc(72px + env(safe-area-inset-bottom))}
+ body.wo-split header{position:relative;top:auto;flex:none}
+ body.wo-split #s-worship.on{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+ body.wo-split #wo-app{flex:1;min-height:0;display:grid;grid-template-columns:minmax(280px,380px) minmax(0,1fr);align-items:stretch;overflow:hidden}
+ body.wo-split #wo-lib,body.wo-split #wo-song{position:relative;top:auto;height:auto;max-height:none;min-height:0;min-width:0;overflow-x:hidden;overflow-y:auto;overflow-anchor:none;overscroll-behavior:contain}
+ body.wo-split #wo-lib{border-right:1px solid #e7e2d2}
 }
 @media (orientation:landscape) and (max-height:500px){
  #wo-play-title{font-size:26px !important}

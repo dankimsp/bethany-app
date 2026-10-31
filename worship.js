@@ -354,14 +354,30 @@ function woApiFetch(params) {
     return res.text().then(function (text) { return JSON.parse(text); });
   });
 }
+function woBackendError(data, fallback) {
+  var bits = [];
+  if (data && typeof data === "object") {
+    if (data.error) bits.push(String(data.error));
+    if (data.message && String(data.message) !== String(data.error)) bits.push(String(data.message));
+  } else if (typeof data === "string" && data) bits.push(data);
+  var text = bits.join(": ").replace(/\s+/g, " ").replace(/[0-9a-f]{32,}/gi, "[redacted]").slice(0, 280);
+  return text || fallback;
+}
 function woApiJsonp(params) {
   return new Promise(function (resolve, reject) {
     var cb = "woApi_" + Date.now() + Math.floor(Math.random() * 1000);
     var script = document.createElement("script");
-    var timer = setTimeout(function () { cleanup(); reject(); }, 20000);
+    var settled = false;
+    var timer = setTimeout(function () { finish(new Error("The song library didn't answer in time.")); }, 60000);
     function cleanup() { clearTimeout(timer); try { delete window[cb]; } catch (e) { window[cb] = undefined; } script.remove(); }
-    window[cb] = function (data) { cleanup(); resolve(data); };
-    script.onerror = function () { cleanup(); reject(); };
+    function finish(err, data) {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      if (err) reject(err); else resolve(data);
+    }
+    window[cb] = function (data) { finish(null, data); };
+    script.onload = function () { setTimeout(function () { finish(new Error("The song library answered without data.")); }, 500); };
     script.src = woBackendQuery(params) + "&callback=" + cb;
     document.body.appendChild(script);
   });
@@ -383,6 +399,7 @@ function woApiPost(params) {
 function woApi(params) {
   var url = woBackendQuery(params);
   if (url.length > 7000) return woApiPost(params);
+  if (String(WORSHIP_BACKEND_URL).indexOf("script.google.com") >= 0) return woApiJsonp(params);
   return woApiFetch(params).catch(function () { return woApiJsonp(params); });
 }
 function woFetchSongs() {
@@ -390,7 +407,7 @@ function woFetchSongs() {
   return woApi({ action: "getSongs", etag: wo.driveEtag || "" }).then(function (data) {
     if (woAuthFailure(data)) return "unauthorized";
     if (!data || data.ok === false) {
-      woPrivateMsg("Couldn't load the private songs.");
+      woPrivateMsg(woBackendError(data, "Couldn't load the private songs."));
       return "error";
     }
     woPrivateMsg("");
@@ -400,8 +417,9 @@ function woFetchSongs() {
       woApplyCatalog(data.songs || []);
       return "ok";
     });
-  }).catch(function () {
-    woPrivateMsg(wo.driveEtag ? "Couldn't reach Drive. Showing saved songs." : "Couldn't reach the song library.");
+  }).catch(function (err) {
+    var fallback = wo.driveEtag ? "Couldn't reach Drive. Showing saved songs." : "Couldn't reach the song library.";
+    woPrivateMsg(woBackendError(err, fallback));
     return "error";
   });
 }
@@ -455,9 +473,9 @@ function woUnlock() {
     if (!previous) wo.teamHash = "";
     else wo.teamHash = previous;
     woSyncLock("");
-  }).catch(function () {
+  }).catch(function (err) {
     if (!previous) wo.teamHash = "";
-    woPrivateMsg("Couldn't reach the song library.");
+    woPrivateMsg(woBackendError(err, "Couldn't reach the song library."));
     woSyncLock("");
   });
 }
@@ -739,6 +757,8 @@ function woFilteredSongs() {
   return list;
 }
 function woRenderLib() {
+  var pane = document.getElementById("wo-lib");
+  var keep = pane ? pane.scrollTop : 0;
   woInitFilters();
   var box = document.getElementById("wo-list");
   box.replaceChildren();
@@ -758,6 +778,7 @@ function woRenderLib() {
     b.querySelector("b").textContent = s.title;
     var speed = woSpeedOf(s);
     b.querySelector("span").textContent = (s.artist ? s.artist + " · " : "") + "Key " + woSharpKey(s.key) + (speed ? " · " + speed.charAt(0).toUpperCase() + speed.slice(1) : "") + (s.tempo ? " · " + s.tempo + " BPM" : "");
+    b.addEventListener("pointerdown", function (e) { e.preventDefault(); });
     b.onclick = function () { location.hash = "#/worship/song/" + encodeURIComponent(s.id); };
     var add = document.createElement("button");
     add.type = "button";
@@ -774,6 +795,10 @@ function woRenderLib() {
     p.className = "muted";
     p.textContent = "No songs match.";
     box.appendChild(p);
+  }
+  if (pane) {
+    pane.scrollTop = keep;
+    requestAnimationFrame(function () { pane.scrollTop = keep; });
   }
 }
 function woOpen(id, keyName, fromRoute) {
@@ -797,7 +822,7 @@ function woOpen(id, keyName, fromRoute) {
     wo.flats = false;
   }
   woShow("song");
-  scrollTo(0, 0);
+  if (!document.body.classList.contains("wo-split")) scrollTo(0, 0);
 }
 function woToolBtn(label, fn, pressed) {
   var b = document.createElement("button");
