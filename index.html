@@ -97,8 +97,12 @@ body.on-signin header{display:none}
 .row span.em{white-space:normal;word-break:break-word;font-size:16px}
 .chk{display:flex;align-items:center;gap:10px;font-weight:700;margin:14px 0}
 .chk input{width:22px;height:22px;padding:0;flex:none}
-.wrow{display:flex;flex-direction:column;align-items:flex-start;width:100%;text-align:left;background:#fff;border:1px solid #e7e2d2;border-radius:14px;padding:12px 14px;margin:8px 0;font:inherit;color:var(--ink);cursor:pointer}
-.wrow b{color:var(--teal);font-size:18px}.wrow span{color:var(--mut);font-size:15px}
+.wrow{display:flex;flex-direction:row;align-items:center;gap:8px;width:100%;text-align:left;background:#fff;border:1px solid #e7e2d2;border-radius:14px;padding:8px 8px 8px 14px;margin:8px 0;color:var(--ink)}
+.wrow .wopen{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;border:0;background:transparent;padding:6px 0;font:inherit;color:inherit;text-align:left;cursor:pointer}
+.wrow b{color:var(--teal);font-size:18px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.wrow span{color:var(--mut);font-size:15px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wadd{flex:none;min-height:44px;padding:8px 12px;border-radius:12px;border:2px solid var(--teal);background:#fff;color:var(--teal);font:inherit;font-weight:800;cursor:pointer}
+.wo-addpick{position:fixed;z-index:30;left:50%;transform:translateX(-50%);width:min(440px,calc(100% - 24px));bottom:calc(84px + env(safe-area-inset-bottom));max-height:min(70vh,420px);overflow:auto;margin:0}
+.wo-addpick .btn{min-height:48px;font-size:17px}
 .wsec{margin:16px 0 4px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;font-size:13px;color:var(--teal)}
 .wline{line-height:1.25;margin:8px 0}
 .wseg{display:inline-block;vertical-align:bottom;margin:0 .15em .1em 0}
@@ -452,6 +456,8 @@ nav{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-rig
    <div id="wo-new" class="card" hidden>
     <label for="wo-new-date">Date</label>
     <input id="wo-new-date" type="date">
+    <label for="wo-new-title">Title</label>
+    <input id="wo-new-title" autocomplete="off">
     <label for="wo-new-service">Service</label>
     <input id="wo-new-service" list="wo-services" placeholder="English Service" autocomplete="off">
     <label for="wo-new-lang">Language</label>
@@ -484,6 +490,8 @@ nav{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-rig
      <button class="btn btn-gold" type="button" onclick="woPublish()">Publish live</button>
     </div>
     <p id="wo-live-off" class="muted" hidden>Live publishing isn't set up yet.</p>
+    <label for="wo-title">Title</label>
+    <input id="wo-title" autocomplete="off">
     <label for="wo-date">Date</label>
     <input id="wo-date" type="date">
     <label for="wo-service">Service</label>

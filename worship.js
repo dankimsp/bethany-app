@@ -4,7 +4,6 @@ var WO_PREFS = "bethany-worship-prefs";
 var WO_NOTES = "bethany-worship-song-notes";
 var WO_SET = "bethany-worship-set";
 var SHARP = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
-var FLAT = ["C","Db","D","Eb","E","F","Gb","G","Ab","A","Bb","B"];
 var wo = { songs: [], byId: {}, view: "lib", cur: null, semi: 0, flats: false, wake: null, meta: null };
 var woPending = null;
 
@@ -16,7 +15,8 @@ function woPc(note) {
   if (m[2] === "b") n--;
   return (n + 12) % 12;
 }
-function woSpell(n, flats) { return (flats ? FLAT : SHARP)[(n + 12) % 12]; }
+function woSpell(n) { return SHARP[(n + 12) % 12]; }
+function woSharpKey(name) { return woSpell(woPc(name)); }
 function woParseChord(ch) {
   var m = String(ch || "").trim().match(/^([A-G](?:#|b)?)([^/]*)(?:\/([A-G](?:#|b)?))?$/);
   if (!m) return null;
@@ -134,7 +134,7 @@ function woSetLyrics(on) { try { localStorage.setItem(WO_LYRICS, on ? "1" : "0")
 function woPrefs() { try { return JSON.parse(localStorage.getItem(WO_PREFS) || "{}"); } catch (e) { return {}; } }
 function woSavePref(id) {
   var all = woPrefs();
-  all[id] = { semi: wo.semi, flats: !!wo.flats };
+  all[id] = { semi: wo.semi };
   try { localStorage.setItem(WO_PREFS, JSON.stringify(all)); } catch (e) {}
 }
 function woNotes() { try { return JSON.parse(localStorage.getItem(WO_NOTES) || "{}"); } catch (e) { return {}; } }
@@ -509,6 +509,7 @@ function woTablet() {
   return !!(window.matchMedia && window.matchMedia("(min-width: 768px)").matches);
 }
 function woShow(view) {
+  woCloseAddPicker();
   wo.view = view;
   woWasTablet = woTablet();
   var split = woWasTablet && (view === "lib" || view === "song");
@@ -756,15 +757,25 @@ function woRenderLib() {
   var active = woActiveFilters();
   if (badge) { badge.hidden = active === 0; badge.textContent = String(active); }
   list.forEach(function (s) {
+    var row = document.createElement("div");
+    row.className = "wrow";
     var b = document.createElement("button");
     b.type = "button";
-    b.className = "wrow";
+    b.className = "wopen";
     b.innerHTML = "<b></b><span></span>";
     b.querySelector("b").textContent = s.title;
     var speed = woSpeedOf(s);
-    b.querySelector("span").textContent = (s.artist ? s.artist + " · " : "") + "Key " + s.key + (speed ? " · " + speed.charAt(0).toUpperCase() + speed.slice(1) : "") + (s.tempo ? " · " + s.tempo + " BPM" : "");
+    b.querySelector("span").textContent = (s.artist ? s.artist + " · " : "") + "Key " + woSharpKey(s.key) + (speed ? " · " + speed.charAt(0).toUpperCase() + speed.slice(1) : "") + (s.tempo ? " · " + s.tempo + " BPM" : "");
     b.onclick = function () { location.hash = "#/worship/song/" + encodeURIComponent(s.id); };
-    box.appendChild(b);
+    var add = document.createElement("button");
+    add.type = "button";
+    add.className = "wadd";
+    add.textContent = "Add";
+    add.setAttribute("aria-label", "Add " + s.title + " to a setlist");
+    add.onclick = function () { woShowAddPicker(s.id); };
+    row.appendChild(b);
+    row.appendChild(add);
+    box.appendChild(row);
   });
   if (!box.childElementCount) {
     var p = document.createElement("p");
@@ -785,13 +796,13 @@ function woOpen(id, keyName, fromRoute) {
   var pref = woPrefs()[id] || {};
   if (keyName) {
     wo.semi = (woPc(keyName) - woPc(s.key) + 12) % 12;
-    wo.flats = /b/.test(keyName);
+    wo.flats = false;
   } else if (pref.semi != null) {
     wo.semi = pref.semi;
-    wo.flats = !!pref.flats;
+    wo.flats = false;
   } else {
     wo.semi = 0;
-    wo.flats = /b/.test(s.key);
+    wo.flats = false;
   }
   woShow("song");
   scrollTo(0, 0);
@@ -814,7 +825,7 @@ function woRenderSong() {
   back.onclick = function () { location.hash = "#/worship/library"; };
   var h = document.createElement("h1"); h.textContent = s.title;
   var sub = document.createElement("p"); sub.className = "muted"; sub.style.margin = "0";
-  sub.textContent = [s.artist, "original key " + s.key, s.tempo ? s.tempo + " BPM" : ""].filter(Boolean).join(" · ");
+  sub.textContent = [s.artist, "original key " + woSharpKey(s.key), s.tempo ? s.tempo + " BPM" : ""].filter(Boolean).join(" · ");
   var concert = document.createElement("p");
   concert.className = "muted"; concert.style.margin = "4px 0 0";
   concert.textContent = "Key " + woKeyNow();
@@ -824,9 +835,7 @@ function woRenderSong() {
   var key = document.createElement("b"); key.className = "wkeyname"; key.textContent = woKeyNow();
   tools.appendChild(key);
   tools.appendChild(woToolBtn("+", bumped(function () { wo.semi++; }), false));
-  tools.appendChild(woToolBtn("♯", bumped(function () { wo.flats = false; }), !wo.flats));
-  tools.appendChild(woToolBtn("♭", bumped(function () { wo.flats = true; }), wo.flats));
-  tools.appendChild(woToolBtn("Reset", bumped(function () { wo.semi = 0; wo.flats = /b/.test(s.key); }), false));
+  tools.appendChild(woToolBtn("Reset", bumped(function () { wo.semi = 0; wo.flats = false; }), false));
   tools.appendChild(woToolBtn("Numbers", function () { woSetNumbers(!woNumbersOn()); woRenderSong(); }, woNumbersOn()));
   tools.appendChild(woToolBtn("Lyrics only", function () { woSetLyrics(!woLyricsOn()); woRenderSong(); }, woLyricsOn()));
   if (s.youtube) {
@@ -835,7 +844,7 @@ function woRenderSong() {
     tools.appendChild(listen);
   }
   tools.appendChild(woToolBtn("Play", function () { woEnterPlay(false); }, false));
-  tools.appendChild(woToolBtn("Add to setlist", function () { woAddCurrent(); }, false));
+  tools.appendChild(woToolBtn("Add to setlist", function () { woShowAddPicker(s.id); }, false));
   var note = document.createElement("textarea");
   note.placeholder = "Personal note for this song";
   note.value = woSongNote(s.id);
@@ -858,6 +867,25 @@ function woDateLabel(iso) {
   var d = new Date(+parts[0], +parts[1] - 1, +parts[2]);
   return d.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
 }
+function woShortDate(iso) {
+  var parts = String(iso || "").split("-");
+  if (parts.length < 3) return iso || "";
+  var d = new Date(+parts[0], +parts[1] - 1, +parts[2]);
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+function woLeaderName() {
+  var member = typeof session === "function" ? session() : null;
+  var name = member && member.name ? String(member.name).trim() : "";
+  return name || "Leader";
+}
+function woDefaultTitle(iso) {
+  return "EM Setlist - " + woShortDate(iso || woNextSunday()) + " - " + woLeaderName();
+}
+function woSetTitle(set) {
+  if (set && set.title) return set.title;
+  if (set && set.service) return set.service;
+  return "Setlist";
+}
 function woLangLabel(code) {
   if (code === "ko") return "Korean";
   if (code === "en") return "English";
@@ -868,6 +896,7 @@ function woNormalizeSet(set) {
   return {
     id: set.id || woId(),
     date: set.date || "",
+    title: set.title || "",
     service: set.service || "",
     language: set.language === "ko" || set.language === "en" ? set.language : "",
     leaderNote: set.leaderNote || "",
@@ -892,7 +921,7 @@ function woLoadSets() {
   var changed = false;
   var out = list.map(function (set) {
     var next = woNormalizeSet(set);
-    if (!set || !set.id || set.service == null || set.language == null || !Array.isArray(set.songs)) changed = true;
+    if (!set || !set.id || set.title == null || set.service == null || set.language == null || !Array.isArray(set.songs)) changed = true;
     return next;
   });
   if (changed) localStorage.setItem("bethany-worship-sets", JSON.stringify(out));
@@ -911,25 +940,92 @@ function woSaveSet(set) {
   if (i < 0) list.unshift(set); else list[i] = set;
   woSaveSets(list);
 }
-function woAddCurrent() {
-  var sets = woLoadSets();
-  var set = wo.setId ? woGetSet(wo.setId) : null;
-  if (!set) set = sets[0];
-  if (!set) { set = woBlankSet(); sets.unshift(set); wo.setId = set.id; }
-  set.songs.push({ id: wo.cur.id, key: woKeyNow(), note: "" });
+function woSongKey(songId) {
+  var song = wo.byId[songId];
+  if (!song) return "C";
+  if (wo.cur && wo.cur.id === songId) return woKeyNow();
+  return woSharpKey(song.key);
+}
+function woAddToSet(setId, songId) {
+  var set = woGetSet(setId);
+  var song = wo.byId[songId];
+  if (!set || !song) return;
+  var key = woSongKey(songId);
+  set.songs.push({ id: songId, key: key, note: "" });
   woSaveSet(set);
-  var n = document.createElement("p");
-  n.className = "muted"; n.textContent = "Added in " + woKeyNow() + ".";
-  document.getElementById("wo-song").appendChild(n);
+  wo.setId = setId;
+  woCloseAddPicker();
+  var msg = "Added to " + woSetTitle(set) + " in " + key + ".";
+  if (wo.view === "song" && document.getElementById("wo-song")) {
+    var n = document.createElement("p");
+    n.className = "muted";
+    n.textContent = msg;
+    document.getElementById("wo-song").appendChild(n);
+    return;
+  }
+  var note = document.getElementById("wo-added");
+  if (!note) {
+    note = document.createElement("p");
+    note.id = "wo-added";
+    note.className = "muted";
+    var list = document.getElementById("wo-list");
+    if (list) list.parentNode.insertBefore(note, list);
+  }
+  if (note) { note.hidden = false; note.textContent = msg; }
+}
+function woCloseAddPicker() {
+  var panel = document.getElementById("wo-add-pick");
+  if (panel) panel.remove();
+}
+function woShowAddPicker(songId) {
+  if (!wo.byId[songId]) return;
+  woCloseAddPicker();
+  var panel = document.createElement("div");
+  panel.id = "wo-add-pick";
+  panel.className = "card wo-addpick";
+  var h = document.createElement("h3");
+  h.textContent = "Add to setlist";
+  panel.appendChild(h);
+  woLoadSets().forEach(function (set) {
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "btn btn-out";
+    b.textContent = woSetTitle(set);
+    b.onclick = function () { woAddToSet(set.id, songId); };
+    panel.appendChild(b);
+  });
+  var created = document.createElement("button");
+  created.type = "button";
+  created.className = "btn btn-teal";
+  created.textContent = "New setlist";
+  created.onclick = function () {
+    var set = woBlankSet();
+    set.title = woDefaultTitle(set.date);
+    var sets = woLoadSets();
+    sets.unshift(set);
+    woSaveSets(sets);
+    woAddToSet(set.id, songId);
+  };
+  var cancel = document.createElement("button");
+  cancel.type = "button";
+  cancel.className = "btn btn-out";
+  cancel.textContent = "Cancel";
+  cancel.onclick = woCloseAddPicker;
+  panel.appendChild(created);
+  panel.appendChild(cancel);
+  document.getElementById("s-worship").appendChild(panel);
 }
 function woOpenNew(date) {
   wo.newOpen = true;
   wo.newDate = date || woNextSunday();
   var dateEl = document.getElementById("wo-new-date");
+  var titleEl = document.getElementById("wo-new-title");
   var service = document.getElementById("wo-new-service");
   var lang = document.getElementById("wo-new-lang");
   var err = document.getElementById("wo-new-err");
   if (dateEl) dateEl.value = wo.newDate;
+  wo.titleDefault = woDefaultTitle(wo.newDate);
+  if (titleEl) titleEl.value = wo.titleDefault;
   if (service) service.value = "";
   if (lang) lang.value = woF.lang === "ko" ? "ko" : "en";
   if (err) { err.hidden = true; err.textContent = ""; }
@@ -945,20 +1041,21 @@ function woCancelNew() {
 }
 function woCreateSet() {
   var dateEl = document.getElementById("wo-new-date");
+  var titleEl = document.getElementById("wo-new-title");
   var serviceEl = document.getElementById("wo-new-service");
   var langEl = document.getElementById("wo-new-lang");
   var err = document.getElementById("wo-new-err");
   var date = dateEl && dateEl.value ? dateEl.value : woNextSunday();
+  var title = titleEl ? titleEl.value.trim() : "";
   var service = serviceEl ? serviceEl.value.trim() : "";
   var language = langEl ? langEl.value : "";
-  if (!service) {
-    if (err) { err.hidden = false; err.textContent = "Add a service name."; }
-    return;
-  }
+  if (!title) title = woDefaultTitle(date);
+  if (err) err.hidden = true;
   var set = woBlankSet();
   set.date = date;
+  set.title = title;
   set.service = service;
-  set.language = language === "ko" ? "ko" : "en";
+  set.language = language === "ko" || language === "en" ? language : "";
   var sets = woLoadSets();
   sets.unshift(set);
   woSaveSets(sets);
@@ -1008,7 +1105,7 @@ function woRenderSets() {
       var card = document.createElement("div");
       card.className = "card";
       var title = document.createElement("h3");
-      title.textContent = set.service || "Setlist";
+      title.textContent = woSetTitle(set);
       var count = document.createElement("p");
       count.className = "muted";
       count.style.margin = "0";
@@ -1020,7 +1117,6 @@ function woRenderSets() {
       row.appendChild(woToolBtn("Open", function () { location.hash = "#/worship/setlists/" + set.id; }, false));
       row.appendChild(woToolBtn("Play", function () { wo.setId = set.id; wo.cur = null; woEnterPlay(true); }, false));
       row.appendChild(woToolBtn("Share", function () { woShare(set.id, "wo-share-list"); }, false));
-      row.appendChild(woToolBtn("Send to band", function () { woSendToBand(set.id); }, false));
       row.appendChild(woToolBtn("Delete", function () {
         if (!confirm("Delete this setlist?")) return;
         woSaveSets(woLoadSets().filter(function (s) { return s.id !== set.id; }));
@@ -1039,7 +1135,9 @@ function woRenderSets() {
 function woRenderSet() {
   var set = woLoadSet();
   var heading = document.querySelector("#wo-edit h1");
-  if (heading) heading.textContent = set.service || "Setlist";
+  if (heading) heading.textContent = woSetTitle(set);
+  var titleInput = document.getElementById("wo-title");
+  if (titleInput && document.activeElement !== titleInput) titleInput.value = set.title || set.service || "";
   document.getElementById("wo-date").value = set.date || "";
   var service = document.getElementById("wo-service");
   if (service && document.activeElement !== service) service.value = set.service || "";
@@ -1092,7 +1190,7 @@ function woRenderSet() {
     var minus = document.createElement("button");
     minus.type = "button"; minus.className = "wmini wicon"; minus.textContent = "−"; minus.setAttribute("aria-label", "Lower key");
     minus.onclick = function () { woNudgeSet(i, -1); };
-    var key = document.createElement("span"); key.className = "wkeyname"; key.textContent = item.key;
+    var key = document.createElement("span"); key.className = "wkeyname"; key.textContent = woSharpKey(item.key);
     var plus = document.createElement("button");
     plus.type = "button"; plus.className = "wmini wicon"; plus.textContent = "+"; plus.setAttribute("aria-label", "Raise key");
     plus.onclick = function () { woNudgeSet(i, 1); };
@@ -1125,8 +1223,7 @@ function woNudgeSet(i, dir) {
   var set = woLoadSet();
   var song = wo.byId[set.songs[i].id];
   if (!song) return;
-  var flats = /b/.test(set.songs[i].key);
-  var next = woSpell(woPc(set.songs[i].key) + dir, flats);
+  var next = woSpell(woPc(set.songs[i].key) + dir);
   set.songs[i].key = next;
   woSaveSet(set);
   woRenderSet();
@@ -1179,7 +1276,23 @@ function woServiceChanged() {
   if (lang) set.language = lang.value === "ko" || lang.value === "en" ? lang.value : "";
   woSaveSet(set);
   var heading = document.querySelector("#wo-edit h1");
-  if (heading) heading.textContent = set.service || "Setlist";
+  if (heading) heading.textContent = woSetTitle(set);
+}
+function woTitleChanged() {
+  var set = woLoadSet();
+  var input = document.getElementById("wo-title");
+  set.title = input ? input.value.trim() : "";
+  woSaveSet(set);
+  var heading = document.querySelector("#wo-edit h1");
+  if (heading) heading.textContent = woSetTitle(set);
+}
+function woNewDateChanged() {
+  var dateEl = document.getElementById("wo-new-date");
+  var titleEl = document.getElementById("wo-new-title");
+  if (!dateEl || !titleEl) return;
+  var next = woDefaultTitle(dateEl.value);
+  if (!titleEl.value.trim() || titleEl.value === wo.titleDefault) titleEl.value = next;
+  wo.titleDefault = next;
 }
 function woSetLangChanged() {
   var set = woLoadSet();
@@ -1196,7 +1309,7 @@ function woLeaderChanged() {
   if (banner) { banner.hidden = !set.leaderNote; banner.textContent = set.leaderNote || ""; }
 }
 function woShareUrl(set) {
-  var payload = { id: set.id, d: set.date, svc: set.service || "", lang: set.language || "", n: set.leaderNote || "", s: (set.songs || []).map(function (x) { return [x.id, x.key, x.note || ""]; }) };
+  var payload = { id: set.id, d: set.date, t: set.title || "", svc: set.service || "", lang: set.language || "", n: set.leaderNote || "", s: (set.songs || []).map(function (x) { return [x.id, x.key, x.note || ""]; }) };
   var enc = btoa(unescape(encodeURIComponent(JSON.stringify(payload)))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
   return location.origin + location.pathname + location.search + "#/worship/set/" + enc;
 }
@@ -1229,7 +1342,7 @@ function woImport(data) {
     if (!pair || !wo.byId[pair[0]]) { missing++; return; }
     songs.push({ id: pair[0], key: pair[1] || wo.byId[pair[0]].key, note: pair[2] || "" });
   });
-  var set = { id: data.id || woId(), date: data.d || woBlankSet().date, service: data.svc || "", language: data.lang === "ko" || data.lang === "en" ? data.lang : "", leaderNote: data.n || "", songs: songs };
+  var set = { id: data.id || woId(), date: data.d || woBlankSet().date, title: data.t || "", service: data.svc || "", language: data.lang === "ko" || data.lang === "en" ? data.lang : "", leaderNote: data.n || "", songs: songs };
   var sets = woLoadSets().filter(function (s) { return s.id !== set.id; });
   sets.unshift(set);
   woSaveSets(sets);
@@ -1268,7 +1381,7 @@ function woRenderPlay() {
   if (!item) return;
   wo.cur = item.song;
   wo.semi = (woPc(item.key) - woPc(item.song.key) + 12) % 12;
-  wo.flats = /b/.test(item.key);
+  wo.flats = false;
   document.getElementById("wo-play-title").textContent = item.song.title;
   document.getElementById("wo-play-key").textContent = woKeyNow();
   document.getElementById("wo-play-num").classList.toggle("on", woNumbersOn());
@@ -1303,7 +1416,7 @@ function woToggleJump() {
   (wo.playList || []).forEach(function (item, i) {
     var b = document.createElement("button");
     b.type = "button";
-    b.textContent = (i + 1) + ". " + item.song.title + (item.key ? " · " + item.key : "");
+    b.textContent = (i + 1) + ". " + item.song.title + (item.key ? " · " + woSharpKey(item.key) : "");
     b.onclick = function () { wo.playIndex = i; box.hidden = true; woRenderPlay(); };
     box.appendChild(b);
   });
@@ -1413,25 +1526,6 @@ function woPublish() {
     woLiveMsg("Sent. If the passphrase is wrong, the sheet will not update.");
   }).catch(function () { woLiveMsg("Couldn't reach the live sheet."); });
 }
-function woSendToBand(id) {
-  var set = woGetSet(id);
-  if (!set) return;
-  var url = woShareUrl(set);
-  var text = set.leaderNote || "Worship set";
-  if (navigator.share) {
-    navigator.share({ title: (set.service || "Worship set") + (set.date ? " " + set.date : ""), text: text, url: url }).catch(function () {});
-    return;
-  }
-  var full = text + "\n" + url;
-  var copied = function () {
-    var note = document.getElementById("wo-import");
-    if (!note) return;
-    note.hidden = false;
-    note.textContent = "Copied the setlist link and leader note.";
-  };
-  if (navigator.clipboard) navigator.clipboard.writeText(full).then(copied).catch(function () { window.prompt("Copy this for the band:", full); });
-  else window.prompt("Copy this for the band:", full);
-}
 function woThisSunday() {
   var target = woNextSunday();
   wo.focusDate = target;
@@ -1464,7 +1558,7 @@ function woPreviewAdd() {
   }
   if (song.title && song.sections.some(function (s) { return s.lines.length; })) {
     var prevCur = wo.cur, prevSemi = wo.semi, prevFlats = wo.flats;
-    wo.semi = 0; wo.flats = /b/.test(song.key);
+    wo.semi = 0; wo.flats = false;
     var h = document.createElement("h2"); h.textContent = song.title; prev.appendChild(h);
     var meta = document.createElement("p");
     meta.className = "muted";
@@ -1521,6 +1615,8 @@ function woApplyRoute() {
 function worshipRoute() { woApplyRoute(); }
 document.getElementById("wo-q").addEventListener("input", woRenderLib);
 document.getElementById("wo-date").addEventListener("change", woDateChanged);
+document.getElementById("wo-title").addEventListener("change", woTitleChanged);
+document.getElementById("wo-new-date").addEventListener("change", woNewDateChanged);
 document.getElementById("wo-service").addEventListener("change", woServiceChanged);
 document.getElementById("wo-service").addEventListener("input", function () { woSyncServiceLang(document.getElementById("wo-service"), document.getElementById("wo-set-lang")); });
 document.getElementById("wo-set-lang").addEventListener("change", woSetLangChanged);
