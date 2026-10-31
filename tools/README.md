@@ -26,7 +26,7 @@ Do not commit the plaintext JSON file. `serve-links.plain.json` is gitignored if
 
 Worship uses its own password, separate from Serve. Charts ship only as `songs.enc.json` (AES-GCM, PBKDF2-SHA-256, 600,000 iterations). The `songs/` folder is gitignored. Do not commit `.cho` files.
 
-The copy on `main` right now is encrypted with the throwaway password `demo-worship`. Replace it off this machine before the team relies on it.
+The worship password is set by Daniel.
 
 1. Put ChordPro files in `songs/` (one song per `.cho` file). The in-app **Add song** page can check a paste and download a `.cho` file. It does not upload anything. Drop that file into `songs/`.
 2. From the repo root:
