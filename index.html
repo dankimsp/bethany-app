@@ -117,8 +117,20 @@ body.on-signin header{display:none}
 #wo-play-body{flex:1;overflow:auto;padding:18px 16px 40px}
 body.wo-playing nav{display:none}
 body.wo-playing .app{padding-bottom:0}
+body:not(.in-worship) nav a.nav-wo{display:none}
+body.in-worship nav a.nav-app{display:none}
+body.in-worship nav{grid-template-columns:repeat(4,1fr)}
+.wo-mode{margin-left:auto;font-size:13px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#f7f5ee;opacity:.85}
+body.in-worship .demo-badge{margin-left:8px}
+.lyrics-only .wch{display:none}
+.lyrics-only .wline{font-size:30px;line-height:1.45}
+#wo-play .lyrics-only .wline{font-size:36px}
+.wo-edge{position:absolute;top:96px;bottom:0;width:22%;z-index:2;border:0;background:transparent;padding:0}
+.wo-edge.left{left:0}.wo-edge.right{right:0}
+#wo-jump{position:absolute;left:12px;right:12px;top:96px;z-index:6;background:#fff;color:var(--ink);border-radius:14px;max-height:70%;overflow:auto;padding:8px;box-shadow:0 8px 30px rgba(0,0,0,.35)}
+#wo-jump button{display:block;width:100%;text-align:left;min-height:48px;border:0;border-bottom:1px solid #ece7d8;background:#fff;font:inherit;font-weight:800;color:var(--teal);padding:8px}
 </style></head><body><div class="app">
-<header><img src="assets/logo-bethany-light.svg" alt="Bethany Church"><span class="demo-badge">Demo</span></header>
+<header><img src="assets/logo-bethany-light.svg" alt="Bethany Church"><span class="wo-mode" id="wo-mode" hidden>Worship</span><span class="demo-badge">Demo</span></header>
 
 <section class="screen" id="s-auth">
  <div id="auth-signin">
@@ -181,7 +193,7 @@ body.wo-playing .app{padding-bottom:0}
    <a class="ql" href="#watch"><svg class="ico" style="width:34px;height:34px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="4"/><path d="M10 9l5 3-5 3z" fill="currentColor"/></svg>Sermons</a>
    <a class="ql" href="#more"><svg class="ico" style="width:34px;height:34px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="19" cy="12" r="1.6" fill="currentColor"/></svg>About &amp; Times</a>
    <a class="ql" href="#serve"><svg class="ico" style="width:34px;height:34px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 11a3 3 0 1 0-3-3 3 3 0 0 0 3 3zM16 11a3 3 0 1 0-3-3 3 3 0 0 0 3 3z"/><path d="M2 20a5 5 0 0 1 10 0M12 20a5 5 0 0 1 10 0"/></svg>Serve</a>
-   <a class="ql" href="#worship"><svg class="ico" style="width:34px;height:34px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V6l10-2v8"/><circle cx="7" cy="18" r="3"/><circle cx="17" cy="14" r="3"/></svg>Worship</a>
+   <a class="ql" href="#/worship/library"><svg class="ico" style="width:34px;height:34px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V6l10-2v8"/><circle cx="7" cy="18" r="3"/><circle cx="17" cy="14" r="3"/></svg>Worship</a>
   </div>
   <h2>Coming up</h2>
   <div class="card"><div class="ev"><div class="ev-date"><div class="m">OCT</div><div class="d">31</div></div><div><h3>Harvestfest</h3><div>Saturday · 4–7 PM</div><a class="lnk" href="#events">Details →</a></div></div></div>
@@ -287,7 +299,7 @@ body.wo-playing .app{padding-bottom:0}
  <h2>Worship</h2>
  <div class="card">
   <p class="muted" style="margin:0">Chord charts for the team.</p>
-  <a class="btn btn-teal" href="#worship">Open worship charts</a>
+  <a class="btn btn-teal" href="#/worship/library">Open worship charts</a>
  </div>
  <h2>Church</h2>
  <a class="btn btn-gold" href="tel:+12065517321"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h4l2 5-3 2a11 11 0 0 0 6 6l2-3 5 2v4a2 2 0 0 1-2 2A17 17 0 0 1 3 5a2 2 0 0 1 2-2"/></svg>Call (206) 551-7321</a>
@@ -330,14 +342,38 @@ body.wo-playing .app{padding-bottom:0}
 <section class="screen" id="s-worship">
  <div id="wo-app">
   <div id="wo-lib" class="pad">
-   <h1 style="margin:0">Worship</h1>
+   <h1 style="margin:0">Library</h1>
+   <button class="btn btn-teal" type="button" onclick="woThisSunday()">This Sunday</button>
    <p class="muted" style="margin:6px 0">English</p>
-   <p id="wo-import" class="muted" hidden></p>
    <label for="wo-q">Search</label>
    <input id="wo-q" placeholder="Title or artist" autocomplete="off">
    <div id="wo-list"></div>
-   <h2>Setlist</h2>
+   <button class="btn btn-out" type="button" onclick="location.hash='#/worship/add'">Add song</button>
+  </div>
+  <div id="wo-sets" class="pad" hidden>
+   <h1 style="margin:0">Setlists</h1>
+   <p id="wo-import" class="muted" hidden></p>
+   <div id="wo-sets-list"></div>
+   <button class="btn btn-teal" type="button" onclick="woNewSet()">New setlist</button>
+   <input id="wo-share-list" hidden readonly onclick="this.select()">
+  </div>
+  <div id="wo-edit" class="pad" hidden>
+   <button type="button" class="lnkbtn" onclick="location.hash='#/worship/setlists'">← Setlists</button>
+   <h1>Setlist</h1>
+   <p id="wo-live-banner" class="ann" hidden></p>
+   <p id="wo-leader-banner" class="ann" hidden></p>
    <div class="card">
+    <label for="wo-leader">Leader note</label>
+    <textarea id="wo-leader" placeholder="Note for the band"></textarea>
+    <div id="wo-live-box">
+     <label for="wo-change">What changed</label>
+     <input id="wo-change" placeholder="Updated setlist">
+     <label for="wo-pass">Leader passphrase</label>
+     <input id="wo-pass" type="password" autocomplete="off">
+     <p id="wo-live-msg" class="muted" hidden></p>
+     <button class="btn btn-gold" type="button" onclick="woPublish()">Publish live</button>
+    </div>
+    <p id="wo-live-off" class="muted" hidden>Live publishing isn't set up yet.</p>
     <label for="wo-date">Sunday</label>
     <input id="wo-date" type="date">
     <div id="wo-set"></div>
@@ -345,11 +381,10 @@ body.wo-playing .app{padding-bottom:0}
     <button class="btn btn-out" type="button" style="min-height:52px;font-size:18px" onclick="woShare()">Share link</button>
     <input id="wo-share" hidden readonly onclick="this.select()">
    </div>
-   <button class="btn btn-out" type="button" onclick="woShow('add')">Add song</button>
   </div>
   <div id="wo-song" class="pad" hidden></div>
   <div id="wo-add" class="pad" hidden>
-   <button type="button" class="lnkbtn" onclick="woShow('lib')">← Library</button>
+   <button type="button" class="lnkbtn" onclick="location.hash='#/worship/library'">← Library</button>
    <h1>Add song</h1>
    <p class="muted">Paste ChordPro. Nothing is saved on a server. Copy or download a .cho file into <b>songs/</b>, then re-encrypt.</p>
    <label for="wo-paste">ChordPro</label>
@@ -369,23 +404,32 @@ body.wo-playing .app{padding-bottom:0}
    <button type="button" class="wmini" onclick="woPlayStep(1)">Next</button>
    <b id="wo-play-key" class="wkeyname" style="color:#fff"></b>
    <button type="button" class="wmini" id="wo-play-num" onclick="woTogglePlayNumbers()">Numbers</button>
+   <button type="button" class="wmini" id="wo-play-lyrics" onclick="woTogglePlayLyrics()">Lyrics only</button>
+   <button type="button" class="wmini" onclick="woToggleJump()">Songs</button>
    <button type="button" class="wmini" id="wo-play-auto" onclick="woAuto(!wo.auto)">Auto-scroll</button>
    <button type="button" class="wmini" onclick="woExitPlay()">Exit</button>
    <span id="wo-play-pos" style="margin-left:auto;font-weight:800"></span>
   </div>
+  <div id="wo-jump" hidden></div>
+  <button type="button" class="wo-edge left" aria-label="Previous song" onclick="woPlayStep(-1)"></button>
+  <button type="button" class="wo-edge right" aria-label="Next song" onclick="woPlayStep(1)"></button>
+  <p id="wo-play-banner" hidden style="margin:0;padding:8px 16px;background:#dcae1d;color:#00303f;font-weight:800"></p>
   <h1 id="wo-play-title" style="margin:0;padding:8px 16px 0;font-size:34px"></h1>
   <div id="wo-play-body"></div>
  </div>
 </section>
 <nav aria-label="Main">
  <a href="#home" data-s="home"><svg class="" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>Home</a>
- <a href="#watch" data-s="watch"><svg class="" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="4"/><path d="M10 9l5 3-5 3z" fill="currentColor"/></svg>Watch</a>
- <a href="#events" data-s="events"><svg class="" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Events</a>
- <a href="#give" data-s="give"><svg class="" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-8-5-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 6-8 11-8 11z"/></svg>Give</a>
+ <a href="#/worship/library" data-s="library" class="nav-wo"><svg class="" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19V5m0 14h6a3 3 0 0 0 3-3V5H7a3 3 0 0 0-3 3zM20 19V5m0 14h-6a3 3 0 0 1-3-3V5h6a3 3 0 0 1 3 3z"/></svg>Library</a>
+ <a href="#/worship/setlists" data-s="setlists" class="nav-wo"><svg class="" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>Setlists</a>
+ <a href="#watch" data-s="watch" class="nav-app"><svg class="" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="4"/><path d="M10 9l5 3-5 3z" fill="currentColor"/></svg>Watch</a>
+ <a href="#events" data-s="events" class="nav-app"><svg class="" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Events</a>
+ <a href="#give" data-s="give" class="nav-app"><svg class="" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-8-5-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 6-8 11-8 11z"/></svg>Give</a>
  <a href="#more" data-s="more"><svg class="" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="19" cy="12" r="1.6" fill="currentColor"/></svg>More</a>
 </nav></div>
 <script>
 const RSVP_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzlNMiNYPc-5jImVg_vvOwQnECRvJ18WKSmQ7bzSCz84LQhlTy68WICnmkXeXqkN0Fi/exec';
+const LIVE_SETLIST_ENDPOINT = '';
 // Schedule = church-info-for-app.md. dow: 0=Sun
 var SV={em:{n:"Sunday English (EM) Service",d:0,h:10,m:0},ko:{n:"Sunday Korean Service",d:0,h:11,m:30},wed:{n:"Wednesday Korean Service",d:3,h:19,m:0},sat:{n:"Saturday Morning Prayer (Korean)",d:6,h:7,m:0},
 women:{n:"Women's Bible Study",d:2,h:18,m:30},men:{n:"Men's Bible Study",d:3,h:19,m:15},yam:{n:"Young Adult Men's Bible Study",d:6,h:19,m:0},youth:{n:"Youth Bible Study",d:0,h:11,m:40}};
@@ -440,19 +484,26 @@ function go(){var s=session(),ok=!!(s&&s.signedIn&&s.profileDone);
  var auth=document.getElementById("s-auth");
  if(!ok){if(!(s&&s.signedIn))authStep=authStep||"signin";else authStep="profile";
   auth.classList.add("on");
+  document.body.classList.remove("in-worship");
+  var woMode=document.getElementById("wo-mode");if(woMode)woMode.hidden=true;
   document.querySelectorAll(".screen").forEach(function(el){if(el!==auth)el.classList.remove("on")});
   document.querySelectorAll("nav a").forEach(function(a){a.classList.remove("on");a.removeAttribute("aria-current")});
   showAuth();scrollTo(0,0);return}
  auth.classList.remove("on");
  document.body.classList.remove("on-signin");
  paintMember();
- var raw=(location.hash||"#home").slice(1),toServe=raw==="serve";
- var h=raw;
+ var raw=(location.hash||"#home").slice(1).replace(/^\/+/,""),toServe=raw==="serve";
+ var inWo=raw==="worship"||raw.indexOf("worship/")===0;
+ var h=raw.split("/")[0];
  if(toServe)h="more";
- else if(h==="worship"||h.indexOf("worship/")===0)h="worship";
+ else if(inWo)h="worship";
  if(h==="auth"||!document.getElementById("s-"+h))h="home";
+ var mark=h;
+ if(inWo)mark=/^worship\/setlists/.test(raw)||/^worship\/set\//.test(raw)?"setlists":"library";
+ document.body.classList.toggle("in-worship",h==="worship");
+ var woMode=document.getElementById("wo-mode");if(woMode)woMode.hidden=h!=="worship";
  document.querySelectorAll(".screen").forEach(function(el){el.classList.toggle("on",el.id==="s-"+h)});
- document.querySelectorAll("nav a").forEach(function(a){a.classList.toggle("on",a.dataset.s===h);a.toggleAttribute("aria-current",a.dataset.s===h)});
+ document.querySelectorAll("nav a").forEach(function(a){a.classList.toggle("on",a.dataset.s===mark);a.toggleAttribute("aria-current",a.dataset.s===mark)});
  scrollTo(0,0);
  if(toServe){var serve=document.getElementById("serve");if(serve)serve.scrollIntoView({block:"start"})}}
 function startEmail(ev){if(ev)ev.preventDefault();
@@ -468,14 +519,14 @@ function providerSignIn(){var note=document.getElementById("oa-status"),btn=docu
 function continueWithEmail(email){if(!email)return;var prev=session(),same=!!(prev&&prev.email===email);
  var s={email:email,name:same?(prev.name||""):"",phone:same?(prev.phone||""):"",emailUpdates:same&&typeof prev.emailUpdates==="boolean"?prev.emailUpdates:true,push:same&&typeof prev.push==="boolean"?prev.push:false,profileDone:!!(same&&prev.profileDone&&prev.name),signedIn:true,annHidden:!!(prev&&prev.annHidden)};
  saveMember(s);
- if(s.profileDone){authStep="signin";if((location.hash||"").indexOf("#worship")===0)go();else if(location.hash!=="#home")location.hash="#home";else go();return}
+ if(s.profileDone){authStep="signin";if(/#\/?worship/.test(location.hash||""))go();else if(location.hash!=="#home")location.hash="#home";else go();return}
  authStep="profile";document.getElementById("prof-name").value=s.name||"";document.getElementById("prof-phone").value=s.phone||"";document.getElementById("prof-err").hidden=true;go()}
 function finishProfile(){var name=document.getElementById("prof-name").value.trim(),err=document.getElementById("prof-err");
  if(!name){err.hidden=false;return}err.hidden=true;var s=session()||{};
  s.name=name;s.phone=document.getElementById("prof-phone").value.trim();
  s.emailUpdates=document.getElementById("sw-prof").getAttribute("aria-checked")==="true";
  if(typeof s.push!=="boolean")s.push=false;s.profileDone=true;s.signedIn=true;saveMember(s);
- if((location.hash||"").indexOf("#worship")===0)go();else if(location.hash!=="#home")location.hash="#home";else go()}
+ if(/#\/?worship/.test(location.hash||""))go();else if(location.hash!=="#home")location.hash="#home";else go()}
 function togglePref(key){var s=session()||{};if(key==="emailUpdates")s.emailUpdates=s.emailUpdates===false;else s.push=!s.push;saveMember(s);paintMember()}
 function hideAnn(){var s=session()||{};s.annHidden=true;saveMember(s);document.getElementById("ann").hidden=true}
 function unsubscribeDemo(){var s=session();if(!s)return;s.emailUpdates=false;saveMember(s);paintMember()}
@@ -527,6 +578,7 @@ function unlockServe(ev){if(ev)ev.preventDefault();
 function tryRememberServe(){var saved;try{saved=localStorage.getItem(SERVE_KEY)}catch(e){return}if(!saved)return;
  loadServeMeta().then(function(meta){return crypto.subtle.importKey("raw",b64ToBytes(saved),{name:"AES-GCM"},false,["decrypt"]).then(function(key){return decryptServe(meta,key)})}).then(showServeLinks).catch(function(){localStorage.removeItem(SERVE_KEY)})}
 addEventListener("hashchange",go);nextService();go();tryRememberServe();
+if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(function(){});
 </script>
 <script src="worship.js"></script>
 </body></html>

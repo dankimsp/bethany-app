@@ -35,4 +35,16 @@ node tools/encrypt-songs.mjs
 
 3. Commit `songs.json` and the `.cho` files, then push to `main`.
 
-A shared setlist link looks like `#worship/set/...`. Opening it saves a copy of that setlist on the device.
+A shared setlist link looks like `#/worship/set/...`. Opening it saves a copy of that setlist on the device. The link includes each song's key, note, and the leader note.
+
+# Live setlist
+
+Publish live sends the open setlist to a Google Sheet. The web app URL is `LIVE_SETLIST_ENDPOINT` in `index.html`. It is empty until the church deploys the script, and the app hides publishing and does not poll while it is empty.
+
+1. Create a Google Sheet for live setlists.
+2. Extensions > Apps Script. Paste `tools/live-setlist-apps-script.gs` and save.
+3. In the script editor, run `hashLeaderPassphrase` once after setting the passphrase in that function, copy the log value, then remove the passphrase from the function. Do not commit the passphrase.
+4. Project Settings > Script properties. Add `LEADER_PASS_HASH` with that hash.
+5. Deploy > New deployment > Web app. Execute as Me. Who has access: Anyone. Copy the web app URL into `LIVE_SETLIST_ENDPOINT`.
+
+The sheet's first tab gets one row per publish: time, setlist id, change summary, leader note, and the songs JSON. Viewers of that setlist poll every 30 seconds and show `Updated HH:MM: <change>`. Only a matching leader passphrase can publish. There are no push notifications.
