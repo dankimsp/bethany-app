@@ -107,8 +107,20 @@ body.on-signin header{display:none}
 .wmini{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px 12px;border-radius:12px;border:2px solid var(--teal);background:#fff;color:var(--teal);font:inherit;font-weight:800;text-decoration:none;cursor:pointer}
 .wmini.on{background:var(--teal);color:#fff}
 .wkeyname{min-width:2.2em;text-align:center;font-size:22px;color:var(--teal)}
-.sitem{display:flex;gap:6px;align-items:center;padding:6px 0;border-bottom:1px solid #ece7d8}
-.whandle{width:44px;height:44px;border:0;border-radius:10px;background:#f3efe4;font-size:18px;cursor:grab;touch-action:none;font-weight:800}
+.sitem{display:flex;gap:6px;align-items:center;min-width:0}
+.whandle{width:36px;height:36px;flex:none;border:0;border-radius:10px;background:#f3efe4;font-size:16px;cursor:grab;touch-action:none;font-weight:800}
+#s-worship,#s-worship *{box-sizing:border-box}
+#s-worship{overflow-x:hidden}
+#s-worship .pad,#s-worship .card,#s-worship .setcard,#s-worship .wtools{max-width:100%;min-width:0}
+#s-worship input,#s-worship textarea,#s-worship select,#s-worship button{max-width:100%}
+#wo-date,#wo-leader,#wo-change,#wo-pass,.setnote{width:100%;min-width:0}
+.setcard{background:#fff;border:1px solid #e7e2d2;border-radius:14px;padding:12px;margin:10px 0}
+.setcard.dragging{opacity:.55}
+.setline{display:flex;align-items:center;gap:6px;min-width:0;margin-bottom:8px}
+.settitle{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;font-weight:800;color:var(--teal)}
+.setx,.wicon{width:36px;height:36px;flex:none;padding:0;min-height:36px}
+.setline .wkeyname{min-width:1.4em;font-size:18px;flex:none}
+.setnote{margin:0}
 #wo-play{position:fixed;inset:0;z-index:40;background:#041820;color:#f7f5ee;display:flex;flex-direction:column}
 #wo-play .wch{color:var(--gold);font-size:16px}
 #wo-play .wline{font-size:26px;margin:14px 0}

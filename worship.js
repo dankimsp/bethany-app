@@ -395,24 +395,41 @@ function woRenderSet() {
   }
   set.songs.forEach(function (item, i) {
     var song = wo.byId[item.id];
-    var row = document.createElement("div");
-    row.className = "sitem";
+    var card = document.createElement("div");
+    card.className = "setcard";
+    var line1 = document.createElement("div");
+    line1.className = "setline";
     var handle = document.createElement("button");
     handle.type = "button"; handle.className = "whandle"; handle.textContent = "⋮⋮";
     handle.setAttribute("aria-label", "Drag to reorder");
     handle.addEventListener("pointerdown", function (e) { woDrag(e, i); });
     var name = document.createElement("button");
-    name.type = "button"; name.className = "lnkbtn"; name.style.flex = "1"; name.style.textAlign = "left";
+    name.type = "button"; name.className = "lnkbtn settitle";
     name.textContent = song ? song.title : item.id;
     name.onclick = function () { if (song) location.hash = "#/worship/song/" + encodeURIComponent(item.id) + "/" + encodeURIComponent(item.key); };
-    var key = document.createElement("span"); key.style.fontWeight = "800"; key.textContent = item.key;
-    var up = woToolBtn("Up", function () { woMove(i, -1); }, false);
-    var down = woToolBtn("Down", function () { woMove(i, 1); }, false);
-    var minus = woToolBtn("−", function () { woNudgeSet(i, -1); }, false);
-    var plus = woToolBtn("+", function () { woNudgeSet(i, 1); }, false);
-    var del = woToolBtn("✕", function () { var s = woLoadSet(); s.songs.splice(i, 1); woSaveSet(s); woRenderSet(); }, false);
+    var del = document.createElement("button");
+    del.type = "button"; del.className = "wmini setx"; del.textContent = "✕";
     del.setAttribute("aria-label", "Remove");
+    del.onclick = function () { var s = woLoadSet(); s.songs.splice(i, 1); woSaveSet(s); woRenderSet(); };
+    line1.appendChild(handle); line1.appendChild(name); line1.appendChild(del);
+    var line2 = document.createElement("div");
+    line2.className = "setline";
+    var up = document.createElement("button");
+    up.type = "button"; up.className = "wmini wicon"; up.textContent = "↑"; up.setAttribute("aria-label", "Move up");
+    up.onclick = function () { woMove(i, -1); };
+    var down = document.createElement("button");
+    down.type = "button"; down.className = "wmini wicon"; down.textContent = "↓"; down.setAttribute("aria-label", "Move down");
+    down.onclick = function () { woMove(i, 1); };
+    var minus = document.createElement("button");
+    minus.type = "button"; minus.className = "wmini wicon"; minus.textContent = "−"; minus.setAttribute("aria-label", "Lower key");
+    minus.onclick = function () { woNudgeSet(i, -1); };
+    var key = document.createElement("span"); key.className = "wkeyname"; key.textContent = item.key;
+    var plus = document.createElement("button");
+    plus.type = "button"; plus.className = "wmini wicon"; plus.textContent = "+"; plus.setAttribute("aria-label", "Raise key");
+    plus.onclick = function () { woNudgeSet(i, 1); };
+    line2.appendChild(up); line2.appendChild(down); line2.appendChild(minus); line2.appendChild(key); line2.appendChild(plus);
     var noteIn = document.createElement("input");
+    noteIn.className = "setnote";
     noteIn.value = item.note || "";
     noteIn.placeholder = "Short note";
     noteIn.setAttribute("aria-label", "Note for " + (song ? song.title : item.id));
@@ -422,11 +439,8 @@ function woRenderSet() {
       current.songs[i].note = noteIn.value;
       woSaveSet(current);
     });
-    row.appendChild(handle); row.appendChild(up); row.appendChild(down); row.appendChild(name); row.appendChild(minus); row.appendChild(key); row.appendChild(plus); row.appendChild(del);
-    var wrap = document.createElement("div");
-    wrap.appendChild(row);
-    wrap.appendChild(noteIn);
-    box.appendChild(wrap);
+    card.appendChild(line1); card.appendChild(line2); card.appendChild(noteIn);
+    box.appendChild(card);
   });
 }
 function woMove(i, dir) {
@@ -449,24 +463,38 @@ function woNudgeSet(i, dir) {
   woRenderSet();
 }
 function woDrag(e, from) {
+  if (e.button != null && e.button !== 0) return;
   e.preventDefault();
-  var startY = e.clientY;
-  e.target.setPointerCapture && e.target.setPointerCapture(e.pointerId);
-  function up(ev) {
-    e.target.onpointerup = null;
-    e.target.onpointercancel = null;
+  var handle = e.currentTarget;
+  var card = handle.closest(".setcard");
+  if (card) card.classList.add("dragging");
+  try { handle.setPointerCapture(e.pointerId); } catch (err) {}
+  function dropIndex(y) {
+    var cards = document.querySelectorAll("#wo-set .setcard");
+    var to = 0;
+    for (var n = 0; n < cards.length; n++) {
+      var rect = cards[n].getBoundingClientRect();
+      if (y > rect.top + rect.height / 2) to = n;
+    }
+    return to;
+  }
+  function finish(ev) {
+    handle.removeEventListener("pointermove", move);
+    handle.removeEventListener("pointerup", finish);
+    handle.removeEventListener("pointercancel", finish);
+    var to = dropIndex(ev.clientY);
     var set = woLoadSet();
-    var shift = Math.round((ev.clientY - startY) / 64);
-    var to = Math.max(0, Math.min(set.songs.length - 1, from + shift));
-    if (to !== from) {
+    if (to !== from && set.songs[from]) {
       var item = set.songs.splice(from, 1)[0];
       set.songs.splice(to, 0, item);
       woSaveSet(set);
     }
     woRenderSet();
   }
-  e.target.onpointerup = up;
-  e.target.onpointercancel = up;
+  function move() {}
+  handle.addEventListener("pointermove", move);
+  handle.addEventListener("pointerup", finish);
+  handle.addEventListener("pointercancel", finish);
 }
 function woDateChanged() {
   var set = woLoadSet();
