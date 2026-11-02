@@ -118,7 +118,8 @@ body.on-signin header{display:none}
 #s-worship{overflow-x:hidden}
 #s-worship .pad,#s-worship .card,#s-worship .setcard,#s-worship .wtools{max-width:100%;min-width:0}
 #s-worship input,#s-worship textarea,#s-worship select,#s-worship button{max-width:100%}
-#wo-date,#wo-leader,#wo-change,.setnote{width:100%;min-width:0}
+#wo-date,#wo-leader,.setnote{width:100%;min-width:0}
+.wo-sync{margin:2px 0 8px;font-size:13px;font-weight:700;color:var(--mut)}
 .setcard{background:#fff;border:1px solid #e7e2d2;border-radius:14px;padding:12px;margin:10px 0}
 .setcard.dragging{opacity:.55}
 .setline{display:flex;align-items:center;gap:6px;min-width:0;margin-bottom:8px}
@@ -441,6 +442,7 @@ nav{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-rig
   </div>
   <div id="wo-sets" class="pad" hidden>
    <h1 style="margin:0">Setlists</h1>
+   <p id="wo-sync-list" class="wo-sync" hidden></p>
    <p id="wo-import" class="muted" hidden></p>
    <div id="wo-new" class="card" hidden>
     <label for="wo-new-date">Date</label>
@@ -477,15 +479,9 @@ nav{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-rig
    <p id="wo-live-banner" class="ann" hidden></p>
    <p id="wo-leader-banner" class="ann" hidden></p>
    <div class="card">
+    <p id="wo-sync" class="wo-sync" hidden></p>
     <label for="wo-leader">Leader note</label>
     <textarea id="wo-leader" placeholder="Note for the band"></textarea>
-    <div id="wo-live-box">
-     <label for="wo-change">What changed</label>
-     <input id="wo-change" placeholder="Updated setlist">
-     <p id="wo-live-msg" class="muted" hidden></p>
-     <button class="btn btn-gold" type="button" onclick="woPublish()">Publish live</button>
-    </div>
-    <p id="wo-live-off" class="muted" hidden>Live publishing isn't set up yet.</p>
     <label for="wo-title">Title</label>
     <input id="wo-title" autocomplete="off">
     <label for="wo-set-leader">Leader</label>
