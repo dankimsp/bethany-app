@@ -151,14 +151,24 @@ function publish_(data) {
   if (!leaderOk_(data.passphrase)) return { ok: false, status: 403, error: "pass" };
   var updatedAt = Utilities.formatDate(new Date(), "America/Los_Angeles", "yyyy-MM-dd'T'HH:mm:ssXXX");
   var songs = data.songs || [];
+  // A change note is optional. Autosave sends an empty string.
+  var change = data.change || "";
+  var stored = { date: data.date || "", service: data.service || "", language: data.language || "", songs: songs };
+  if (data.title != null) stored.title = data.title || "";
+  if (data.titleEdited === true || data.titleEdited === false) stored.titleEdited = data.titleEdited === true;
+  if (data.leader != null) stored.leader = data.leader || "";
   book_().getSheetByName("Live Setlists").appendRow([
     updatedAt,
     data.id || "",
-    data.change || "",
+    change,
     data.leaderNote || "",
-    JSON.stringify({ date: data.date || "", service: data.service || "", language: data.language || "", songs: songs })
+    JSON.stringify(stored)
   ]);
-  return { ok: true, status: 200, found: true, id: data.id || "", updatedAt: updatedAt, change: data.change || "", leaderNote: data.leaderNote || "", date: data.date || "", service: data.service || "", language: data.language || "", songs: songs };
+  var result = { ok: true, status: 200, found: true, id: data.id || "", updatedAt: updatedAt, change: change, leaderNote: data.leaderNote || "", date: data.date || "", service: data.service || "", language: data.language || "", songs: songs };
+  if (data.title != null) result.title = data.title || "";
+  if (data.titleEdited === true || data.titleEdited === false) result.titleEdited = data.titleEdited === true;
+  if (data.leader != null) result.leader = data.leader || "";
+  return result;
 }
 
 function readSet_(id) {
@@ -168,7 +178,7 @@ function readSet_(id) {
     if (String(rows[i][1]) !== String(id) || String(rows[i][1]) === "id") continue;
     var extra = {};
     try { extra = JSON.parse(rows[i][4] || "{}"); } catch (err) { extra = {}; }
-    return {
+    var found = {
       ok: true,
       status: 200,
       found: true,
@@ -181,6 +191,12 @@ function readSet_(id) {
       language: extra.language || "",
       songs: extra.songs || []
     };
+    if (Object.prototype.hasOwnProperty.call(extra, "title")) {
+      found.title = extra.title || "";
+      found.titleEdited = extra.titleEdited === true;
+    }
+    if (Object.prototype.hasOwnProperty.call(extra, "leader")) found.leader = extra.leader || "";
+    return found;
   }
   return { ok: true, status: 200, found: false };
 }

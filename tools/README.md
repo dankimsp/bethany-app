@@ -65,7 +65,7 @@ Private charts, live setlists, and song requests share one Apps Script web app. 
 
 # Live setlist
 
-When `WORSHIP_BACKEND_URL` is set, Publish live and the 30-second refresh use that web app. When it is empty, Publish live still uses `LIVE_SETLIST_ENDPOINT` in `index.html`. That older URL can stay empty, and the app hides publishing and does not poll while both are empty.
+When `WORSHIP_BACKEND_URL` is set, setlist edits publish themselves to that web app after a short pause, and an open setlist refreshes every 30 seconds. A change note is not required. When that URL is empty, the same autosave uses `LIVE_SETLIST_ENDPOINT` in `index.html` if it is set. If both are empty, edits stay on the device.
 
 1. Create a Google Sheet for live setlists.
 2. Extensions > Apps Script. Paste `tools/live-setlist-apps-script.gs` and save.

@@ -47,7 +47,7 @@ Optional: add `REQUEST_EMAIL` if requests should go somewhere other than danielc
 
 The first published setlist or song request creates a spreadsheet named **Bethany Worship** in Daniel’s Drive. It has two sheets, **Live Setlists** and **Song Requests**. To copy the spreadsheet URL, run `showSpreadsheet` and read the log.
 
-Song requests append a row (`time`, `title`, `artist`, `name`) and email danielcyk123@gmail.com. The subject starts with `[Song Request]`. Publishing a setlist does not ask for a passphrase.
+Song requests append a row (`time`, `title`, `artist`, `name`) and email danielcyk123@gmail.com. The subject starts with `[Song Request]`. Publishing a setlist does not ask for a passphrase or a change note. The app saves setlist edits on its own.
 
 Drive listings are cached for about 10 minutes. Each response includes an `etag` / `version`. The app sends the etag it already has and skips the song bodies when nothing changed.
 
@@ -65,4 +65,4 @@ After the URL is set:
 
 - Songs from Drive load on their own and merge with the bundled public-domain songs. They are saved in IndexedDB (localStorage if IndexedDB is unavailable) so the library still opens offline.
 - **Add song** asks for a song title and an artist name, then posts a song request. The email subject starts with `[Song Request]`.
-- **Publish live** on a setlist uses this same URL and does not ask for a passphrase.
+- Setlist edits save on this device immediately and publish to the live sheet about a second and a half later. There is no publish button and no change note. A small status says Saving…, Saved, or Offline, will sync.
