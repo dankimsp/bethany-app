@@ -1,4 +1,4 @@
-var CACHE = "bethany-worship-v16";
+var CACHE = "bethany-worship-v17";
 var FILES = [
   "./",
   "index.html",
@@ -21,6 +21,11 @@ var FILES = [
   "assets/hero.jpg"
 ];
 
+function shellRequest(request) {
+  var url = new URL(request.url);
+  return request.mode === "navigate" || /\.(?:html|js|css)$/i.test(url.pathname);
+}
+
 self.addEventListener("install", function (event) {
   event.waitUntil(caches.open(CACHE).then(function (cache) { return cache.addAll(FILES); }).then(function () { return self.skipWaiting(); }));
 });
@@ -35,11 +40,14 @@ self.addEventListener("fetch", function (event) {
   if (event.request.method !== "GET") return;
   var url = new URL(event.request.url);
   if (url.origin !== self.location.origin) return;
-  event.respondWith(fetch(event.request).then(function (response) {
-    var copy = response.clone();
-    caches.open(CACHE).then(function (cache) { cache.put(event.request, copy); });
+  var fresh = shellRequest(event.request) ? { cache: "reload" } : {};
+  event.respondWith(fetch(event.request, fresh).then(function (response) {
+    if (response && response.ok) {
+      var copy = response.clone();
+      caches.open(CACHE).then(function (cache) { cache.put(event.request, copy); });
+    }
     return response;
   }).catch(function () {
-    return caches.match(event.request).then(function (cached) { return cached || caches.match("./"); });
+    return caches.match(event.request, { ignoreSearch: true }).then(function (cached) { return cached || caches.match("./"); });
   }));
 });

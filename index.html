@@ -3,7 +3,8 @@
 <title>Bethany Church – Member App (Mockup v2)</title>
 <link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#00303f">
 <link rel="apple-touch-icon" href="assets/icon-192.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Bethany">
-<script>try{var _m=JSON.parse(localStorage.getItem("bethany-demo-member")||"null");if(!(_m&&_m.signedIn&&_m.profileDone))document.documentElement.classList.add("need-auth")}catch(e){document.documentElement.classList.add("need-auth")}</script>
+<script>try{var _m=JSON.parse(localStorage.getItem("bethany-demo-member")||"null");if(!(_m&&_m.signedIn&&_m.profileDone))document.documentElement.classList.add("need-auth")}catch(e){document.documentElement.classList.add("need-auth")}
+if("serviceWorker" in navigator){var woHadSW=!!navigator.serviceWorker.controller,woRefreshing=false;navigator.serviceWorker.addEventListener("controllerchange",function(){if(!woHadSW){woHadSW=true;return}if(woRefreshing)return;woRefreshing=true;location.reload()});navigator.serviceWorker.register("sw.js?v=17").catch(function(){})}</script>
 <style>
 :root{--teal:#00303f;--teal2:#0b4a5c;--gold:#dcae1d;--cream:#f7f5ee;--ink:#1a2226;--mut:#4a5559}
 *{box-sizing:border-box}html,body{margin:0}
@@ -720,7 +721,6 @@ function unlockServe(ev){if(ev)ev.preventDefault();
 function tryRememberServe(){var saved;try{saved=localStorage.getItem(SERVE_KEY)}catch(e){return}if(!saved)return;
  loadServeMeta().then(function(meta){return crypto.subtle.importKey("raw",b64ToBytes(saved),{name:"AES-GCM"},false,["decrypt"]).then(function(key){return decryptServe(meta,key)})}).then(showServeLinks).catch(function(){localStorage.removeItem(SERVE_KEY)})}
 addEventListener("hashchange",go);nextService();go();tryRememberServe();
-if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(function(){});
 </script>
-<script src="worship.js"></script>
+<script src="worship.js?v=17"></script>
 </body></html>

@@ -71,7 +71,28 @@ function woParseLyric(line) {
 function woSplitList(val) {
   return String(val || "").split(",").map(function (part) { return part.trim(); }).filter(Boolean);
 }
-var WO_ARTIST_KEEP = ["Crosby, Stills, Nash & Young", "Crosby, Stills & Nash", "Earth, Wind & Fire", "For King & Country", "Simon & Garfunkel", "Mumford & Sons", "Brooks & Dunn", "Shane & Shane", "Hall & Oates"];
+var WO_ARTIST_KEEP = [
+  ["Crosby, Stills, Nash & Young", "Crosby, Stills, Nash & Young"],
+  ["Holy, Holy, Holy, Lord God Almighty!", "Holy, Holy, Holy, Lord God Almighty!"],
+  ["Holy, Holy, Holy, Lord God Alighty!", "Holy, Holy, Holy, Lord God Alighty!"],
+  ["O, Lord My God! When I In Awesome Wonder", "O, Lord My God! When I In Awesome Wonder"],
+  ["What A Fellowship, What A Joy Divine", "What A Fellowship, What A Joy Divine"],
+  ["Let Us Rejoice And Be Glad", "Let Us Rejoice And Be Glad"],
+  ["Lord, I Lift Your Name On High", "Lord, I Lift Your Name On High"],
+  ["Crosby, Stills & Nash", "Crosby, Stills & Nash"],
+  ["All Sons & Daughters", "All Sons & Daughters"],
+  ["Earth, Wind & Fire", "Earth, Wind & Fire"],
+  ["For King & Country", "For King & Country"],
+  ["Simon & Garfunkel", "Simon & Garfunkel"],
+  ["Citizens & Saints", "Citizens & Saints"],
+  ["Mumford & Sons", "Mumford & Sons"],
+  ["Sons & Daughters", "Sons & Daughters"],
+  ["Shane and Shane", "Shane & Shane"],
+  ["Brooks & Dunn", "Brooks & Dunn"],
+  ["Shane & Shane", "Shane & Shane"],
+  ["Shane&Shane", "Shane & Shane"],
+  ["Hall & Oates", "Hall & Oates"]
+];
 function woArtistKey(name) {
   return String(name || "").replace(/\s+/g, " ").trim().toLowerCase();
 }
@@ -90,17 +111,27 @@ function woSplitArtists(raw) {
   var text = String(raw || "").replace(/\s+/g, " ").trim();
   if (!text) return [];
   var held = [];
-  WO_ARTIST_KEEP.slice().sort(function (a, b) { return b.length - a.length; }).forEach(function (name) {
-    var pattern = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, "\\s+");
+  var parens = [];
+  WO_ARTIST_KEEP.slice().sort(function (a, b) { return b[0].length - a[0].length; }).forEach(function (pair) {
+    var pattern = pair[0].replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, "\\s+");
     text = text.replace(new RegExp(pattern, "ig"), function () {
-      held.push(name);
+      held.push(pair[1]);
       return "\u0001" + (held.length - 1) + "\u0001";
     });
   });
-  function restore(part) {
-    return String(part || "").replace(/\u0001(\d+)\u0001/g, function (_, n) { return held[Number(n)]; }).replace(/\s+/g, " ").trim();
+  text = text.replace(/\(([^)]*)\)/g, function (_, inner) {
+    parens.push(inner);
+    return " \u0002" + (parens.length - 1) + "\u0002 ";
+  });
+  function tokenToName(token) {
+    return String(token || "").replace(/\u0001(\d+)\u0001/g, function (_, n) { return held[Number(n)]; });
   }
-  var re = /\s+(?:&|and|\/|featuring|feat\.?|ft\.?|x|with)\s+|,\s+/gi;
+  function restore(part) {
+    return tokenToName(String(part || "").replace(/\u0002(\d+)\u0002/g, function (_, n) {
+      return "(" + tokenToName(parens[Number(n)]) + ")";
+    })).replace(/\s+/g, " ").trim();
+  }
+  var re = /\s+(?:&|and|featuring|feat\.?|ft\.?|x|with)\s+|\s*\/\s*|,\s*(?:&\s*)?/gi;
   var parts = [], seps = [], last = 0, match;
   while ((match = re.exec(text))) {
     parts.push(text.slice(last, match.index));
@@ -110,20 +141,37 @@ function woSplitArtists(raw) {
   parts.push(text.slice(last));
   parts = parts.map(function (part) { return part.trim(); }).filter(Boolean);
   if (!parts.length) return [];
-  if (parts.length === 1) {
-    var only = restore(parts[0]);
-    return only ? [only] : [];
+  var out = [];
+  if (parts.length === 1) out = [restore(parts[0])];
+  else {
+    var acc = parts[0];
+    for (var i = 0; i < seps.length; i++) {
+      var sep = seps[i].replace(/\s+/g, " ").trim().toLowerCase();
+      var next = parts[i + 1];
+      var share = (sep === "&" || sep === "and") && acc.indexOf("\u0001") < 0 && next.indexOf("\u0001") < 0 ? woShareSurname(acc, next) : null;
+      if (share) { out.push(share[0]); acc = share[1]; }
+      else { out.push(restore(acc)); acc = next; }
+    }
+    out.push(restore(acc));
   }
-  var out = [], acc = parts[0];
-  for (var i = 0; i < seps.length; i++) {
-    var sep = seps[i].replace(/\s+/g, " ").trim().toLowerCase();
-    var next = parts[i + 1];
-    var share = (sep === "&" || sep === "and") && acc.indexOf("\u0001") < 0 && next.indexOf("\u0001") < 0 ? woShareSurname(acc, next) : null;
-    if (share) { out.push(share[0]); acc = share[1]; }
-    else { out.push(restore(acc)); acc = next; }
-  }
-  out.push(restore(acc));
-  return out.map(function (name) { return String(name || "").replace(/\s+/g, " ").trim(); }).filter(Boolean);
+  var flat = [];
+  out.forEach(function (name) {
+    woExpandArtist(name).forEach(function (part) {
+      part = String(part || "").replace(/\s+/g, " ").trim();
+      if (part) flat.push(part);
+    });
+  });
+  return flat;
+}
+function woExpandArtist(name) {
+  var m = String(name || "").match(/^(.*?)\s*\(([^)]*)\)\s*(.*)$/);
+  if (!m) return [name];
+  var inner = m[2].trim();
+  var outer = (m[1] + " " + m[3]).replace(/\s+/g, " ").trim();
+  if (!outer) return [name];
+  if (/psalm|^\d{3,4}$/i.test(inner)) return [outer];
+  if (/arr\.?/i.test(inner)) inner = inner.replace(/\barr\.?/ig, " ");
+  return [outer].concat(woSplitArtists(inner));
 }
 function woArtistNames(song) {
   if (!song) return [];
