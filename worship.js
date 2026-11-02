@@ -93,6 +93,16 @@ var WO_ARTIST_KEEP = [
   ["Shane&Shane", "Shane & Shane"],
   ["Hall & Oates", "Hall & Oates"]
 ];
+var WO_ARTIST_ALIAS = {
+  "elevation": "Elevation Worship",
+  "hillsong": "Hillsong Worship",
+  "maverick city": "Maverick City Music",
+  "rend collective experiment": "Rend Collective"
+};
+function woCanonArtist(name) {
+  var cleaned = String(name || "").replace(/\s+/g, " ").trim();
+  return WO_ARTIST_ALIAS[woArtistKey(cleaned)] || cleaned;
+}
 function woArtistKey(name) {
   return String(name || "").replace(/\s+/g, " ").trim().toLowerCase();
 }
@@ -157,7 +167,7 @@ function woSplitArtists(raw) {
   var flat = [];
   out.forEach(function (name) {
     woExpandArtist(name).forEach(function (part) {
-      part = String(part || "").replace(/\s+/g, " ").trim();
+      part = woCanonArtist(part);
       if (part) flat.push(part);
     });
   });
@@ -195,7 +205,8 @@ function woParseCho(text, id) {
     if (dm) {
       var name = dm[1].toLowerCase().trim(), val = (dm[2] || "").trim();
       if (name === "title" || name === "t") song.title = val;
-      else if (name === "artist" || name === "subtitle" || name === "st") { if (!song.artist) song.artist = val; }
+      else if (name === "artist") song.artist = val;
+      else if ((name === "subtitle" || name === "st") && !song.artist) song.artist = val;
       else if (name === "key") song.key = val.replace(/\s+/g, "") || song.key;
       else if (name === "youtube") song.youtube = val;
       else if (name === "tempo") { var bpm = parseInt(val, 10); if (bpm > 0) song.tempo = bpm; }
