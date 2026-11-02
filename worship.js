@@ -71,6 +71,65 @@ function woParseLyric(line) {
 function woSplitList(val) {
   return String(val || "").split(",").map(function (part) { return part.trim(); }).filter(Boolean);
 }
+var WO_ARTIST_KEEP = ["Crosby, Stills, Nash & Young", "Crosby, Stills & Nash", "Earth, Wind & Fire", "For King & Country", "Simon & Garfunkel", "Mumford & Sons", "Brooks & Dunn", "Shane & Shane", "Hall & Oates"];
+function woArtistKey(name) {
+  return String(name || "").replace(/\s+/g, " ").trim().toLowerCase();
+}
+function woArtistCaps(name) {
+  var score = 0;
+  String(name || "").replace(/[A-Z]/g, function () { score++; return ""; });
+  return score;
+}
+function woShareSurname(left, right) {
+  var l = String(left || "").trim().split(/\s+/);
+  var r = String(right || "").trim().split(/\s+/);
+  if (l.length === 1 && r.length === 2 && l[0] && r[0] && r[1]) return [l[0] + " " + r[1], r.join(" ")];
+  return null;
+}
+function woSplitArtists(raw) {
+  var text = String(raw || "").replace(/\s+/g, " ").trim();
+  if (!text) return [];
+  var held = [];
+  WO_ARTIST_KEEP.slice().sort(function (a, b) { return b.length - a.length; }).forEach(function (name) {
+    var pattern = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, "\\s+");
+    text = text.replace(new RegExp(pattern, "ig"), function () {
+      held.push(name);
+      return "\u0001" + (held.length - 1) + "\u0001";
+    });
+  });
+  function restore(part) {
+    return String(part || "").replace(/\u0001(\d+)\u0001/g, function (_, n) { return held[Number(n)]; }).replace(/\s+/g, " ").trim();
+  }
+  var re = /\s+(?:&|and|\/|featuring|feat\.?|ft\.?|x|with)\s+|,\s+/gi;
+  var parts = [], seps = [], last = 0, match;
+  while ((match = re.exec(text))) {
+    parts.push(text.slice(last, match.index));
+    seps.push(match[0]);
+    last = match.index + match[0].length;
+  }
+  parts.push(text.slice(last));
+  parts = parts.map(function (part) { return part.trim(); }).filter(Boolean);
+  if (!parts.length) return [];
+  if (parts.length === 1) {
+    var only = restore(parts[0]);
+    return only ? [only] : [];
+  }
+  var out = [], acc = parts[0];
+  for (var i = 0; i < seps.length; i++) {
+    var sep = seps[i].replace(/\s+/g, " ").trim().toLowerCase();
+    var next = parts[i + 1];
+    var share = (sep === "&" || sep === "and") && acc.indexOf("\u0001") < 0 && next.indexOf("\u0001") < 0 ? woShareSurname(acc, next) : null;
+    if (share) { out.push(share[0]); acc = share[1]; }
+    else { out.push(restore(acc)); acc = next; }
+  }
+  out.push(restore(acc));
+  return out.map(function (name) { return String(name || "").replace(/\s+/g, " ").trim(); }).filter(Boolean);
+}
+function woArtistNames(song) {
+  if (!song) return [];
+  if (!song.artists) song.artists = woSplitArtists(song.artist);
+  return song.artists;
+}
 function woNormList(val, allowed, message, errors) {
   return woSplitList(val).map(function (part) {
     var canon = allowed[part.toLowerCase()];
@@ -528,18 +587,6 @@ function woInitFilters() {
     woRenderLib();
   };
   var artist = document.getElementById("wo-artist");
-  var names = {};
-  wo.songs.forEach(function (s) { if (s.artist) names[s.artist] = 1; });
-  var all = document.createElement("option");
-  all.value = "";
-  all.textContent = "All artists";
-  artist.appendChild(all);
-  Object.keys(names).sort(function (a, b) { return a.localeCompare(b); }).forEach(function (name) {
-    var o = document.createElement("option");
-    o.value = name;
-    o.textContent = name;
-    artist.appendChild(o);
-  });
   artist.onchange = function () { woF.artist = artist.value; woRenderLib(); };
   document.getElementById("wo-az").onclick = function () {
     woF.az = !woF.az;
@@ -581,25 +628,36 @@ function woInitFilters() {
   woSyncLang();
   ["moment", "time"].forEach(woPruneField);
   woSyncTheme();
+  woFillArtists();
+  woFillChoice("wo-moment", "moment");
+  woFillChoice("wo-time", "time");
+}
+function woFillArtists() {
   var artist = document.getElementById("wo-artist");
+  if (!artist) return;
   var chosen = woF.artist;
+  var byKey = {};
+  woLangSongs().forEach(function (s) {
+    woArtistNames(s).forEach(function (name) {
+      var key = woArtistKey(name);
+      if (!key) return;
+      var prev = byKey[key];
+      if (!prev || woArtistCaps(name) > woArtistCaps(prev)) byKey[key] = name;
+    });
+  });
   artist.replaceChildren();
   var allOpt = document.createElement("option");
   allOpt.value = "";
   allOpt.textContent = "All artists";
   artist.appendChild(allOpt);
-  var names = {};
-  woLangSongs().forEach(function (s) { if (s.artist) names[s.artist] = 1; });
-  Object.keys(names).sort(function (a, b) { return a.localeCompare(b); }).forEach(function (name) {
+  Object.keys(byKey).sort(function (a, b) { return byKey[a].localeCompare(byKey[b], undefined, { sensitivity: "base" }); }).forEach(function (key) {
     var o = document.createElement("option");
-    o.value = name;
-    o.textContent = name;
+    o.value = key;
+    o.textContent = byKey[key];
     artist.appendChild(o);
   });
-  if (chosen && names[chosen]) artist.value = chosen;
+  if (chosen && byKey[chosen]) artist.value = chosen;
   else { woF.artist = ""; artist.value = ""; }
-  woFillChoice("wo-moment", "moment");
-  woFillChoice("wo-time", "time");
 }
 function woSyncTheme() {
   var theme = document.getElementById("wo-theme");
@@ -691,7 +749,7 @@ function woFilteredSongs() {
     if ((s.language || "en") !== woF.lang) return false;
     var speed = woSpeedOf(s);
     if (woF.speed !== "all" && speed !== woF.speed) return false;
-    if (woF.artist && s.artist !== woF.artist) return false;
+    if (woF.artist && woArtistNames(s).map(woArtistKey).indexOf(woF.artist) < 0) return false;
     if (woF.theme && (s.themes || []).indexOf(woF.theme) < 0) return false;
     if (!woMatchAny(s.moment, woF.moment)) return false;
     if (!woMatchAny(s.season, woF.season)) return false;
@@ -700,8 +758,8 @@ function woFilteredSongs() {
     if (!woMatchAny(s.difficulty, woF.difficulty)) return false;
     if (woF.scripture && String(s.scripture || "").toLowerCase().indexOf(woF.scripture) < 0) return false;
     if (!q) return true;
-    var hay = woF.titleOnly ? s.title : s.title + " " + (s.artist || "");
-    return hay.toLowerCase().indexOf(q) >= 0;
+    var hay = woF.titleOnly ? s.title : [s.title, s.artist || ""].concat(woArtistNames(s)).join(" ");
+    return hay.replace(/\s+/g, " ").toLowerCase().indexOf(q.replace(/\s+/g, " ")) >= 0;
   });
   if (woF.az) list = list.slice().sort(function (a, b) { return a.title.localeCompare(b.title); });
   return list;
