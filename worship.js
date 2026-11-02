@@ -4,8 +4,9 @@ var WO_PREFS = "bethany-worship-prefs";
 var WO_NOTES = "bethany-worship-song-notes";
 var WO_SET = "bethany-worship-set";
 var WO_SYNC = "bethany-worship-sync";
+var WO_PLAY_SIZE = "bethany-worship-play-size";
 var SHARP = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
-var wo = { songs: [], byId: {}, view: "lib", cur: null, semi: 0, flats: false, wake: null, meta: null, syncText: "", syncTimer: 0, syncFlight: false, syncGen: 0 };
+var wo = { songs: [], byId: {}, view: "lib", cur: null, semi: 0, flats: false, wake: null, meta: null, syncText: "", syncTimer: 0, syncFlight: false, syncGen: 0, fitGen: 0, fitTimer: 0 };
 var woPending = null;
 
 function woPc(note) {
@@ -200,7 +201,7 @@ function woLabel(ch, song) {
 }
 function woChart(song) {
   var root = document.createElement("div");
-  if (woLyricsOn()) root.className = "lyrics-only";
+  root.className = "wo-chart" + (woLyricsOn() ? " lyrics-only" : "");
   song.sections.forEach(function (sec) {
     if (sec.label) {
       var h = document.createElement("div");
@@ -373,24 +374,47 @@ function woApi(params) {
 }
 function woFetchSongs() {
   if (!woBackendEnabled()) return Promise.resolve("off");
-  return woApi({ action: "getSongs", etag: wo.driveEtag || "" }).then(function (data) {
-    if (woStillLocked(data) || !data || data.ok === false) {
-      console.warn("Worship library:", woBackendError(data, WO_UNAVAILABLE));
-      woPrivateMsg(WO_UNAVAILABLE);
-      return woStillLocked(data) ? "locked" : "error";
-    }
-    woPrivateMsg("");
-    if (data.unchanged) return "ok";
-    wo.driveEtag = data.etag || "";
-    return woCacheWrite({ etag: data.etag || "", version: data.version || data.etag || "", songs: data.songs || [] }).then(function () {
-      woApplyCatalog(data.songs || []);
-      return "ok";
-    });
-  }).catch(function (err) {
-    console.warn("Worship library:", woBackendError(err, WO_UNAVAILABLE));
+  var merged = {};
+  var cursor = "";
+  var etag = wo.driveEtag || "";
+  var steps = 0;
+  var stalls = 0;
+  function fail(data, err) {
+    console.warn("Worship library:", woBackendError(data || err, WO_UNAVAILABLE));
     woPrivateMsg(WO_UNAVAILABLE);
-    return "error";
-  });
+    return woStillLocked(data) ? "locked" : "error";
+  }
+  function step() {
+    if (++steps > 80) return fail(null, "The song library is still indexing.");
+    var params = { action: "getSongs" };
+    if (cursor) params.cursor = cursor;
+    else if (etag) params.etag = etag;
+    return woApi(params).then(function (data) {
+      if (woStillLocked(data) || !data || data.ok === false) return fail(data);
+      woPrivateMsg("");
+      if (data.unchanged && !cursor) return "ok";
+      var added = 0;
+      (data.songs || []).forEach(function (item) {
+        if (!item || !item.id || !item.cho) return;
+        if (!merged[item.id]) added++;
+        merged[item.id] = item;
+      });
+      var list = Object.keys(merged).map(function (key) { return merged[key]; });
+      if (list.length) woApplyCatalog(list);
+      if (data.more === true) {
+        var next = typeof data.cursor === "string" ? data.cursor : cursor;
+        if (!added && next === cursor) {
+          stalls++;
+          if (stalls > 40) return fail(data, "The song library is still indexing.");
+        } else stalls = 0;
+        cursor = next;
+        return new Promise(function (resolve) { setTimeout(resolve, added ? 80 : 400); }).then(step);
+      }
+      wo.driveEtag = data.etag || etag || "";
+      return woCacheWrite({ etag: wo.driveEtag, version: data.version || wo.driveEtag, songs: list }).then(function () { return "ok"; });
+    });
+  }
+  return step().catch(function (err) { return fail(null, err); });
 }
 function woLoadPrivate() {
   woSyncAdd();
@@ -1469,11 +1493,96 @@ function woRenderPlay() {
   var body = document.getElementById("wo-play-body");
   body.replaceChildren(woChart(item.song));
   body.scrollTop = 0;
+  document.getElementById("wo-play").classList.add("wo-fitting");
+  woFitPlay();
   document.getElementById("wo-play-pos").textContent = "Song " + (wo.playIndex + 1) + " of " + wo.playList.length;
   document.getElementById("wo-play-lyrics").classList.toggle("on", woLyricsOn());
   document.getElementById("wo-play-body").classList.toggle("lyrics-only", woLyricsOn());
   var jump = document.getElementById("wo-jump");
   if (jump) jump.hidden = true;
+}
+function woPlaySizes() {
+  try {
+    var map = JSON.parse(localStorage.getItem(WO_PLAY_SIZE) || "{}");
+    return map && typeof map === "object" ? map : {};
+  } catch (e) { return {}; }
+}
+function woPlaySize(id) {
+  var n = Number(woPlaySizes()[id]);
+  return n >= 8 && n <= 48 ? n : 0;
+}
+function woSetPlaySize(id, px) {
+  var map = woPlaySizes();
+  map[id] = px;
+  localStorage.setItem(WO_PLAY_SIZE, JSON.stringify(map));
+}
+function woClearPlaySize(id) {
+  var map = woPlaySizes();
+  delete map[id];
+  localStorage.setItem(WO_PLAY_SIZE, JSON.stringify(map));
+}
+function woApplyPlaySize(px, cols) {
+  var play = document.getElementById("wo-play");
+  var body = document.getElementById("wo-play-body");
+  if (!play || !body) return;
+  play.classList.add("wo-fitting");
+  play.style.setProperty("--wo-fs", px + "px");
+  body.classList.toggle("wo-cols", !!cols);
+}
+function woPlayFits(px, cols) {
+  woApplyPlaySize(px, cols);
+  var body = document.getElementById("wo-play-body");
+  return !!body && body.scrollHeight <= body.clientHeight + 2;
+}
+function woBestFit(cols) {
+  var lo = 8, hi = 48, best = 8, fits = false;
+  while (lo <= hi) {
+    var mid = (lo + hi) >> 1;
+    if (woPlayFits(mid, cols)) { best = mid; fits = true; lo = mid + 1; }
+    else hi = mid - 1;
+  }
+  return { px: best, fits: fits };
+}
+function woWidePlay() {
+  var w = window.innerWidth, h = window.innerHeight;
+  return w >= 768 || (w > h && w >= 700);
+}
+function woAutoFit() {
+  var one = woBestFit(false);
+  var two = woWidePlay() ? woBestFit(true) : null;
+  var cols = false;
+  var px = one.px;
+  if (two && two.fits && (!one.fits || two.px > one.px)) { cols = true; px = two.px; }
+  woApplyPlaySize(px, cols);
+}
+function woFitPlay() {
+  var gen = ++wo.fitGen;
+  requestAnimationFrame(function () {
+    if (gen !== wo.fitGen) return;
+    var item = wo.playList && wo.playList[wo.playIndex];
+    if (!item || !item.song) return;
+    var saved = woPlaySize(item.song.id);
+    if (saved) woApplyPlaySize(saved, false);
+    else woAutoFit();
+  });
+}
+function woNudgePlaySize(delta) {
+  var item = wo.playList && wo.playList[wo.playIndex];
+  if (!item || !item.song) return;
+  var cur = woPlaySize(item.song.id);
+  if (!cur) {
+    var raw = getComputedStyle(document.getElementById("wo-play")).getPropertyValue("--wo-fs");
+    cur = parseFloat(raw) || 16;
+  }
+  var next = Math.max(8, Math.min(48, Math.round(cur + delta)));
+  woSetPlaySize(item.song.id, next);
+  woApplyPlaySize(next, false);
+}
+function woResetPlaySize() {
+  var item = wo.playList && wo.playList[wo.playIndex];
+  if (!item || !item.song) return;
+  woClearPlaySize(item.song.id);
+  woAutoFit();
 }
 function woPlayStep(dir) {
   if (!wo.playList || !wo.playList.length) return;
@@ -1662,9 +1771,16 @@ document.getElementById("wo-leader").addEventListener("input", woLeaderChanged);
 addEventListener("online", function () { if (woDirtyIds().length) woFlushSync(); });
 addEventListener("hashchange", worshipRoute);
 addEventListener("resize", function () {
-  if (!document.body.classList.contains("in-worship")) return;
-  if (woTablet() === woWasTablet) return;
-  woShow(wo.view);
+  if (document.body.classList.contains("in-worship") && woTablet() !== woWasTablet) woShow(wo.view);
+  var play = document.getElementById("wo-play");
+  if (!play || play.hidden) return;
+  if (wo.fitTimer) clearTimeout(wo.fitTimer);
+  wo.fitTimer = setTimeout(function () {
+    var item = wo.playList && wo.playList[wo.playIndex];
+    if (!item || !item.song) return;
+    if (woPlaySize(item.song.id)) woApplyPlaySize(woPlaySize(item.song.id), false);
+    else woAutoFit();
+  }, 120);
 });
 var woPlayBody = document.getElementById("wo-play-body");
 if (woPlayBody) {

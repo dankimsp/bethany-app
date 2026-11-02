@@ -49,7 +49,27 @@ The first published setlist or song request creates a spreadsheet named **Bethan
 
 Song requests append a row (`time`, `title`, `artist`, `name`) and email danielcyk123@gmail.com. The subject starts with `[Song Request]`. Publishing a setlist does not ask for a passphrase or a change note. The app saves setlist edits on its own.
 
-Drive listings are cached for about 10 minutes. Each response includes an `etag` / `version`. The app sends the etag it already has and skips the song bodies when nothing changed.
+Song charts are stored in a Drive file named `bethany-worship-index.json`. A visit only re-reads a chart when that file is new or its modified time changed. Each web request works for about 20 seconds, then returns the songs it has plus `more: true` if there are more. The app keeps asking until the list is complete. When nothing has changed, the app sends the `etag` it already has and the script answers without opening the charts.
+
+## 4b. Build the song index
+
+After you paste a new `Code.gs` and deploy it:
+
+1. In the script editor, choose the function `buildIndex`.
+2. Click **Run**. Approve Drive if Google asks.
+3. Open **Execution log**. Wait until it says `Index complete.` It logs `Indexed n / total` as it goes.
+4. If it says it paused or made no further progress, run `buildIndex` again. It continues from the charts it already stored.
+
+You can run `buildIndex` any time. Charts that have not changed are not opened again. The app still works if you skip this step. The first visits just finish the index in short batches.
+
+## 4c. Update an existing deployment
+
+1. Open the existing **Bethany Worship** script at [script.google.com](https://script.google.com) while signed in as danielcyk123@gmail.com.
+2. Replace `Code.gs` with `tools/worship-backend.gs` from this repo. Save.
+3. Deploy > Manage deployments > pencil on the current web app > Version: **New version** > Deploy. Keep the same `/exec` URL.
+4. If Google asks, allow Drive. Allow Sheets and Gmail if it asks for those too.
+5. Run `buildIndex` once, as above.
+6. Do not type a password into the file. Leave `TEAM_HASH` and `LEADER_HASH` deleted. Leave `EN_FOLDER_ID`, `KO_FOLDER_ID`, and `REQUEST_EMAIL` as they are.
 
 ## 5. Point the app at the web app
 

@@ -5,8 +5,10 @@
 // SPREADSHEET_ID is saved automatically the first time a setlist is published or a song is requested.
 // Never put a password or a hash in this file.
 
-var CACHE_SECONDS = 600;
-var CACHE_CHUNK = 50000;
+var INDEX_NAME = "bethany-worship-index.json";
+var INDEX_LIST_MS = 600000;
+var INDEX_PAGE_SONGS = 40;
+var INDEX_PAGE_CHARS = 120000;
 
 function saveFolderIds() {
   PropertiesService.getScriptProperties().setProperties({
@@ -51,7 +53,7 @@ function handle_(params) {
   var auth = auth_(params.token);
   if (auth) return auth;
   var action = String(params.action || "getSongs");
-  if (action === "listSongs" || action === "getSongs") return songs_(params.etag || "");
+  if (action === "listSongs" || action === "getSongs") return songs_(params);
   if (action === "publish") return publish_(params.payload || params);
   if (action === "get") return readSet_(params.id);
   if (action === "request") return request_(params);
@@ -67,82 +69,319 @@ function auth_(token) {
   return null;
 }
 
-function songs_(clientEtag) {
+function songs_(params) {
+  params = params || {};
   try {
-    return songsBuild_(String(clientEtag || ""));
+    var clientEtag = String(params.etag || "");
+    var cursor = String(params.cursor || "");
+    var props = PropertiesService.getScriptProperties();
+    if (!cursor && clientEtag && props.getProperty("INDEX_READY") === "1" && props.getProperty("INDEX_ETAG") === clientEtag) {
+      return {
+        ok: true,
+        status: 200,
+        unchanged: true,
+        more: false,
+        ready: true,
+        etag: clientEtag,
+        version: clientEtag,
+        count: Number(props.getProperty("INDEX_TOTAL") || 0)
+      };
+    }
+    return songsBuild_(clientEtag, cursor, {});
   } catch (err) {
     return { ok: false, status: 500, error: "drive", message: String(err).slice(0, 180) };
   }
 }
 
-function songsBuild_(clientEtag) {
+// Run once from the editor after pasting this file. Safe to run again; saved progress is kept.
+function buildIndex() {
+  var start = Date.now();
+  var last = -1;
+  var spins = 0;
+  while (Date.now() - start < 270000) {
+    var res;
+    try { res = songsBuild_("", "", { budgetMs: 20000, maxReads: 30 }); }
+    catch (err) { Logger.log(String(err).slice(0, 180)); return; }
+    if (!res || res.ok === false) {
+      Logger.log((res && (res.message || res.error)) || "Index failed.");
+      return;
+    }
+    Logger.log("Indexed " + (res.indexed || 0) + " / " + (res.total || 0));
+    if (res.ready) { Logger.log("Index complete."); return; }
+    if ((res.indexed || 0) === last) {
+      spins++;
+      if (spins >= 4) {
+        Logger.log("No further progress. Run buildIndex again if songs remain.");
+        return;
+      }
+      Utilities.sleep(500);
+    } else spins = 0;
+    last = res.indexed || 0;
+  }
+  Logger.log("Paused before the time limit. Run buildIndex again to continue.");
+}
+
+function songsBuild_(clientEtag, cursor, opts) {
+  opts = opts || {};
   var props = PropertiesService.getScriptProperties();
   var en = props.getProperty("EN_FOLDER_ID");
   var ko = props.getProperty("KO_FOLDER_ID");
   if (!en || !ko) return { ok: false, status: 500, error: "config" };
-
-  var metaText = cacheGet_("wo:meta");
-  if (metaText) {
-    var meta = parseJson_(metaText);
-    if (meta.etag && clientEtag && clientEtag === meta.etag) {
-      return { ok: true, status: 200, unchanged: true, etag: meta.etag, version: meta.etag, count: meta.count || 0 };
+  var lock = LockService.getScriptLock();
+  var locked = false;
+  try { locked = lock.tryLock(opts.lockMs || 1500); } catch (err) { locked = false; }
+  var start = Date.now();
+  var budgetMs = opts.budgetMs || 20000;
+  var maxReads = opts.maxReads || 25;
+  try {
+    var index = loadIndex_();
+    if (locked) {
+      var changed = listStep_(index, en, ko, start, budgetMs);
+      var reads = readStep_(index, start, budgetMs, maxReads);
+      var readyNow = indexReady_(index);
+      if (changed || reads || index.ready !== readyNow) {
+        index.ready = readyNow;
+        saveIndex_(index);
+      }
+      if (readyNow && index.etag) {
+        if (props.getProperty("INDEX_READY") !== "1" || props.getProperty("INDEX_ETAG") !== index.etag) {
+          props.setProperty("INDEX_READY", "1");
+          props.setProperty("INDEX_ETAG", index.etag);
+          props.setProperty("INDEX_TOTAL", String(index.total || (index.listed || []).length));
+        }
+      } else if (props.getProperty("INDEX_READY")) props.deleteProperty("INDEX_READY");
     }
-    if (meta.etag) {
-      var hit = cacheGet_("wo:body:" + meta.etag);
-      if (hit) return parseJson_(hit);
-    }
+    return pageIndex_(index, String(cursor || ""));
+  } finally {
+    if (locked) { try { lock.releaseLock(); } catch (err2) {} }
   }
-
-  var listed = listTree_(DriveApp.getFolderById(en), "en", 0).concat(listTree_(DriveApp.getFolderById(ko), "ko", 0));
-  listed.sort(function (a, b) { return a.id < b.id ? -1 : a.id > b.id ? 1 : 0; });
-  var etag = hashPass_(listed.map(function (file) { return file.id + "|" + file.updated + "|" + file.bytes; }).join("\n"));
-  if (clientEtag && clientEtag === etag) {
-    cachePut_("wo:meta", JSON.stringify({ etag: etag, count: listed.length }), CACHE_SECONDS);
-    return { ok: true, status: 200, unchanged: true, etag: etag, version: etag, count: listed.length };
-  }
-  var cached = cacheGet_("wo:body:" + etag);
-  if (cached) {
-    cachePut_("wo:meta", JSON.stringify({ etag: etag, count: listed.length }), CACHE_SECONDS);
-    return parseJson_(cached);
-  }
-
-  var songs = listed.map(function (file) {
-    return {
-      id: "drive-" + file.id,
-      name: file.name,
-      language: file.language,
-      updated: file.updated,
-      bytes: file.bytes,
-      cho: DriveApp.getFileById(file.id).getBlob().getDataAsString("UTF-8")
-    };
-  });
-  var result = { ok: true, status: 200, etag: etag, version: etag, count: songs.length, songs: songs };
-  var text = JSON.stringify(result);
-  if (text.length < 800000) {
-    cachePut_("wo:body:" + etag, text, CACHE_SECONDS);
-    cachePut_("wo:meta", JSON.stringify({ etag: etag, count: songs.length }), CACHE_SECONDS);
-  }
-  return result;
 }
 
-function listTree_(folder, language, depth) {
-  var out = [];
-  var files = folder.getFiles();
-  while (files.hasNext()) {
-    var file = files.next();
-    if (!/\.cho$/i.test(file.getName())) continue;
-    out.push({
-      id: file.getId(),
-      name: file.getName(),
-      language: language,
-      updated: file.getLastUpdated().getTime(),
-      bytes: file.getSize()
-    });
+function loadIndex_() {
+  try {
+    var data = JSON.parse(indexFile_().getBlob().getDataAsString("UTF-8") || "{}");
+    if (!data || typeof data !== "object") throw 0;
+    if (!data.files || typeof data.files !== "object") data.files = {};
+    if (!Array.isArray(data.listed)) data.listed = [];
+    return data;
+  } catch (err) {
+    return { listedAt: 0, etag: "", total: 0, ready: false, listing: false, listed: [], files: {} };
   }
-  if (depth >= 4) return out;
-  var subs = folder.getFolders();
-  while (subs.hasNext()) out = out.concat(listTree_(subs.next(), language, depth + 1));
-  return out;
+}
+
+function saveIndex_(index) {
+  indexFile_().setContent(JSON.stringify(index));
+}
+
+function indexFile_() {
+  var props = PropertiesService.getScriptProperties();
+  var id = props.getProperty("INDEX_FILE_ID");
+  if (id) {
+    try { return DriveApp.getFileById(id); } catch (err) { id = ""; }
+  }
+  var found = DriveApp.getFilesByName(INDEX_NAME);
+  while (found.hasNext()) {
+    var file = found.next();
+    if (file.getName() === INDEX_NAME) {
+      props.setProperty("INDEX_FILE_ID", file.getId());
+      return file;
+    }
+  }
+  var created = DriveApp.createFile(INDEX_NAME, "{}", MimeType.PLAIN_TEXT);
+  props.setProperty("INDEX_FILE_ID", created.getId());
+  return created;
+}
+
+function listStep_(index, en, ko, start, budgetMs) {
+  var stale = !index.listedAt || (Date.now() - Number(index.listedAt) > INDEX_LIST_MS);
+  if (!index.listQueue && !stale && !index.listing) return false;
+  if (!index.listQueue) {
+    index.listQueue = [
+      { id: en, language: "en", depth: 0 },
+      { id: ko, language: "ko", depth: 0 }
+    ];
+    index.listSeen = {};
+    index.listed = [];
+    index.listing = true;
+    index.ready = false;
+    index.listedAt = 0;
+  }
+  var guard = 0;
+  while (index.listQueue.length && Date.now() - start < budgetMs && guard < 8000) {
+    guard++;
+    var job = index.listQueue[0];
+    var folder;
+    try { folder = DriveApp.getFolderById(job.id); }
+    catch (err) { index.listQueue.shift(); continue; }
+    var files = folder.getFiles();
+    var folderDone = true;
+    while (files.hasNext()) {
+      if (Date.now() - start > budgetMs) { folderDone = false; break; }
+      var file = files.next();
+      var fid = file.getId();
+      if (index.listSeen[fid]) continue;
+      index.listSeen[fid] = 1;
+      if (!/\.cho$/i.test(file.getName())) continue;
+      index.listed.push({
+        id: fid,
+        name: file.getName(),
+        language: job.language,
+        updated: file.getLastUpdated().getTime(),
+        bytes: file.getSize()
+      });
+    }
+    if (folderDone && job.depth < 4) {
+      var subs = folder.getFolders();
+      while (subs.hasNext()) {
+        if (Date.now() - start > budgetMs) { folderDone = false; break; }
+        var sub = subs.next();
+        var sid = sub.getId();
+        if (index.listSeen["folder:" + sid]) continue;
+        index.listSeen["folder:" + sid] = 1;
+        index.listQueue.push({ id: sid, language: job.language, depth: job.depth + 1 });
+      }
+    }
+    if (!folderDone) break;
+    index.listQueue.shift();
+  }
+  if (index.listQueue.length) return true;
+  index.listed.sort(function (a, b) { return a.id < b.id ? -1 : a.id > b.id ? 1 : 0; });
+  index.etag = hashPass_(index.listed.map(function (file) { return file.id + "|" + file.updated + "|" + file.bytes; }).join("\n"));
+  index.total = index.listed.length;
+  index.listedAt = Date.now();
+  index.listing = false;
+  var keep = {};
+  index.listed.forEach(function (file) {
+    var prev = index.files[file.id];
+    if (prev && prev.cho != null && prev.updated === file.updated && prev.bytes === file.bytes) keep[file.id] = prev;
+  });
+  index.files = keep;
+  delete index.listQueue;
+  delete index.listSeen;
+  return true;
+}
+
+function readStep_(index, start, budgetMs, maxReads) {
+  var reads = 0;
+  var listed = index.listed || [];
+  for (var i = 0; i < listed.length; i++) {
+    if (Date.now() - start >= budgetMs || reads >= maxReads) break;
+    var file = listed[i];
+    var prev = index.files[file.id];
+    if (prev && prev.cho != null && prev.updated === file.updated && prev.bytes === file.bytes) {
+      if (!(prev.failed && prev.failed < 2 && !prev.cho)) continue;
+    }
+    try {
+      var cho = DriveApp.getFileById(file.id).getBlob().getDataAsString("UTF-8");
+      index.files[file.id] = { name: file.name, language: file.language, updated: file.updated, bytes: file.bytes, cho: cho };
+    } catch (err) {
+      index.files[file.id] = {
+        name: file.name,
+        language: file.language,
+        updated: file.updated,
+        bytes: file.bytes,
+        cho: "",
+        failed: prev && prev.failed ? prev.failed + 1 : 1
+      };
+    }
+    reads++;
+  }
+  return reads;
+}
+
+function indexReady_(index) {
+  if (index.listing || !index.listedAt || index.listQueue) return false;
+  var listed = index.listed || [];
+  for (var i = 0; i < listed.length; i++) {
+    var file = listed[i];
+    var prev = index.files[file.id];
+    if (!prev || prev.cho == null || prev.updated !== file.updated || prev.bytes !== file.bytes) return false;
+    if (prev.failed && prev.failed < 2 && !prev.cho) return false;
+  }
+  return true;
+}
+
+function indexedCount_(index) {
+  var n = 0;
+  var listed = index.listed || [];
+  for (var i = 0; i < listed.length; i++) {
+    var file = listed[i];
+    var prev = index.files[file.id];
+    if (prev && prev.cho != null && prev.updated === file.updated && prev.bytes === file.bytes) n++;
+  }
+  return n;
+}
+
+function freshFile_(index, file) {
+  var prev = index.files[file.id];
+  if (!prev || prev.cho == null || prev.updated !== file.updated || prev.bytes !== file.bytes) return false;
+  if (prev.failed && prev.failed < 2 && !prev.cho) return false;
+  return true;
+}
+
+function songFrom_(file, prev) {
+  return {
+    id: "drive-" + file.id,
+    name: file.name || prev.name || "",
+    language: file.language || prev.language || "",
+    updated: file.updated,
+    bytes: file.bytes,
+    cho: prev.cho
+  };
+}
+
+function pageIndex_(index, cursor) {
+  var listed = index.listed || [];
+  var ready = indexReady_(index);
+  var songs = [];
+  var used = 0;
+  var next = cursor;
+  var more = !ready;
+  if (!index.listedAt || index.listing) {
+    for (var i = 0; i < listed.length && songs.length < INDEX_PAGE_SONGS; i++) {
+      var file = listed[i];
+      if (!freshFile_(index, file) || !index.files[file.id].cho) continue;
+      var early = songFrom_(file, index.files[file.id]);
+      var earlySize = JSON.stringify(early).length;
+      if (songs.length && used + earlySize > INDEX_PAGE_CHARS) break;
+      songs.push(early);
+      used += earlySize;
+    }
+    more = true;
+    next = "";
+  } else {
+    var seenCursor = !cursor;
+    for (var j = 0; j < listed.length; j++) {
+      var item = listed[j];
+      if (!seenCursor) {
+        if (item.id === cursor) seenCursor = true;
+        continue;
+      }
+      if (!freshFile_(index, item)) { more = true; break; }
+      if (!index.files[item.id].cho) continue;
+      var song = songFrom_(item, index.files[item.id]);
+      var piece = JSON.stringify(song).length;
+      if (songs.length && (songs.length >= INDEX_PAGE_SONGS || used + piece > INDEX_PAGE_CHARS)) { more = true; break; }
+      songs.push(song);
+      used += piece;
+      next = item.id;
+    }
+    if (!seenCursor) return pageIndex_(index, "");
+    if (!more) next = "";
+  }
+  return {
+    ok: true,
+    status: 200,
+    etag: index.etag || "",
+    version: index.etag || "",
+    more: more,
+    ready: ready,
+    cursor: more ? next : "",
+    indexed: indexedCount_(index),
+    total: index.total || listed.length,
+    count: index.total || listed.length,
+    songs: songs
+  };
 }
 
 function publish_(data) {
@@ -261,26 +500,6 @@ function hashPass_(text) {
 
 function parseJson_(text) {
   try { return JSON.parse(text || "{}"); } catch (err) { return {}; }
-}
-
-function cachePut_(key, text, seconds) {
-  var cache = CacheService.getScriptCache();
-  var n = Math.ceil(text.length / CACHE_CHUNK) || 1;
-  for (var i = 0; i < n; i++) cache.put(key + ":" + i, text.slice(i * CACHE_CHUNK, (i + 1) * CACHE_CHUNK), seconds);
-  cache.put(key + ":n", String(n), seconds);
-}
-
-function cacheGet_(key) {
-  var cache = CacheService.getScriptCache();
-  var n = cache.get(key + ":n");
-  if (!n) return null;
-  var parts = [];
-  for (var i = 0; i < Number(n); i++) {
-    var part = cache.get(key + ":" + i);
-    if (part == null) return null;
-    parts.push(part);
-  }
-  return parts.join("");
 }
 
 function scriptOut_(result, callback) {

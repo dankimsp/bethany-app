@@ -197,6 +197,16 @@ nav{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-rig
  #wo-play .wline{font-size:22px;margin:8px 0}
  #wo-play-bar{padding:6px 8px}
 }
+#wo-play.wo-fitting #wo-play-bar{padding:4px 8px;gap:4px}
+#wo-play.wo-fitting #wo-play-bar .wmini{min-height:36px;padding:4px 8px}
+#wo-play.wo-fitting #wo-play-title{font-size:calc(var(--wo-fs, 16px) * 1.2) !important;line-height:1.1;padding:2px 10px 0}
+#wo-play.wo-fitting #wo-play-body{padding:4px 8px 12px}
+#wo-play.wo-fitting .wline,#wo-play.wo-fitting .lyrics-only .wline{font-size:var(--wo-fs, 16px);line-height:1.12;margin:1px 0}
+#wo-play.wo-fitting .wch{font-size:calc(var(--wo-fs, 16px) * .62);min-height:.85em;line-height:1.05}
+#wo-play.wo-fitting .wsec{margin:4px 0 1px;font-size:calc(var(--wo-fs, 16px) * .55)}
+#wo-play.wo-fitting .chord{font-weight:800}
+#wo-play-body.wo-cols .wo-chart{column-count:2;column-gap:16px}
+#wo-play-body.wo-cols .wline,#wo-play-body.wo-cols .wsec{break-inside:avoid;page-break-inside:avoid}
 </style></head><body><div class="app">
 <header><img src="assets/logo-bethany-light.svg" alt="Bethany Church"><span class="wo-mode" id="wo-mode" hidden>Worship</span><span class="demo-badge">Demo</span></header>
 
@@ -533,6 +543,9 @@ nav{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-rig
    <b id="wo-play-key" class="wkeyname" style="color:#fff"></b>
    <button type="button" class="wmini" id="wo-play-num" onclick="woTogglePlayNumbers()">Numbers</button>
    <button type="button" class="wmini" id="wo-play-lyrics" onclick="woTogglePlayLyrics()">Lyrics only</button>
+   <button type="button" class="wmini" id="wo-fit-down" onclick="woNudgePlaySize(-2)" aria-label="Smaller text">A−</button>
+   <button type="button" class="wmini" id="wo-fit-up" onclick="woNudgePlaySize(2)" aria-label="Larger text">A+</button>
+   <button type="button" class="wmini" id="wo-fit" onclick="woResetPlaySize()">Fit</button>
    <button type="button" class="wmini" onclick="woToggleJump()">Songs</button>
    <button type="button" class="wmini" onclick="woExitPlay()">Exit</button>
    <span id="wo-play-pos" style="margin-left:auto;font-weight:800"></span>
