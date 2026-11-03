@@ -22,7 +22,7 @@ if ("serviceWorker" in navigator) {
     woRefreshing = true;
     location.reload();
   });
-  navigator.serviceWorker.register("sw.js?v=23").catch(function () {});
+  navigator.serviceWorker.register("sw.js?v=24").catch(function () {});
 }
 </script>
 <style>
@@ -204,10 +204,11 @@ body.wo-playing .app{padding-bottom:0}
 .empty img{width:84px;height:auto}
 .back.glass{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.25);color:#fff}
 #s-signin{padding:0 0 28px}
-.auth-photo{height:340px;position:relative;background:linear-gradient(180deg,rgba(0,16,22,.97) 0%,rgba(0,18,26,.95) 20%,rgba(0,32,42,.42) 46%,rgba(0,48,63,.96)),url(assets/img/church-exterior.webp) center 30%/cover;color:#fff;padding:14px 22px 0}
-.auth-photo h1{position:absolute;left:22px;right:22px;bottom:58px;font-family:var(--serif);font-size:34px;line-height:1.14;margin:0}
+.auth-photo{height:340px;position:relative;display:flex;flex-direction:column;justify-content:flex-end;background:linear-gradient(180deg,rgba(0,16,22,.97) 0%,rgba(0,18,26,.95) 20%,rgba(0,32,42,.42) 46%,rgba(0,48,63,.96)),url(assets/img/church-exterior.webp) center 30%/cover;color:#fff;padding:14px 22px 28px}
+.auth-photo .hdr{position:absolute;top:14px;left:22px;right:22px}
+.auth-photo h1{position:static;font-family:var(--serif);font-size:clamp(28px,8.4vw,34px);line-height:1.14;margin:0;text-wrap:balance}
 .auth-photo h1 em{font-weight:400;color:#fff}
-.auth-photo .lead{position:absolute;left:22px;right:22px;bottom:28px;margin:0;font-size:14px;color:rgba(255,255,255,.88)}
+.auth-photo .lead{position:static;margin:8px 0 0;font-size:14px;color:rgba(255,255,255,.88)}
 .sheet{background:var(--bg);border-radius:24px 24px 0 0;margin-top:-22px;position:relative;padding:22px 22px 8px}
 .gbtn{width:100%;height:52px;border-radius:999px;background:#fff;border:1.5px solid rgba(0,48,63,.14);display:flex;align-items:center;justify-content:center;gap:10px;font-weight:700;font-size:16px;cursor:pointer}
 .or{display:flex;align-items:center;gap:12px;color:var(--text-3);font-size:12px;font-weight:600;margin:14px 0}
@@ -256,6 +257,7 @@ body.wo-playing .app{padding-bottom:0}
 .kitchen-grid{display:block}
 .week-grid{display:block}
 .home-grid{display:flex;flex-direction:column;gap:16px}
+#s-home .home-grid > .card{margin:0}
 .tiles{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 @media (min-width:768px){
   .app{max-width:none;margin:0;padding-left:var(--rail);background:var(--bg)}
@@ -285,7 +287,7 @@ body.wo-playing .app{padding-bottom:0}
   .week-grid{display:grid;grid-template-columns:1fr;gap:16px;align-items:start}
   #special-list{display:grid;grid-template-columns:1fr 1fr;gap:16px}
   .ev-img{margin:0}
-  .mhead{margin:-26px -36px 16px;min-height:280px;padding:20px 36px 24px}
+  .mhead{margin:0 0 16px;min-height:280px;padding:20px 28px 24px;border-radius:var(--r-card);overflow:hidden}
   .grid td.nm{position:sticky;left:0;background:#fff;z-index:1}
   #wo-play-body.wo-cols .wo-chart{column-count:var(--wo-cols,2);column-gap:28px}
 }
@@ -301,10 +303,14 @@ body.wo-playing .app{padding-bottom:0}
   .tiles{grid-template-columns:1fr 1fr}
   .s-tiles .tile:not(.photo){flex-direction:column;align-items:flex-start;min-height:124px}
   .s-tiles .tile:not(.photo) .mic{margin:0 0 8px}
+  .home-grid .s-hero{align-self:stretch;height:100%}
   .home-grid .hero.photo{min-height:300px}
   .week-grid{grid-template-columns:1fr 1fr}
   #wo-song .wbody{column-count:2;column-gap:28px}
+  #wo-song .wbody .wblock{break-inside:avoid}
+  #wo-song .wbody .wsec{break-after:avoid}
   #wo-song .wbody .wline,#wo-song .wbody .wsec{break-inside:avoid}
+  #s-give,#s-visit,#s-more{max-width:760px}
   #ministry-list{grid-template-columns:1.4fr 1fr 1fr}
   #ministry-list .mcard.span2{grid-column:auto}
   #wo-play-body.wo-cols .wo-chart{column-count:var(--wo-cols,3)}
@@ -329,7 +335,7 @@ body.signed-out .screen{padding-bottom:28px}
 .wsec{margin:14px 0 4px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;font-size:12px;color:var(--accent)}
 .wline{line-height:1.35;margin:8px 0} .wseg{display:inline-block;vertical-align:bottom;margin:0;position:relative} .wword{display:inline-block;white-space:nowrap} .wseg>span:last-child{white-space:pre} .wseg.cont::after{content:"-";font-weight:700;color:var(--text-2)}
 .wch{display:block;min-height:1.05em;font-size:14px;background:none;white-space:nowrap}
-.chord{font-weight:800;background:#F6DD8A;color:#2A2000;padding:0 2px;border-radius:16px}
+.chord{font-weight:800;background:#F6DD8A;color:#2A2000;padding:0 2px;border-radius:4px}
 #s-worship .chip{min-height:44px;height:auto;padding:6px 12px;border:0;box-shadow:inset 0 0 0 1.5px rgba(0,48,63,.16);background:#fff;color:var(--brand);cursor:pointer}
 #s-worship .chip.on{background:var(--brand);color:#fff}
 .lang-switch{display:flex;border-radius:999px;overflow:hidden;margin:8px 0;padding:3px;background:var(--surface-2)}
@@ -339,7 +345,7 @@ body.signed-out .screen{padding-bottom:28px}
 .setcard{background:#fff;border:1px solid var(--stroke);border-radius:16px;padding:12px;margin:10px 0}
 .setline{display:flex;align-items:center;gap:6px;margin-bottom:8px}
 .settitle{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;font-weight:800;color:var(--brand);background:none;border:0;cursor:pointer}
-.lnkbtn{background:none;border:0;color:var(--accent);font-weight:700;cursor:pointer;min-height:44px;display:inline-flex;align-items:center;padding:0 2px}
+.lnkbtn{background:none;border:0;color:var(--accent);font-weight:700;cursor:pointer;min-height:44px;display:inline-flex;align-items:center;gap:6px;padding:0 2px}
 .wo-sync{font-size:14px;font-weight:700;color:var(--ok)}
 #wo-play{position:fixed;inset:0;z-index:40;background:#041820;color:#f7f5ee;display:flex;flex-direction:column}
 #wo-play .chord{color:#041820;background:#dcae1d}
@@ -388,8 +394,10 @@ body.signed-out .screen{padding-bottom:28px}
 #s-events .row-between{margin:28px 0 12px}
 #special-list:has(> :only-child){grid-template-columns:1fr}
 .week-grid{align-items:start}
+.week-grid .card{margin:0}
 @media (min-width:768px) and (max-width:1099px){
-  .s-tiles .tile:not(.photo){flex-direction:row;align-items:center;gap:14px;min-height:88px}
+  .home-grid .s-min{align-self:stretch;height:100%}
+  .s-tiles .tile:not(.photo){flex-direction:row;align-items:center;justify-content:flex-start;gap:14px;min-height:88px}
   .s-tiles .tile:not(.photo) .mic{margin:0}
 }
 @media (min-width:768px){
@@ -410,6 +418,12 @@ a.pill.line.createbtn{height:48px;margin-top:8px}
 .give-secondary{background:var(--surface)}
 .wo-empty b{display:block}
 #wo-private-msg .lnkbtn{font-size:14px}
+#s-worship .wo-search{position:sticky;top:0;z-index:4;background:var(--bg);padding:4px 0 8px}
+#wo-list{position:relative;padding-right:52px}
+.wo-az{position:sticky;top:12px;float:right;display:flex;flex-direction:column;align-items:center;width:44px;margin-right:-52px;z-index:3;max-height:calc(100dvh - 200px);overflow:auto}
+.wo-az-letter{width:44px;min-height:28px;border:0;background:transparent;color:var(--accent);font-size:12px;font-weight:700;line-height:20px;padding:0;cursor:pointer}
+.wo-letter{font-size:12px;font-weight:800;letter-spacing:.08em;color:var(--text-2);margin:14px 0 4px}
+.wo-more{margin:12px 0}
 @media (min-width:768px){
   #special-list:has(> :only-child) .ev-img{display:grid;grid-template-columns:minmax(220px,34%) minmax(0,1fr)}
   #special-list:has(> :only-child) .ev-img img.ph{height:100%;min-height:210px}
@@ -423,7 +437,7 @@ a.pill.line.createbtn{height:48px;margin-top:8px}
 <section class="screen" id="s-signin" hidden>
   <div class="auth-photo">
     <div class="hdr"><img class="logo" src="assets/logo-bethany-light.svg" alt="Bethany Church"><div class="lang glass"><button type="button" id="auth-en">EN</button><button type="button" id="auth-ko">한</button></div></div>
-    <h1><span data-i18n="welcomeTitle">Welcome home to</span><br><em data-i18n="welcomeChurch">Bethany Church</em></h1>
+    <h1><span data-i18n="welcomeTitle">Welcome home&nbsp;to</span><br><em data-i18n="welcomeChurch">Bethany Church</em></h1>
     <p class="lead" data-i18n="welcomeLead">Sign in for services, events and your ministries.</p>
   </div>
   <div class="sheet">
@@ -729,15 +743,17 @@ a.pill.line.createbtn{height:48px;margin-top:8px}
     <button type="button" id="wo-lang-en" class="on" role="tab" aria-selected="true">English CCM</button>
     <button type="button" id="wo-lang-ko" role="tab" aria-selected="false">Korean CCM</button>
    </div>
+   <div class="wo-search">
    <label id="wo-q-lab" for="wo-q">Song name</label>
    <input id="wo-q" placeholder="Title or artist" autocomplete="off">
+   </div>
    <button class="btn" id="wo-filter-btn" type="button" aria-expanded="false"><span id="wo-filter-label">Filters</span> <span id="wo-filter-n" hidden>0</span></button>
    <div id="wo-filters" hidden>
     <div id="wo-speed" class="chips"></div>
     <label id="wo-artist-lab" for="wo-artist">Artist</label>
     <select id="wo-artist"></select>
     <div class="chips">
-     <button class="chip" id="wo-az" type="button">A–Z</button>
+     <button class="chip on" id="wo-az" type="button">A–Z</button>
      <button class="chip" id="wo-titleonly" type="button">Title only</button>
     </div>
     <label id="wo-theme-lab" for="wo-theme">Theme</label>
@@ -888,6 +904,6 @@ const WORSHIP_BACKEND_URL = 'https://script.google.com/macros/s/AKfycbwWtdJUNT8n
 <script src="js/config.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/app.js"></script>
-<script src="worship.js?v=23"></script>
+<script src="worship.js?v=24"></script>
 </body>
 </html>

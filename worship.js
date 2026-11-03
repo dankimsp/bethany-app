@@ -321,11 +321,13 @@ function woChart(song) {
   var root = document.createElement("div");
   root.className = "wo-chart wbody" + (woLyricsOn() ? " lyrics-only" : "");
   song.sections.forEach(function (sec) {
+    var block = document.createElement("div");
+    block.className = "wblock";
     if (sec.label) {
       var h = document.createElement("div");
       h.className = "wsec";
       h.textContent = sec.label;
-      root.appendChild(h);
+      block.appendChild(h);
     }
     sec.lines.forEach(function (line) {
       var row = document.createElement("div");
@@ -365,8 +367,9 @@ function woChart(song) {
         }
         word.appendChild(s);
       });
-      root.appendChild(row);
+      block.appendChild(row);
     });
+    root.appendChild(block);
   });
   return root;
 }
@@ -446,7 +449,9 @@ function woApplyCatalog(driveItems) {
     if (item.language && !/\{language\s*:/i.test(item.cho)) song.language = item.language === "ko" ? "ko" : "en";
     extra.push(song);
   });
-  wo.songs = (wo.bundled || []).concat(extra);
+  wo.songs = (wo.bundled || []).concat(extra).sort(function (a, b) {
+    return String(a.title || "").localeCompare(String(b.title || ""), undefined, { sensitivity: "base" });
+  });
   wo.byId = {};
   wo.songs.forEach(function (s) { wo.byId[s.id] = s; });
   woInitFilters();
@@ -675,9 +680,9 @@ function woShow(view) {
   woLiveWatch(view === "edit");
 }
 var woWasTablet = null;
-var woF = { speed: "all", artist: "", theme: "", moment: [], season: [], range: [], time: [], difficulty: [], scripture: "", az: false, titleOnly: false, open: false, lang: "en", speedReady: false };
+var woF = { speed: "all", artist: "", theme: "", moment: [], season: [], range: [], time: [], difficulty: [], scripture: "", az: true, titleOnly: false, open: false, lang: "en", speedReady: false };
 function woActiveFilters() {
-  return (woF.speed !== "all" ? 1 : 0) + (woF.artist ? 1 : 0) + (woF.theme ? 1 : 0) + (woF.az ? 1 : 0) + (woF.titleOnly ? 1 : 0) + woF.moment.length + woF.season.length + woF.range.length + woF.time.length + woF.difficulty.length + (woF.scripture ? 1 : 0);
+  return (woF.speed !== "all" ? 1 : 0) + (woF.artist ? 1 : 0) + (woF.theme ? 1 : 0) + (woF.titleOnly ? 1 : 0) + woF.moment.length + woF.season.length + woF.range.length + woF.time.length + woF.difficulty.length + (woF.scripture ? 1 : 0);
 }
 function woSpeedOf(song) {
   if (song.speed === "slow" || song.speed === "medium" || song.speed === "fast") return song.speed;
@@ -726,14 +731,14 @@ function woInitFilters() {
     document.getElementById("wo-filter-btn").setAttribute("aria-expanded", woF.open ? "true" : "false");
   };
   document.getElementById("wo-clear").onclick = function () {
-    woF.speed = "all"; woF.artist = ""; woF.theme = ""; woF.moment = []; woF.season = []; woF.range = []; woF.time = []; woF.difficulty = []; woF.scripture = ""; woF.az = false; woF.titleOnly = false;
+    woF.speed = "all"; woF.artist = ""; woF.theme = ""; woF.moment = []; woF.season = []; woF.range = []; woF.time = []; woF.difficulty = []; woF.scripture = ""; woF.az = true; woF.titleOnly = false;
     var scripture = document.getElementById("wo-scripture"); if (scripture) scripture.value = "";
     document.getElementById("wo-q").value = "";
     document.getElementById("wo-q").placeholder = "Title or artist";
     document.getElementById("wo-artist").value = "";
     var themePick = document.getElementById("wo-theme"); if (themePick) themePick.value = "";
     document.querySelectorAll("#wo-speed button").forEach(function (b) { b.classList.toggle("on", b.dataset.speed === "all"); });
-    document.getElementById("wo-az").classList.remove("on");
+    document.getElementById("wo-az").classList.add("on");
     document.getElementById("wo-titleonly").classList.remove("on");
     woRenderLib();
   };
@@ -811,6 +816,7 @@ function woT(key) {
     add: ["Add", "추가"], song: ["song", "곡"], songs: ["songs", "곡"], allArtists: ["All artists", "모든 아티스트"],
     allThemes: ["All themes", "모든 주제"], none: ["No songs match.", "맞는 곡이 없습니다."],
     enAdding: ["English songs are being added.", "영어 곡을 추가하는 중입니다."],
+    showMore: ["Show more", "더 보기"],
     libEn: ["English CCM", "영어 CCM"], libKo: ["Korean CCM", "한국어 CCM"], key: ["Key", "키"],
     all: ["All", "전체"], slow: ["Slow", "느림"], medium: ["Medium", "보통"], fast: ["Fast", "빠름"]
   };
@@ -938,8 +944,22 @@ function woFilteredSongs() {
     var hay = woF.titleOnly ? s.title : [s.title, s.artist || ""].concat(woArtistNames(s)).join(" ");
     return hay.replace(/\s+/g, " ").toLowerCase().indexOf(q.replace(/\s+/g, " ")) >= 0;
   });
-  if (woF.az) list = list.slice().sort(function (a, b) { return a.title.localeCompare(b.title); });
+  if (woF.az) list = list.slice().sort(function (a, b) { return String(a.title || "").localeCompare(String(b.title || ""), undefined, { sensitivity: "base" }); });
   return list;
+}
+function woLetter(title) {
+  var ch = String(title || "").trim().charAt(0);
+  var code = ch.charCodeAt(0);
+  if (code >= 0xAC00 && code <= 0xD7A3) {
+    var initials = "ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ";
+    return initials[Math.floor((code - 0xAC00) / 588)];
+  }
+  var up = ch.toUpperCase();
+  return /[A-Z]/.test(up) ? up : "#";
+}
+function woLibSignature() {
+  var q = document.getElementById("wo-q");
+  return [woF.lang, woF.speed, woF.artist, woF.theme, woF.az ? "1" : "0", woF.titleOnly ? "1" : "0", (woF.moment || []).join(","), (woF.season || []).join(","), (woF.range || []).join(","), (woF.time || []).join(","), (woF.difficulty || []).join(","), woF.scripture || "", q ? q.value : ""].join("|");
 }
 function woRenderLib() {
   if (!woF.langPicked) woF.lang = woPreferLibLang();
@@ -950,12 +970,57 @@ function woRenderLib() {
   var box = document.getElementById("wo-list");
   box.replaceChildren();
   var list = woFilteredSongs();
+  var sig = woLibSignature();
+  if (wo.libSig !== sig) { wo.libSig = sig; wo.libShown = 60; }
+  if (!wo.libShown) wo.libShown = 60;
+  var shown = list.slice(0, wo.libShown);
   var count = document.getElementById("wo-count");
   if (count) count.textContent = list.length + " " + woT(list.length === 1 ? "song" : "songs");
   var badge = document.getElementById("wo-filter-n");
   var active = woActiveFilters();
   if (badge) { badge.hidden = active === 0; badge.textContent = String(active); }
-  list.forEach(function (s) {
+  if (list.length && woF.az) {
+    var rail = document.createElement("div");
+    rail.className = "wo-az";
+    rail.setAttribute("aria-label", "A to Z");
+    var seenLetter = {};
+    var letters = [];
+    list.forEach(function (s) {
+      var letter = woLetter(s.title);
+      if (!seenLetter[letter]) { seenLetter[letter] = 1; letters.push(letter); }
+    });
+    letters.forEach(function (letter) {
+      var jump = document.createElement("button");
+      jump.type = "button";
+      jump.className = "wo-az-letter";
+      jump.textContent = letter;
+      jump.onclick = function () {
+        var at = -1;
+        list.forEach(function (s, i) { if (at < 0 && woLetter(s.title) === letter) at = i; });
+        if (at < 0) return;
+        if (wo.libShown < at + 1) wo.libShown = Math.ceil((at + 1) / 60) * 60;
+        wo.holdScroll = true;
+        woRenderLib();
+        var target = document.getElementById("wo-L-" + encodeURIComponent(letter));
+        if (target) target.scrollIntoView({ block: "start" });
+      };
+      rail.appendChild(jump);
+    });
+    box.appendChild(rail);
+  }
+  var lastLetter = "";
+  shown.forEach(function (s) {
+    if (woF.az) {
+      var letter = woLetter(s.title);
+      if (letter !== lastLetter) {
+        var head = document.createElement("div");
+        head.className = "wo-letter";
+        head.id = "wo-L-" + encodeURIComponent(letter);
+        head.textContent = letter;
+        box.appendChild(head);
+        lastLetter = letter;
+      }
+    }
     var row = document.createElement("div");
     row.className = "wrow";
     var b = document.createElement("button");
@@ -977,16 +1042,24 @@ function woRenderLib() {
     row.appendChild(add);
     box.appendChild(row);
   });
-  if (!box.childElementCount) {
+  if (!shown.length) {
     var p = document.createElement("p");
     p.className = "muted";
     p.textContent = woT("none");
     box.appendChild(p);
+  } else if (shown.length < list.length) {
+    var more = document.createElement("button");
+    more.type = "button";
+    more.className = "pill line wo-more";
+    more.textContent = woT("showMore") + " (" + (list.length - shown.length) + ")";
+    more.onclick = function () { wo.libShown += 60; woRenderLib(); };
+    box.appendChild(more);
   }
-  if (pane) {
+  if (pane && !wo.holdScroll) {
     pane.scrollTop = keep;
     requestAnimationFrame(function () { pane.scrollTop = keep; });
   }
+  wo.holdScroll = false;
 }
 function woOpen(id, keyName, fromRoute) {
   var s = wo.byId[id];
