@@ -1,436 +1,400 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<title>Bethany Church – Member App (Mockup v2)</title>
-<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#00303f">
-<link rel="apple-touch-icon" href="assets/icon-192.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Bethany">
-<script>try{var _m=JSON.parse(localStorage.getItem("bethany-demo-member")||"null");if(!(_m&&_m.signedIn&&_m.profileDone))document.documentElement.classList.add("need-auth")}catch(e){document.documentElement.classList.add("need-auth")}
-if("serviceWorker" in navigator){var woHadSW=!!navigator.serviceWorker.controller,woRefreshing=false;navigator.serviceWorker.addEventListener("controllerchange",function(){if(!woHadSW){woHadSW=true;return}if(woRefreshing)return;woRefreshing=true;location.reload()});navigator.serviceWorker.register("sw.js?v=18").catch(function(){})}</script>
+<title>Bethany Church</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#00303f">
+<link rel="apple-touch-icon" href="assets/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Bethany">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Noto+Sans+KR:wght@400;500;600;700;800&family=Noto+Serif+KR:wght@700&family=Open+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script>
+if ("serviceWorker" in navigator) {
+  var woHadSW = !!navigator.serviceWorker.controller, woRefreshing = false;
+  navigator.serviceWorker.addEventListener("controllerchange", function () {
+    if (!woHadSW) { woHadSW = true; return; }
+    if (woRefreshing) return;
+    woRefreshing = true;
+    location.reload();
+  });
+  navigator.serviceWorker.register("sw.js?v=20").catch(function () {});
+}
+</script>
 <style>
-:root{--teal:#00303f;--teal2:#0b4a5c;--gold:#dcae1d;--cream:#f7f5ee;--ink:#1a2226;--mut:#4a5559}
-*{box-sizing:border-box}html,body{margin:0}
-body{font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:19px;line-height:1.5;background:var(--cream);color:var(--ink)}
-.app{max-width:480px;margin:0 auto;min-height:100vh;padding-bottom:96px;position:relative}
-header{background:var(--teal);color:#fff;padding:14px 18px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:5}
-header img{height:38px}header .t{margin-left:auto;font-size:15px;opacity:.85}
-.screen{display:none}.screen.on{display:block}
-.pad{padding:20px 18px}
-h1{font-size:30px;line-height:1.2;margin:0 0 8px}h2{font-size:23px;margin:26px 0 10px;color:var(--teal)}h3{font-size:20px;margin:0 0 4px}
-.hero{position:relative;color:#fff;background:var(--teal) center/cover;min-height:250px;display:flex;align-items:flex-end}
-.hero:before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,48,63,.15),rgba(0,48,63,.92))}
-.hero>div{position:relative;padding:22px 18px}.hero p{margin:0;font-size:18px}
-.card{background:#fff;border-radius:16px;padding:18px;margin:12px 0;box-shadow:0 2px 10px rgba(0,48,63,.08);border:1px solid #e7e2d2}
-.next{border-left:6px solid var(--gold)}.label{font-size:15px;text-transform:uppercase;letter-spacing:.08em;color:var(--mut);font-weight:700}
-.big{font-size:26px;font-weight:800;color:var(--teal)}
-.btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:62px;padding:14px 18px;border-radius:14px;font-size:21px;font-weight:800;text-decoration:none;border:0;margin:10px 0;cursor:pointer;font-family:inherit}
-.btn-live{background:#c4161c;color:#fff;font-size:24px;min-height:74px}
-.btn-gold{background:var(--gold);color:var(--teal)}.btn-teal{background:var(--teal);color:#fff}
-.btn-out{background:#fff;color:var(--teal);border:3px solid var(--teal)}
-.dot{width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 0 0 4px rgba(255,255,255,.35)}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.ql{background:#fff;border:2px solid #e2dccb;border-radius:16px;padding:16px 12px;text-align:center;text-decoration:none;color:var(--teal);font-weight:800;font-size:18px;min-height:104px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
-.ql .ic{font-size:32px}
-.row{display:flex;justify-content:space-between;gap:10px;padding:12px 0;border-bottom:1px solid #ece7d8}.row:last-child{border:0}
-.row b{color:var(--teal)}.row span{text-align:right;font-weight:700;white-space:nowrap}
-.step{display:flex;align-items:center;gap:6px}.step button{width:48px;height:52px;flex:none;border-radius:12px;border:2px solid var(--teal);background:#fff;color:var(--teal);font-size:26px;font-weight:800;cursor:pointer}.step input{text-align:center;padding:12px 4px;min-width:0}
-.ph{background:#fff3c4;border:2px dashed #b8890a;color:#6b4f00;padding:2px 8px;border-radius:8px;font-weight:700;font-size:.9em}
-.ev-date{background:var(--teal);color:#fff;border-radius:12px;text-align:center;padding:8px 10px;min-width:70px}
-.ev-date .m{font-size:14px;color:var(--gold);font-weight:800}.ev-date .d{font-size:28px;font-weight:800;line-height:1}
-.ev{display:flex;gap:14px;align-items:flex-start}
-.past{opacity:.85}.past .ev-date{background:#7b8a8f}
-.tag{display:inline-block;background:var(--gold);color:var(--teal);font-weight:800;font-size:14px;padding:2px 10px;border-radius:20px}
-label{display:block;font-weight:700;margin:14px 0 6px}
-input,select,textarea{width:100%;font-size:19px;padding:14px;border:2px solid #9aa6a9;border-radius:12px;font-family:inherit;background:#fff}
-textarea{min-height:130px}
-.photo{width:100%;border-radius:16px;display:block;margin:12px 0;aspect-ratio:16/9;object-fit:cover}
-a.lnk{color:var(--teal);font-weight:700}
-.muted{color:var(--mut);font-size:17px}
-.note{font-size:14px;color:var(--mut);text-align:center;margin:20px 0 0}
-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:var(--teal);display:grid;grid-template-columns:repeat(5,1fr);z-index:10;padding-bottom:env(safe-area-inset-bottom)}
-nav a{color:#cfe0e4;text-decoration:none;text-align:center;font-size:16px;font-weight:700;padding:10px 0 12px;display:flex;flex-direction:column;align-items:center;gap:2px}
-nav a .ic{font-size:24px;line-height:1.1}
-nav a.on{color:var(--gold);box-shadow:inset 0 4px 0 var(--gold)}
-
-nav a svg{width:28px;height:28px}
-.ico{width:24px;height:24px;vertical-align:-5px;flex:none}
-.h3i{display:flex;align-items:center;gap:8px;margin:0 0 4px;font-size:20px}
-a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible{outline:4px solid var(--gold);outline-offset:3px;box-shadow:0 0 0 7px var(--teal)}
-nav a:focus-visible{outline-offset:-6px;box-shadow:none}
-.cal{display:inline-flex;align-items:center;gap:6px;background:#fff;color:var(--teal);border:2px solid var(--teal);border-radius:10px;font-weight:800;font-size:16px;padding:8px 12px;min-height:44px;cursor:pointer;font-family:inherit;margin-top:8px}
-.srow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid #ece7d8}.srow:last-child{border:0}
-.srow .calx{margin:0;padding:6px 10px;font-size:15px}
-.srow b{color:var(--teal);display:block}.srow small{font-size:17px;font-weight:700}
-.serm{display:flex;gap:12px;align-items:center;text-decoration:none;color:inherit;padding:10px 0;border-bottom:1px solid #ece7d8}.serm:last-child{border:0}
-.serm img{width:128px;height:72px;object-fit:cover;border-radius:10px;flex:none}
-.serm .tt{font-weight:800;color:var(--teal);font-size:17px;line-height:1.3}.serm .dt{font-size:15px;color:var(--mut)}
-details{background:#fff;border:1px solid #e7e2d2;border-radius:16px;margin:12px 0;box-shadow:0 2px 10px rgba(0,48,63,.08)}
-summary{list-style:none;cursor:pointer;padding:18px;font-size:21px;font-weight:800;color:var(--teal);display:flex;justify-content:space-between;align-items:center;min-height:64px}
-summary::-webkit-details-marker{display:none}
-summary:after{content:"+";font-size:30px;color:var(--gold);line-height:1}
-details[open] summary:after{content:"–"}
-details>div{padding:0 18px 18px}
-details .card{box-shadow:none;margin:10px 0;background:var(--cream)}
-ol{padding-left:24px;margin:6px 0}ol li{margin:6px 0}
+:root{
+  --font:"Open Sans","Noto Sans KR",-apple-system,system-ui,sans-serif;
+  --serif:"Libre Baskerville","Noto Serif KR",Georgia,serif;
+  --bg:#F7F5EE; --surface:#fff; --surface-2:#F2EFE7; --surface-3:#E4E0D4;
+  --stroke:rgba(0,48,63,.08); --text:#0F2830; --text-2:#4D5C61; --text-3:#68767B;
+  --brand:#00303F; --accent:#12596B; --gold:#DCAE1D; --gold-ink:#7C5D08; --plum:#6E3F6B;
+  --gold-soft:rgba(220,174,29,.16); --accent-soft:rgba(18,89,107,.09); --plum-soft:rgba(110,63,107,.09);
+  --ok:#2F7A57; --ok-soft:#E2F0E8; --maybe:#9A6A00; --maybe-soft:#FBEFC9; --no:#A9473D; --no-soft:#F6E2DE;
+  --shadow:0 1px 2px rgba(0,40,50,.04),0 10px 28px rgba(0,40,50,.07);
+  --hero:radial-gradient(90% 80% at 100% 0%, rgba(220,174,29,.30), transparent 60%), radial-gradient(110% 120% at 0% 100%, #1C6676, transparent 62%), linear-gradient(140deg,#00303F,#06404F 55%,#032A37);
+  --teal:var(--brand); --ink:var(--text); --mut:var(--text-2);
+}
+*{box-sizing:border-box} html,body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font)}
+html[lang="ko"]{word-break:keep-all}
 [hidden]{display:none !important}
-.welcome{background:var(--teal);color:#fff;text-align:center;padding:48px 24px 36px;position:relative}
-.welcome img{height:64px}.welcome h1{color:#fff;margin:22px 0 6px}.welcome p{margin:0;opacity:.85;font-size:18px}
-.center{text-align:center}
-.bigic{width:96px;height:96px;border-radius:50%;background:#fff;border:3px solid var(--gold);display:flex;align-items:center;justify-content:center;margin:8px auto 16px;color:var(--teal)}
-.tg{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.sw{width:60px;height:34px;border-radius:20px;background:var(--teal);position:relative;flex:none;border:0;padding:0;cursor:pointer}
-.sw:after{content:"";position:absolute;right:4px;top:4px;width:26px;height:26px;border-radius:50%;background:var(--gold)}
-.sw.off{background:#c9cfd1}.sw.off:after{right:auto;left:4px;background:#fff}
-.swl{font-size:13px;font-weight:800;color:var(--mut);text-align:center;margin-top:2px}
-.ann{background:var(--gold);color:var(--teal);padding:10px 18px;font-size:16px;font-weight:700;display:flex;gap:8px;align-items:flex-start}
-.ann .x{margin-left:auto;background:none;border:0;color:inherit;font-size:22px;line-height:1;cursor:pointer;padding:0 0 0 8px;font-family:inherit}
-.oauth{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;min-height:62px;background:#fff;border:2px solid #9aa6a9;border-radius:14px;cursor:pointer;padding:14px 18px;font:inherit;font-size:20px;font-weight:800;color:var(--ink)}
-.oauth:disabled{opacity:.55}
-.demo-badge{margin-left:auto;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);border:1px solid rgba(220,174,29,.7);background:rgba(220,174,29,.16);border-radius:999px;padding:2px 8px;line-height:1.4}
-.welcome .demo-badge{position:absolute;top:14px;right:14px;margin:0}
-.hi{font-size:30px;line-height:1.2;font-weight:800;margin:0 0 4px}
-.lnkbtn{background:none;border:0;padding:0;color:var(--teal);font-weight:700;font-size:inherit;cursor:pointer;font-family:inherit}
-.mail-preview{font-size:15px;color:#333}.mail-preview hr{border:0;border-top:1px solid #ddd;margin:14px 0}
-html.need-auth #s-auth{display:block}
-html.need-auth nav,body.locked nav{display:none}
-html.need-auth .app,body.locked .app{padding-bottom:28px}
-html.need-auth header{display:none}
-html.need-auth.show-bar header{display:flex}
-body.on-signin header{display:none}
-.row span.em{white-space:normal;word-break:break-word;font-size:16px}
-.chk{display:flex;align-items:center;gap:10px;font-weight:700;margin:14px 0}
-.chk input{width:22px;height:22px;padding:0;flex:none}
-.wrow{display:flex;flex-direction:row;align-items:center;gap:8px;width:100%;text-align:left;background:#fff;border:1px solid #e7e2d2;border-radius:14px;padding:8px 8px 8px 14px;margin:8px 0;color:var(--ink)}
-.wrow .wopen{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;border:0;background:transparent;padding:6px 0;font:inherit;color:inherit;text-align:left;cursor:pointer}
-.wrow b{color:var(--teal);font-size:18px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.wrow span{color:var(--mut);font-size:15px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.wadd{flex:none;min-height:44px;padding:8px 12px;border-radius:12px;border:2px solid var(--teal);background:#fff;color:var(--teal);font:inherit;font-weight:800;cursor:pointer}
-.wo-addpick{position:fixed;z-index:30;left:50%;transform:translateX(-50%);width:min(440px,calc(100% - 24px));bottom:calc(84px + env(safe-area-inset-bottom));max-height:min(70vh,420px);overflow:auto;margin:0}
-.wo-addpick .btn{min-height:48px;font-size:17px}
-.wsec{margin:16px 0 4px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;font-size:13px;color:var(--teal)}
-.wline{line-height:1.25;margin:8px 0}
-.wseg{display:inline-block;vertical-align:bottom;margin:0 .15em .1em 0}
-.wch{display:block;min-height:1.05em;font-size:13px;line-height:1.2;font-weight:400;background:none;padding:0;white-space:nowrap}
-.chord{display:inline;font-weight:800;color:#1a2226;background:#ffe58a;padding:0 2px;border-radius:3px}
-.wtools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0}
-.wmini{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px 12px;border-radius:12px;border:2px solid var(--teal);background:#fff;color:var(--teal);font:inherit;font-weight:800;text-decoration:none;cursor:pointer}
-.wmini.on{background:var(--teal);color:#fff}
-.wkeyname{min-width:2.2em;text-align:center;font-size:22px;color:var(--teal)}
-.sitem{display:flex;gap:6px;align-items:center;min-width:0}
-.whandle{width:36px;height:36px;flex:none;border:0;border-radius:10px;background:#f3efe4;font-size:16px;cursor:grab;touch-action:none;font-weight:800}
-#s-worship,#s-worship *{box-sizing:border-box}
-#s-worship{overflow-x:hidden}
-#s-worship .pad,#s-worship .card,#s-worship .setcard,#s-worship .wtools{max-width:100%;min-width:0}
-#s-worship input,#s-worship textarea,#s-worship select,#s-worship button{max-width:100%}
-#wo-date,#wo-leader,.setnote{width:100%;min-width:0}
-.wo-sync{margin:2px 0 8px;font-size:13px;font-weight:700;color:var(--mut)}
-.setcard{background:#fff;border:1px solid #e7e2d2;border-radius:14px;padding:12px;margin:10px 0}
-.setcard.dragging{opacity:.55}
-.setline{display:flex;align-items:center;gap:6px;min-width:0;margin-bottom:8px}
-.settitle{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;font-weight:800;color:var(--teal)}
-.setx,.wicon{width:36px;height:36px;flex:none;padding:0;min-height:36px}
-.setline .wkeyname{min-width:1.4em;font-size:18px;flex:none}
-.setnote{margin:0}
-.chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0;max-width:100%}
-.chip{min-height:44px;padding:6px 12px;border-radius:999px;border:2px solid var(--teal);background:#fff;color:var(--teal);font:inherit;font-weight:800;font-size:15px;cursor:pointer}
-.chip.on{background:var(--teal);color:#fff}
-#wo-filter-n{display:inline-block;min-width:1.4em;margin-left:6px;background:var(--gold);color:var(--teal);border-radius:999px;font-size:14px;line-height:1.4;padding:0 6px}
-#wo-play{position:fixed;inset:0;z-index:40;background:#041820;color:#f7f5ee;display:flex;flex-direction:column}
-#wo-play .wch{background:none;font-size:16px;color:inherit}
-#wo-play .chord{color:#041820;background:#dcae1d}
-#wo-play .wline{font-size:26px;margin:14px 0}
-#wo-play .wsec{color:var(--gold)}
-#wo-play-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 12px;background:#00303f}
-#wo-play-body{flex:1;overflow:auto;padding:18px 16px 40px}
-body.wo-playing nav{display:none}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:inherit;text-decoration:none}
+.app{max-width:480px;margin:0 auto;min-height:100vh;min-height:100dvh;position:relative}
+.screen{padding:12px 20px calc(168px + env(safe-area-inset-bottom))}
+.hdr{display:flex;align-items:center;justify-content:space-between;min-height:50px;gap:8px}
+.logo{height:36px}
+.ptitle{font-family:var(--serif);font-size:30px;font-weight:700;letter-spacing:-.02em;line-height:1.15;margin:0}
+.psub{color:var(--text-2);font-size:14.5px;margin:4px 0 16px}
+.greet h1{font-family:var(--serif);font-size:26px;line-height:1.15;margin:8px 0 12px}
+.greet em{font-style:italic;font-weight:400;color:var(--accent)}
+.card{background:var(--surface);border:1px solid var(--stroke);border-radius:24px;box-shadow:var(--shadow);padding:16px;margin:12px 0}
+.hero{background:var(--hero);color:#fff;border-radius:28px;padding:18px 18px 16px 20px;position:relative;overflow:hidden}
+.eyebrow{font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-2)}
+.hero .eyebrow{color:#F0D57A}
+.htitle{font-family:var(--serif);font-size:22px;font-weight:700;margin:10px 0}
+.pill{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:46px;padding:0 16px;border-radius:999px;border:0;font-weight:700;text-decoration:none;cursor:pointer}
+.pill.white{background:#fff;color:var(--brand)} .pill.glass{background:rgba(255,255,255,.14);color:#fff}
+.pill.brand{background:var(--brand);color:#fff} .pill.sm{height:36px;padding:0 12px;font-size:13px}
+.pill.block{width:100%;height:52px}
+.chip{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:999px;font-size:11px;font-weight:700}
+.chip.acc{background:var(--accent-soft);color:var(--accent)} .chip.gold{background:var(--gold-soft);color:var(--gold-ink)}
+.lang{display:flex;height:34px;padding:3px;border-radius:999px;background:#fff;border:1px solid var(--stroke)}
+.lang button{border:0;background:transparent;border-radius:999px;font-weight:700;min-width:32px;cursor:pointer}
+.lang button.on{background:var(--brand);color:#fff}
+.nav{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom));transform:translateX(-50%);width:min(440px,calc(100% - 28px));height:64px;border-radius:999px;background:rgba(255,255,255,.94);border:1px solid rgba(0,48,63,.07);box-shadow:0 12px 32px rgba(0,40,50,.16);display:flex;padding:0 6px;z-index:30}
+.nav a{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-decoration:none;color:var(--text-3);font-size:10.5px;font-weight:600;border-radius:999px}
+.nav a.on{background:var(--brand);color:#fff;flex:1.15}
+.nav a svg{width:21px;height:21px}
+svg.i{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.wkrow{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--stroke)}
+.day{width:42px;height:24px;border-radius:8px;background:var(--accent-soft);color:var(--accent);font-size:10.5px;font-weight:800;display:grid;place-items:center;flex:none}
+.tt{font-weight:700;flex:1;min-width:0} .tm{margin-left:auto;font-weight:700;white-space:nowrap} .mut{color:var(--text-2);font-size:13px}
+.dblk{width:60px;height:74px;border-radius:18px;background:var(--gold-soft);display:flex;flex-direction:column;align-items:center;justify-content:center;flex:none}
+.dblk b{font-family:var(--serif);font-size:24px;color:var(--brand)}
+.special-home,.ecard{display:flex;gap:12px;align-items:center}
+.row-between{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.bento{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tile{background:#fff;border:1px solid var(--stroke);border-radius:24px;box-shadow:var(--shadow);padding:14px;text-decoration:none;color:inherit;display:flex;flex-direction:column;justify-content:space-between;min-height:104px}
+.tile.wide{grid-column:span 2}
+.lr{display:flex;align-items:center;gap:12px;padding:11px 0;border-top:1px solid var(--stroke);width:100%;background:none;border-left:0;border-right:0;border-bottom:0;text-align:left;cursor:pointer}
+.lr:first-child{border-top:0}
+.grow{flex:1;min-width:0}
+.go{width:28px;height:28px;border-radius:50%;background:var(--surface-2);display:grid;place-items:center}
+.mic{width:40px;height:40px;border-radius:14px;display:grid;place-items:center}
+.mic.acc{background:var(--accent-soft);color:var(--accent)} .mic.gold{background:var(--gold-soft);color:var(--gold-ink)}
+.tgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tool{min-height:118px;text-decoration:none;color:inherit;display:flex;flex-direction:column;justify-content:space-between}
+.field,input.text,select.text,textarea.text{width:100%;border-radius:16px;border:1.5px solid var(--stroke);background:#fff;padding:12px 14px;margin:6px 0 12px}
+.field:focus,input.text:focus,select.text:focus,textarea.text:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
+.back{width:42px;height:42px;border-radius:50%;border:1px solid var(--stroke);background:#fff;display:grid;place-items:center;cursor:pointer}
+.av3{display:flex;background:var(--surface-2);border-radius:14px;padding:3px;gap:3px}
+.av3 button{flex:1;height:36px;border:0;border-radius:11px;background:transparent;font-weight:700;color:var(--text-2);cursor:pointer}
+.av3 button.available{background:var(--ok);color:#fff}
+.av3 button.maybe{background:var(--maybe-soft);color:var(--maybe)}
+.av3 button.unavailable{background:var(--no);color:#fff}
+.sun.needs{outline:2px solid var(--gold)}
+.note{width:100%;margin-top:8px}
+.grid{width:100%;table-layout:fixed;border-collapse:separate;border-spacing:3px 6px}
+.grid col.who{width:96px}
+.grid th{font-size:10px;color:var(--text-2);text-align:center;font-weight:700} .grid th b{display:block;font-size:14px;color:var(--text)}
+.grid td{text-align:center;vertical-align:middle}
+.grid td.nm{text-align:left;font-size:12px;font-weight:700;line-height:1.2;white-space:normal} .grid td.nm small{display:block;color:var(--text-3);font-weight:600}
+.cnt{font-size:10px;font-weight:800;line-height:1.15;white-space:nowrap;color:var(--text)}
+.cl{height:34px;border-radius:10px;display:grid;place-items:center}
+.cl.a{background:var(--ok-soft);color:var(--ok)} .cl.m{background:var(--maybe-soft);color:var(--maybe)}
+.cl.u{background:var(--no-soft);color:var(--no)} .cl.e{border:1.5px dashed var(--surface-3)}
+.seg{display:flex;background:#fff;border:1px solid var(--stroke);border-radius:999px;padding:4px}
+.seg button{flex:1;height:36px;border:0;border-radius:999px;background:transparent;font-weight:700;cursor:pointer}
+.seg button.on{background:var(--brand);color:#fff}
+.warn{background:var(--no-soft);color:var(--no);border-radius:16px;padding:12px}
+.avt{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent);font-weight:800}
+.ministry-row,.signup-card{width:100%;display:flex;gap:12px;align-items:flex-start;text-align:left;cursor:pointer;color:inherit}
+.signup-card{flex-direction:column;align-items:stretch;cursor:default}
+.signup-card h3{margin:0;font-size:16.5px;font-weight:800;text-decoration:none}
+.signup-head{display:flex;gap:12px;align-items:flex-start}
+.signup-head h3{margin:0 0 2px;font-size:16.5px;font-weight:800;text-decoration:none}
+.signup-card .mut{margin:0}
+.signup-card .hint{font-size:13px;font-weight:700;color:var(--accent);margin:10px 0 0}
+.signup-card .pill{width:100%;margin-top:12px;height:44px}
+.radio{width:22px;height:22px;border-radius:50%;border:2px solid #C9C3B4;flex:none;display:inline-block}
+.radio.on{border:7px solid var(--brand)}
+.signup-day{padding:5px 6px}
+.signup-day.on{background:var(--accent-soft);border-radius:12px}
+.signup-day.locked{opacity:.72}
+.signup-day .tt{font-size:14.5px}
+.signup-day .ts{font-size:12px;color:var(--text-2);font-weight:600;margin-top:1px}
+#signup-go{margin-top:8px}
+#signup-list.card{padding:6px 12px}
+#serve-form label{display:flex;align-items:flex-start;gap:8px;margin:4px 0 12px}
+#serve-form .pill{width:100%}
+#s-more .card{margin:8px 0}
+#s-more h2{margin:8px 0 4px}
+#more-code a,#more-ministry a{color:var(--accent);font-weight:800;text-decoration:none}
+#visit-map{margin-top:8px}
+.gold{color:var(--gold-ink)}
+body.wo-playing .nav{display:none}
 body.wo-playing .app{padding-bottom:0}
-body:not(.in-worship) nav a.nav-wo{display:none}
-body.in-worship nav a.nav-app{display:none}
-body.in-worship nav{grid-template-columns:repeat(4,1fr)}
-.wo-mode{margin-left:auto;font-size:13px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#f7f5ee;opacity:.85}
-body.in-worship .demo-badge{margin-left:8px}
-.lyrics-only .wch{display:none}
-.lyrics-only .wline{font-size:30px;line-height:1.45}
-#wo-play .lyrics-only .wline{font-size:36px}
-.wo-edge{position:absolute;top:96px;bottom:0;width:22%;z-index:2;border:0;background:transparent;padding:0}
+@media (min-width:900px){
+  body{background:#E7E2D4}
+  .app{max-width:720px;margin:28px auto 40px;min-height:calc(100vh - 80px);border-radius:28px;box-shadow:var(--shadow);background:var(--bg);padding-bottom:120px}
+  .nav{position:sticky;bottom:16px}
+}
+#s-worship .pad{padding:4px 0 12px}
+#s-worship h1{font-family:var(--serif);font-size:28px}
+#s-worship label{font-weight:700;font-size:13px;color:var(--text-2)}
+#s-worship input,#s-worship select,#s-worship textarea{width:100%;border-radius:14px;border:1.5px solid var(--stroke);padding:10px 12px;margin:4px 0 10px;background:#fff}
+.wrow{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--stroke);border-radius:16px;padding:8px 10px;margin:8px 0}
+.wrow .wopen{flex:1;min-width:0;border:0;background:transparent;text-align:left;cursor:pointer;padding:4px}
+.wrow b{display:block;color:var(--brand)} .wrow span{color:var(--text-2);font-size:14px}
+.wadd,.wmini,.btn{border-radius:12px;border:1.5px solid var(--brand);background:#fff;color:var(--brand);font-weight:800;padding:8px 12px;cursor:pointer;text-decoration:none}
+.wmini.on,.btn.btn-teal{background:var(--brand);color:#fff}
+.btn.btn-gold{background:var(--gold);color:var(--brand);border-color:transparent}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;margin:6px 0}
+.wsec{margin:14px 0 4px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;font-size:12px;color:var(--accent)}
+.wline{line-height:1.25;margin:8px 0} .wseg{display:inline-block;vertical-align:bottom;margin:0 .15em .1em 0}
+.wch{display:block;min-height:1.05em;font-size:13px;background:none;white-space:nowrap}
+.chord{font-weight:800;background:#F6DD8A;color:#2A2000;padding:0 2px;border-radius:3px}
+#s-worship .chip{min-height:40px;height:auto;padding:6px 12px;border:1.5px solid var(--brand);background:#fff;color:var(--brand);cursor:pointer}
+#s-worship .chip.on{background:var(--brand);color:#fff}
+.lang-switch{display:flex;border:1.5px solid var(--brand);border-radius:14px;overflow:hidden;margin:8px 0}
+.lang-switch button{flex:1;min-height:44px;border:0;background:#fff;font-weight:800;cursor:pointer}
+.lang-switch button.on{background:var(--brand);color:#fff}
+.wkeyname{font-weight:800;color:var(--brand)}
+.setcard{background:#fff;border:1px solid var(--stroke);border-radius:16px;padding:12px;margin:10px 0}
+.setline{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.settitle{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;font-weight:800;color:var(--brand);background:none;border:0;cursor:pointer}
+.lnkbtn{background:none;border:0;color:var(--accent);font-weight:700;cursor:pointer}
+.wo-sync{font-size:13px;font-weight:700;color:var(--ok)}
+#wo-play{position:fixed;inset:0;z-index:40;background:#041820;color:#f7f5ee;display:flex;flex-direction:column}
+#wo-play .chord{color:#041820;background:#dcae1d}
+#wo-play-bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:8px;background:#00303f}
+#wo-play-body{flex:1;overflow:auto;padding:8px 10px 24px}
+#wo-play .wsec{color:var(--gold)}
+.wo-edge{position:absolute;top:84px;bottom:0;width:18%;border:0;background:transparent}
 .wo-edge.left{left:0}.wo-edge.right{right:0}
-#wo-jump{position:absolute;left:12px;right:12px;top:96px;z-index:6;background:#fff;color:var(--ink);border-radius:14px;max-height:70%;overflow:auto;padding:8px;box-shadow:0 8px 30px rgba(0,0,0,.35)}
-#wo-jump button{display:block;width:100%;text-align:left;min-height:48px;border:0;border-bottom:1px solid #ece7d8;background:#fff;font:inherit;font-weight:800;color:var(--teal);padding:8px}
-header{padding-top:max(14px,env(safe-area-inset-top))}
-#s-worship{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
-#wo-play{padding-top:env(safe-area-inset-top);padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right);padding-bottom:env(safe-area-inset-bottom)}
-nav{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
-.lang-switch{display:flex;margin:10px 0;border:2px solid var(--teal);border-radius:14px;overflow:hidden}
-.lang-switch button{flex:1;min-height:48px;border:0;background:#fff;color:var(--teal);font:inherit;font-weight:800;font-size:16px;cursor:pointer;padding:8px}
-.lang-switch button+button{border-left:2px solid var(--teal)}
-.lang-switch button.on{background:var(--teal);color:#fff}
-.flab{font-weight:800;font-size:14px;letter-spacing:.04em;text-transform:uppercase;margin:12px 0 0;color:var(--teal)}
-.meta-chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
-.meta-chip{display:inline-block;background:#fff3c4;color:#1a2226;border-radius:999px;padding:4px 10px;font-size:14px;font-weight:800;line-height:1.3}
-@media (min-width:768px){
- .app,nav{max-width:900px}
- body{font-size:20px}
- .wline{font-size:22px}
- .wch{font-size:16px}
- .wrow b{font-size:21px}
- .chip{min-height:48px;font-size:17px}
- .lang-switch button{min-height:52px;font-size:18px}
- #wo-play .wline{font-size:32px}
- #wo-play .wch{font-size:20px}
- #wo-play-title{font-size:42px !important}
-}
-@media (min-width:1024px){
- .app,nav{max-width:1120px}
- .wline{font-size:24px}
- .wch{font-size:18px}
- #wo-play .wline{font-size:38px}
- #wo-play .wch{font-size:22px}
-}
-@media (min-width:768px){
- body.wo-split{overflow:hidden;height:100vh;height:100dvh}
- body.wo-split .app,body.wo-split nav{max-width:1120px}
- body.wo-split .app{height:100vh;height:100dvh;max-height:100dvh;overflow:hidden;display:flex;flex-direction:column;padding-bottom:calc(72px + env(safe-area-inset-bottom))}
- body.wo-split header{position:relative;top:auto;flex:none}
- body.wo-split #s-worship.on{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
- body.wo-split #wo-app{flex:1;min-height:0;display:grid;grid-template-columns:minmax(280px,380px) minmax(0,1fr);align-items:stretch;overflow:hidden}
- body.wo-split #wo-lib,body.wo-split #wo-song{position:relative;top:auto;height:auto;max-height:none;min-height:0;min-width:0;overflow-x:hidden;overflow-y:auto;overflow-anchor:none;overscroll-behavior:contain}
- body.wo-split #wo-lib{border-right:1px solid #e7e2d2}
-}
-@media (orientation:landscape) and (max-height:500px){
- #wo-play-title{font-size:26px !important}
- #wo-play .wline{font-size:22px;margin:8px 0}
- #wo-play-bar{padding:6px 8px}
-}
-#wo-play.wo-fitting #wo-play-bar{padding:4px 8px;gap:4px}
-#wo-play.wo-fitting #wo-play-bar .wmini{min-height:36px;padding:4px 8px}
-#wo-play.wo-fitting #wo-play-title{font-size:calc(var(--wo-fs, 16px) * 1.2) !important;line-height:1.1;padding:2px 10px 0}
-#wo-play.wo-fitting #wo-play-body{padding:4px 8px 12px}
-#wo-play.wo-fitting .wline,#wo-play.wo-fitting .lyrics-only .wline{font-size:var(--wo-fs, 16px);line-height:1.12;margin:1px 0}
-#wo-play.wo-fitting .wch{font-size:calc(var(--wo-fs, 16px) * .62);min-height:.85em;line-height:1.05}
-#wo-play.wo-fitting .wsec{margin:4px 0 1px;font-size:calc(var(--wo-fs, 16px) * .55)}
-#wo-play.wo-fitting .chord{font-weight:800}
+#wo-jump{position:absolute;left:12px;right:12px;top:84px;background:#fff;color:var(--text);border-radius:16px;max-height:70%;overflow:auto;z-index:6}
+#wo-jump button{display:block;width:100%;text-align:left;min-height:44px;border:0;border-bottom:1px solid var(--stroke);background:#fff;font-weight:800;color:var(--brand)}
+.lyrics-only .wch{display:none}
+#wo-play.wo-fitting #wo-play-title{font-size:calc(var(--wo-fs,16px) * 1.2) !important}
+#wo-play.wo-fitting .wline,#wo-play.wo-fitting .lyrics-only .wline{font-size:var(--wo-fs,16px);line-height:1.12;margin:1px 0}
+#wo-play.wo-fitting .wch{font-size:calc(var(--wo-fs,16px) * .62)}
 #wo-play-body.wo-cols .wo-chart{column-count:2;column-gap:16px}
-#wo-play-body.wo-cols .wline,#wo-play-body.wo-cols .wsec{break-inside:avoid;page-break-inside:avoid}
-</style></head><body><div class="app">
-<header><img src="assets/logo-bethany-light.svg" alt="Bethany Church"><span class="wo-mode" id="wo-mode" hidden>Worship</span><span class="demo-badge">Demo</span></header>
-
-<section class="screen" id="s-auth">
- <div id="auth-signin">
-  <div class="welcome"><span class="demo-badge">Demo</span><img src="assets/logo-bethany-light.svg" alt="Bethany Church"><h1>Welcome to Bethany</h1><p>Member app</p></div>
-  <form class="pad" onsubmit="startEmail(event)">
-   <label for="login-email">Email</label>
-   <input id="login-email" type="email" autocomplete="email" placeholder="you@example.com">
-   <p id="login-err" style="color:#b00020;font-weight:700;margin:8px 0 0" hidden>Please enter your email.</p>
-   <button class="btn btn-gold" type="submit">Log in or Sign up</button>
-   <p class="muted center" style="margin:4px 0 0;font-size:15px">🔒 No password needed — we'll email you a sign-in link.</p>
-   <p class="muted center" style="margin:26px 0 10px;font-size:16px">Or continue with</p>
-   <button type="button" class="oauth" id="oa-google" onclick="providerSignIn()"><svg width="26" height="26" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.5l6.7-6.7C35.6 2.4 30.2 0 24 0 14.6 0 6.6 5.4 2.7 13.3l7.8 6C12.4 13.7 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.4c-.5 2.9-2.2 5.3-4.6 6.9l7.5 5.8c4.4-4 6.8-10 6.8-17.2z"/><path fill="#FBBC05" d="M10.5 28.7c-.5-1.4-.8-3-.8-4.7s.3-3.2.8-4.7l-7.8-6C1 16.6 0 20.2 0 24s1 7.4 2.7 10.7l7.8-6z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.5-5.8c-2.1 1.4-4.8 2.3-8.4 2.3-6.3 0-11.6-4.2-13.5-9.9l-7.8 6C6.6 42.6 14.6 48 24 48z"/></svg>Continue with Google</button>
-   <p id="oa-status" class="muted center" hidden>Signing in…</p>
-  </form>
- </div>
- <div id="auth-check" hidden>
-  <div class="pad center">
-   <div class="bigic"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 7l10 7 10-7"/></svg></div>
-   <h1>Check your email</h1>
-   <p class="muted">We sent a sign-in link to<br><b id="check-email" style="color:var(--ink)"></b></p>
-   <div class="card" style="text-align:left"><b style="color:var(--teal)">Tap the link in the email</b> to finish signing in. It works for 15 minutes.</div>
-   <button class="btn btn-gold" type="button" onclick="openDemoLink()">Demo: open sign-in link</button>
-   <p class="muted">This is a prototype. No email is sent.</p>
-   <p class="muted">Didn't get it? Check spam, or <button type="button" class="lnkbtn" onclick="sendAgainDemo()">send again</button>.</p>
-   <p id="check-again" class="muted" hidden>Demo only — no email is sent. Use the button above.</p>
-   <p class="muted"><button type="button" class="lnkbtn" onclick="useDifferentEmail()">Use a different email</button></p>
-  </div>
- </div>
- <div id="auth-profile" hidden>
-  <div class="pad">
-   <h1>Welcome! Tell us your name</h1>
-   <p class="muted" style="margin:0">Just once — so we know who you are.</p>
-   <label for="prof-name">Your name</label>
-   <input id="prof-name" autocomplete="name" placeholder="First and last name">
-   <label for="prof-phone">Phone <span class="muted">(optional)</span></label>
-   <input id="prof-phone" type="tel" autocomplete="tel" placeholder="(425) 555-0100">
-   <div class="card tg">
-    <div><b style="color:var(--teal)">Email me church updates</b><div class="muted" style="font-size:15px">News, announcements &amp; updates from Bethany · on by default, tap to turn off anytime</div></div>
-    <button type="button" class="sw" id="sw-prof" role="switch" aria-checked="true" aria-label="Email me church updates" onclick="togglePref('emailUpdates')"></button>
-   </div>
-   <p id="prof-err" style="color:#b00020;font-weight:700;margin:8px 0 0" hidden>Please enter your name.</p>
-   <button class="btn btn-teal" type="button" onclick="finishProfile()">Continue</button>
-   <p class="note">You can change this anytime in More → My Profile.</p>
-   <p class="muted center"><button type="button" class="lnkbtn" onclick="useDifferentEmail()">Use a different email</button></p>
-  </div>
- </div>
-</section>
-
+#wo-play-body.wo-cols .wline,#wo-play-body.wo-cols .wsec{break-inside:avoid}
+.meta-chip{display:inline-block;background:#fff3c4;border-radius:999px;padding:4px 10px;font-size:13px;font-weight:800;margin:2px}
+.wo-addpick{position:fixed;z-index:35;left:50%;transform:translateX(-50%);width:min(440px,calc(100% - 24px));bottom:96px;background:#fff;border-radius:20px;padding:12px;box-shadow:var(--shadow)}
+@media (min-width:768px){
+  body.wo-split{overflow:hidden;height:100dvh}
+  body.wo-split .app{height:100dvh;max-height:100dvh;display:flex;flex-direction:column;padding-bottom:88px;overflow:hidden}
+  body.wo-split #s-worship{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+  body.wo-split #wo-app{flex:1;min-height:0;display:grid;grid-template-columns:minmax(260px,340px) minmax(0,1fr)}
+  body.wo-split #wo-lib,body.wo-split #wo-song{overflow:auto;min-height:0}
+}
+</style>
+</head>
+<body>
+<div class="app" id="app">
 <section class="screen" id="s-home">
- <div class="ann" id="ann"><span aria-hidden="true">📢</span><span>[Placeholder] Sample announcement — fellowship lunch after service this Sunday.</span><button type="button" class="x" onclick="hideAnn()" aria-label="Dismiss announcement">×</button></div>
- <div class="pad" style="padding-bottom:0"><p class="hi">Hi, <span id="hi-name">there</span> 👋</p><p class="muted" style="margin:0">Good to see you.</p></div>
- <div class="hero" style="background-image:url(assets/hero.jpg)"><div><h1>Welcome home.</h1><p>Bethany Church · Lynnwood, WA</p></div></div>
- <div class="pad">
-  <div class="card next"><div class="label">Next service</div><div class="big" id="nx-when">Sunday · 10:00 AM</div><div id="nx-name">English (EM) Service</div><div class="muted">15414 Ash Way, Lynnwood</div></div>
-  <a class="btn btn-live" href="#watch"><span class="dot"></span>Watch Live</a>
-  <h2>Quick links</h2>
-  <div class="grid">
-   <a class="ql" href="#events"><svg class="ico" style="width:34px;height:34px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Events</a>
-   <a class="ql" href="#give"><svg class="ico" style="width:34px;height:34px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-8-5-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 6-8 11-8 11z"/></svg>Give</a>
-   <a class="ql" href="#watch"><svg class="ico" style="width:34px;height:34px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="4"/><path d="M10 9l5 3-5 3z" fill="currentColor"/></svg>Sermons</a>
-   <a class="ql" href="#more"><svg class="ico" style="width:34px;height:34px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="19" cy="12" r="1.6" fill="currentColor"/></svg>About &amp; Times</a>
-   <a class="ql" href="#serve"><svg class="ico" style="width:34px;height:34px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 11a3 3 0 1 0-3-3 3 3 0 0 0 3 3zM16 11a3 3 0 1 0-3-3 3 3 0 0 0 3 3z"/><path d="M2 20a5 5 0 0 1 10 0M12 20a5 5 0 0 1 10 0"/></svg>Serve</a>
-   <a class="ql" href="#/worship/library"><svg class="ico" style="width:34px;height:34px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V6l10-2v8"/><circle cx="7" cy="18" r="3"/><circle cx="17" cy="14" r="3"/></svg>Worship</a>
+  <div class="hdr"><img class="logo" src="assets/logo-bethany.svg" alt="Bethany Church"><div class="lang"><button type="button" id="lang-en">EN</button><button type="button" id="lang-ko">한</button></div></div>
+  <div class="greet"><h1 id="greet"></h1></div>
+  <div class="hero">
+    <div class="eyebrow" data-i18n="next">Next service</div>
+    <div class="htitle" id="hero-name"></div>
+    <div class="mut" style="color:rgba(255,255,255,.85)"><span id="hero-when"></span> · <span id="hero-time"></span></div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="pill white" id="watch-live" type="button" data-i18n="watch">Watch Live</button>
+      <button class="pill glass" id="all-times" type="button" data-i18n="allTimes">All times</button>
+    </div>
   </div>
-  <h2>Coming up</h2>
-  <div class="card"><div class="ev"><div class="ev-date"><div class="m">OCT</div><div class="d">31</div></div><div><h3>Harvestfest</h3><div>Saturday · 4–7 PM</div><a class="lnk" href="#events">Details →</a></div></div></div>
- </div>
+  <div class="card" id="home-events"></div>
+  <div class="bento">
+    <a class="tile" id="sermon-tile" href="https://www.bethanychurchwa.org/blog" target="_blank" rel="noopener">
+      <div class="eyebrow" data-i18n="sermon">Sermon notes</div>
+      <div><b data-i18n="sermonBody">Read write-ups of past sermons</b><div class="mut" data-i18n="sermonOpen">Opens bethanychurchwa.org</div></div>
+    </a>
+    <button class="tile" id="home-ministry" type="button" hidden>
+      <div class="eyebrow" data-i18n="myMin">My Ministry</div>
+      <div><b data-i18n="myMin">My Ministry</b><div class="mut" id="home-answer"></div></div>
+    </button>
+  </div>
+  <button id="see-events" type="button" hidden>See all</button>
 </section>
 
-<section class="screen" id="s-watch"><div class="pad">
- <h1>Watch</h1><p class="muted">Join us live or catch up on recent services.</p>
- <div class="card" style="background:var(--teal);color:#fff;text-align:center;padding:22px 18px">
-  <div style="font-size:20px;font-weight:700">Bethany Church on YouTube</div>
-  <a class="btn btn-live" href="https://www.youtube.com/@bethanychurch2134/streams" target="_blank"><span class="dot"></span>Watch Live Now</a>
- </div>
- <h2>Recent sermons</h2>
- <div class="card"><a class="serm" href="https://www.youtube.com/watch?v=RD-z2mtRfmI" target="_blank"><img src="assets/yt-RD-z2mtRfmI.jpg" alt=""><div><div class="tt">Having Compassion Like Jesus</div><div class="dt">Sun Oct 18, 2026 · English · Pastor Woori Cheh</div></div></a><a class="serm" href="https://www.youtube.com/watch?v=BXkvDVEWF4g" target="_blank"><img src="assets/yt-BXkvDVEWF4g.jpg" alt=""><div><div class="tt">예수님처럼 불쌍히 여기는 삶</div><div class="dt">Sun Oct 18, 2026 · Korean · 최우리 목사</div></div></a><a class="serm" href="https://www.youtube.com/watch?v=Ft4VTw6ZzIE" target="_blank"><img src="assets/yt-Ft4VTw6ZzIE.jpg" alt=""><div><div class="tt">토요일 새벽예배</div><div class="dt">Sat Oct 17, 2026 · Korean Morning Prayer</div></div></a><a class="serm" href="https://www.youtube.com/watch?v=5aAoIUO6024" target="_blank"><img src="assets/yt-5aAoIUO6024.jpg" alt=""><div><div class="tt">수요예배 · 헌금 후의 바람직한 태도</div><div class="dt">Wed Oct 14, 2026 · Korean · 전리사 목사</div></div></a><a class="serm" href="https://www.youtube.com/watch?v=nFqJh4yqI_s" target="_blank"><img src="assets/yt-nFqJh4yqI_s.jpg" alt=""><div><div class="tt">Humble Like Jesus Part 2</div><div class="dt">Sun Oct 4, 2026 · English · Pastor Woori Cheh</div></div></a></div>
- <a class="btn btn-out" style="font-size:18px" href="https://www.youtube.com/@bethanychurch2134/streams" target="_blank">See all services on YouTube</a>
- <h2>Livestream times</h2>
- <div class="card"><div class="srow"><div><b>Sunday English (EM)</b><small>Sun 10:00 AM</small></div></div><div class="srow"><div><b>Sunday Korean</b><small>Sun 11:30 AM</small></div></div><div class="srow"><div><b>Wednesday Korean</b><small>Wed 7:00 PM</small></div></div><div class="srow"><div><b>Morning Prayer (Korean)</b><small>Sat 7:00 AM</small></div></div></div>
-</div></section>
+<section class="screen" id="s-events" hidden>
+  <div class="hdr"><h1 class="ptitle" data-i18n="events">Events</h1></div>
+  <p class="psub"><span data-i18n="where">All at 15414 Ash Way</span> · <b style="color:var(--accent)" data-i18n="liveWord">Live</b> = <span data-i18n="alsoLive">also livestreamed</span></p>
+  <div class="row-between"><h2 class="ptitle" style="font-size:20px" data-i18n="weekly">Weekly schedule</h2><span class="mut" data-i18n="every">Every week</span></div>
+  <div class="card" id="weekly-list"></div>
+  <div class="row-between"><h2 class="ptitle" style="font-size:20px" data-i18n="specials">Special events</h2><span class="mut" data-i18n="once">One-time</span></div>
+  <div id="special-list"></div>
+</section>
 
-<section class="screen" id="s-events"><div class="pad">
- <h1>Events</h1><p class="muted">What's happening at Bethany.</p>
- <h2>Upcoming</h2>
- <div class="card"><div class="ev"><div class="ev-date"><div class="m">OCT</div><div class="d">31</div></div><div><h3>Harvestfest</h3><div><b>Saturday, Oct 31, 2026</b></div><div>4:00 – 7:00 PM</div><div class="muted">15414 Ash Way, Lynnwood</div></div></div>
-  <p style="margin:10px 0 0">Pumpkin carving, face painting, games, food and candy galore. Costume up and join the fun!</p>
-  <button class="btn btn-gold" onclick="openRsvp()">RSVP for Harvestfest</button>
-  <button class="btn btn-out" style="font-size:18px;min-height:52px" onclick="ics('harvest')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M12 13v5M9.5 15.5h5"/></svg>Add to calendar</button></div>
- <div class="card" id="rsvp" hidden><div id="rsvp-form"><h3 style="color:var(--teal)">RSVP · Harvestfest</h3><div class="muted">Sat, Oct 31 · 4–7 PM</div>
-  <label for="r-name">Your name</label><input id="r-name" autocomplete="name" placeholder="First and last name">
-  <div class="grid"><div><label for="r-ad">Adults</label><div class="step"><button type="button" onclick="st('r-ad',-1)" aria-label="Fewer adults">−</button><input id="r-ad" inputmode="numeric" value="1" aria-live="polite"><button type="button" onclick="st('r-ad',1)" aria-label="More adults">+</button></div></div>
-  <div><label for="r-kd">Kids</label><div class="step"><button type="button" onclick="st('r-kd',-1)" aria-label="Fewer kids">−</button><input id="r-kd" inputmode="numeric" value="0" aria-live="polite"><button type="button" onclick="st('r-kd',1)" aria-label="More kids">+</button></div></div></div>
-  <label for="r-ph">Phone or email <span class="muted">(optional)</span></label><input id="r-ph" placeholder="So we can reach you">
-  <p id="r-err" style="color:#b00020;font-weight:700;margin:8px 0 0" hidden>Please enter your name.</p>
-  <button class="btn btn-teal" onclick="sendRsvp()">Send RSVP</button><button class="btn btn-out" style="min-height:52px;font-size:18px" onclick="closeRsvp()">Cancel</button></div>
-  <div id="rsvp-ok" hidden style="text-align:center"><div style="font-size:52px;color:#1d7a3a">✓</div><h3 style="color:var(--teal)">You're on the list!</h3><p id="r-sum" style="font-size:20px;font-weight:700;margin:6px 0"></p><p class="muted">See you Saturday, Oct 31 at 4 PM.</p><button class="btn btn-out" style="min-height:52px;font-size:18px" onclick="closeRsvp()">Done</button></div></div>
- <h2>Weekly gatherings</h2>
- <div class="card"><div class="srow"><div><b>Sunday English (EM)</b><small>Sun 10:00 AM</small></div></div><div class="srow"><div><b>Sunday Korean</b><small>Sun 11:30 AM</small></div></div><div class="srow"><div><b>Wednesday Korean</b><small>Wed 7:00 PM</small></div></div><div class="srow"><div><b>Sat Morning Prayer</b><small>Sat 7:00 AM</small></div></div></div>
- <h2>Recent</h2>
- <div class="card past ev"><div class="ev-date"><div class="m">JUN</div><div class="d">25</div></div><div><h3>ROAR! VBS</h3><div>June 25–27, 2026</div></div></div>
- <div class="card past ev"><div class="ev-date"><div class="m">APR</div><div class="d">3</div></div><div><h3>Good Friday Worship Night</h3><div>April 3, 2026</div></div></div>
- <div class="card past ev"><div class="ev-date"><div class="m">DEC</div><div class="d">'23</div></div><div><h3>Nepal Relief Drive</h3><div>December 2023</div></div></div>
-</div></section>
+<section class="screen" id="s-ministries" hidden>
+  <div class="hdr"><h1 class="ptitle" data-i18n="ministries">Ministries</h1></div>
+  <p class="psub" data-i18n="find">Find your people at Bethany.</p>
+  <div id="ministry-list"></div>
+</section>
 
-<section class="screen" id="s-give"><div class="pad">
- <h1>Give</h1><p class="muted">Thank you for supporting the ministry of Bethany Church.</p>
- <div class="card"><div class="h3i"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg><b>Give online</b></div><p style="margin:4px 0">Secure giving through Tithe.ly. Set up a <b>one-time</b> or <b>recurring</b> gift.</p>
-  <a class="btn btn-gold" href="https://tithe.ly/give_new/www/#/tithely/give-one-time/1412967" target="_blank">Give with Tithe.ly</a>
-  <p class="muted" style="margin:6px 0 0">Or use the Tithe.ly app:</p>
-  <div class="grid"><a class="btn btn-out" style="font-size:17px" href="https://apps.apple.com/us/app/tithe-ly/id694740700" target="_blank">iPhone app</a><a class="btn btn-out" style="font-size:17px" href="https://play.google.com/store/apps/details?id=ly.tithe.tithely&hl=en" target="_blank">Android app</a></div></div>
- <div class="card"><div class="h3i"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></svg><b>Venmo</b></div><p style="margin:6px 0">Send to: <b style="font-size:21px;color:var(--teal)">@Bethany_IMPACT</b></p><a class="btn btn-teal" href="https://venmo.com/u/Bethany_IMPACT" target="_blank">Open Venmo</a></div>
- <div class="card"><div class="h3i"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg><b>Give by check</b></div>
-  <div class="row"><b>Payable to</b><span>Bethany Church</span></div>
-  <div style="padding:12px 0;border-bottom:1px solid #ece7d8"><b style="color:var(--teal)">Mail to</b><div style="font-weight:700">Bethany Church<br>15414 Ash Way<br>Lynnwood, WA 98087</div></div>
-  <div style="padding-top:12px"><b style="color:var(--teal)">Memo</b><div>For general offering, the memo line can be left blank. To give to a specific missionary or missional purpose, write where the gift should go in the memo line.</div></div></div>
-</div></section>
+<section class="screen" id="s-food-kitchen" hidden>
+  <div class="hdr"><button class="back" type="button" onclick="history.back()"><svg class="i"><use href="#i-back"/></svg></button><h1 class="ptitle" style="font-size:22px" data-i18n="kitchen">Food Kitchen</h1></div>
+  <p class="psub" id="kitchen-blurb"></p>
+  <article class="card signup-card">
+    <div class="signup-head">
+      <span class="mic acc"><svg class="i"><use href="#i-bowl"/></svg></span>
+      <div class="grow">
+        <h3 data-i18n="km">KM Food Sign-up</h3>
+        <p class="mut" data-i18n="kmBody"></p>
+        <p class="hint" id="km-hint" hidden></p>
+      </div>
+    </div>
+    <a class="pill brand" href="#/signup/km-food" data-i18n="signUp">Sign up</a>
+  </article>
+  <article class="card signup-card">
+    <div class="signup-head">
+      <span class="mic gold"><svg class="i"><use href="#i-heart"/></svg></span>
+      <div class="grow">
+        <h3 data-i18n="snack">EM Sunday Snack Sign-up</h3>
+        <p class="mut" data-i18n="snackBody"></p>
+        <p class="hint" id="snack-hint" hidden></p>
+      </div>
+    </div>
+    <a class="pill brand" href="#/signup/snack" data-i18n="signUp">Sign up</a>
+  </article>
+  <p class="card mut" data-i18n="donation">Want to make a snack donation instead? Contact Jennifer.</p>
+</section>
 
-<section class="screen" id="s-more"><div class="pad">
- <p class="muted" style="margin:0 0 4px">More ›</p>
- <h1>My Profile</h1>
- <div class="card">
-  <div class="row"><b>Name</b><span id="pf-name"></span></div>
-  <div class="row"><b>Email</b><span id="pf-email" class="em"></span></div>
-  <button type="button" class="lnkbtn" style="font-size:16px" onclick="editProfile()">Edit</button>
-  <div id="pf-edit" hidden>
-   <label for="pf-name-in">Name</label><input id="pf-name-in" autocomplete="name">
-   <label for="pf-phone-in">Phone <span class="muted">(optional)</span></label><input id="pf-phone-in" type="tel" autocomplete="tel">
-   <p id="pf-edit-err" style="color:#b00020;font-weight:700;margin:8px 0 0" hidden>Please enter your name.</p>
-   <button class="btn btn-teal" type="button" onclick="saveProfileEdit()">Save</button>
+<section class="screen" id="s-signup" hidden>
+  <div class="hdr"><button class="back" type="button" onclick="history.back()"><svg class="i"><use href="#i-back"/></svg></button></div>
+  <h1 class="ptitle" id="signup-title" style="font-size:26px"></h1>
+  <p class="psub" id="signup-sub"></p>
+  <p class="mut" id="signup-multi" hidden data-i18n="several"></p>
+  <label data-i18n="name">Name</label>
+  <input class="text" id="signup-name" autocomplete="name">
+  <div class="eyebrow" data-i18n="which">Which Sunday</div>
+  <div class="card" id="signup-list"></div>
+  <button class="pill brand block" id="signup-go" type="button" data-i18n="signUp">Sign up</button>
+  <p id="signup-msg" class="mut" hidden></p>
+  <div class="card row-between" id="signup-mine" hidden>
+    <div><div class="eyebrow" data-i18n="yourSignup">Your sign-up</div><b id="signup-mine-label"></b></div>
+    <button class="pill sm" id="signup-cancel" type="button" data-i18n="cancel">Cancel my sign-up</button>
   </div>
- </div>
- <h2>Notifications</h2>
- <div class="card" id="notify-card" style="padding:4px 18px">
-  <div class="tg" style="margin:0;padding:12px 0;border-bottom:1px solid #ece7d8">
-   <div><b style="color:var(--teal)">Email me church updates</b><div class="muted" style="font-size:15px">News, announcements &amp; updates from Bethany</div></div>
-   <div><button type="button" class="sw" id="sw-email" role="switch" aria-checked="true" aria-label="Email me church updates" onclick="togglePref('emailUpdates')"></button><div class="swl" id="sw-email-l">ON</div></div>
+  <p class="card mut" id="signup-donation" data-i18n="donation"></p>
+</section>
+
+<section class="screen" id="s-give" hidden>
+  <div class="hdr"><h1 class="ptitle" data-i18n="give">Give</h1></div>
+  <p class="psub" data-i18n="giveLead"></p>
+  <div class="card"><b data-i18n="giveOnline">Give online</b><p data-i18n="giveBody"></p><a class="pill brand" id="give-link" target="_blank" rel="noopener" data-i18n="giveBtn">Give with Tithe.ly</a></div>
+  <div class="card"><b data-i18n="venmo">Venmo</b><p><span data-i18n="sendTo"></span> <b id="venmo-handle"></b></p><a class="pill brand" id="venmo-link" target="_blank" rel="noopener" data-i18n="openVenmo">Open Venmo</a></div>
+  <div class="card"><b data-i18n="byCheck">Give by check</b><p><span data-i18n="payable"></span>: <b id="check-pay"></b></p><p id="check-mail"></p><p class="mut" id="check-memo"></p></div>
+</section>
+
+<section class="screen" id="s-more" hidden>
+  <div class="hdr"><h1 class="ptitle" data-i18n="more">More</h1></div>
+  <div id="more-worship-card" class="hero" hidden>
+    <div class="htitle" style="font-size:20px">Worship Team</div>
+    <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+      <a class="pill glass sm" href="#/worship/library">Chord sheets</a>
+      <a class="pill glass sm" href="#/worship/setlists">Setlists</a>
+      <a class="pill sm" style="background:var(--gold);color:var(--brand)" href="#/availability">Availability</a>
+    </div>
   </div>
-  <div class="tg" style="margin:0;padding:12px 0">
-   <div><b style="color:var(--teal)">Push notifications</b><div class="muted" style="font-size:15px">Alerts on this phone</div></div>
-   <div><button type="button" class="sw off" id="sw-push" role="switch" aria-checked="false" aria-label="Push notifications" onclick="togglePref('push')"></button><div class="swl" id="sw-push-l">OFF</div></div>
+  <h2 data-i18n="church">Church</h2>
+  <div class="card">
+    <a class="lr" href="#/ministries"><div><div class="tt" data-i18n="ministries">Ministries</div><div class="ts mut">Worship, Nursery, Food Kitchen</div></div></a>
+    <a class="lr" href="#/visit"><div><div class="tt" data-i18n="visit">Visit & contact</div><div class="ts mut" data-i18n="visitSub"></div></div></a>
+    <a class="lr" href="#/notifications"><div><div class="tt" data-i18n="notes">Notifications</div><div class="ts mut" data-i18n="notesSub"></div></div></a>
+    <button class="lr" type="button" id="more-lang"><div><div class="tt" data-i18n="language">Language</div><div class="ts mut" data-i18n="langSub"></div></div></button>
   </div>
- </div>
- <p class="note" style="font-size:16px">✓ You can change this anytime.</p>
- <button class="btn btn-out" type="button" style="min-height:52px;font-size:18px" onclick="signOut()">Sign out</button>
- <details id="d-mail"><summary>Preview church email</summary><div class="mail-preview">
-  <div style="color:#222;font-size:15px"><b>[Placeholder] This week at Bethany</b><br>[Placeholder church announcement — news &amp; updates from Bethany go here…]</div>
-  <hr>
-  Bethany Church · 15414 Ash Way, Lynnwood, WA 98087<br>
-  <span id="mail-why">You're getting this because you turned on "Email me church updates."</span><br>
-  <button type="button" class="lnkbtn" id="mail-unsub" onclick="unsubscribeDemo()">Unsubscribe</button> · <button type="button" class="lnkbtn" onclick="document.getElementById('notify-card').scrollIntoView({behavior:'smooth',block:'start'})">Manage email preferences</button>
- </div></details>
- <h2 id="serve">Serve</h2>
- <div class="card" id="serve-card">
-  <form id="serve-form" onsubmit="unlockServe(event)">
-   <p class="muted" style="margin:0">Team links stay hidden until this password is entered.</p>
-   <label for="serve-pw">Team password</label>
-   <input id="serve-pw" type="password" autocomplete="current-password">
-   <label class="chk" for="serve-remember"><input id="serve-remember" type="checkbox"> Remember on this device</label>
-   <p id="serve-err" style="color:#b00020;font-weight:700;margin:8px 0 0" hidden>That password isn't right. Try again.</p>
-   <button class="btn btn-teal" type="submit">Unlock</button>
+  <button class="card lr" id="feedback-link" type="button"><div><div class="tt" data-i18n="feedback">Send feedback</div><div class="ts mut" data-i18n="feedbackSub"></div></div></button>
+  <p id="more-code"><span data-i18n="serveAsk"></span> <a href="#/team-code" data-i18n="haveCode">Have a team code?</a></p>
+  <p id="more-ministry" hidden><a href="#/ministry" data-i18n="myMin">My Ministry</a> · <a href="#/team-code" data-i18n="anotherLink"></a></p>
+  <div class="card" id="serve-card">
+    <b data-i18n="serveTitle">Serve links</b>
+    <form id="serve-form" onsubmit="unlockServe(event)">
+      <label for="serve-pw" data-i18n="servePw">Team password</label>
+      <input class="text" id="serve-pw" type="password" autocomplete="current-password">
+      <label class="mut"><input id="serve-remember" type="checkbox"> <span data-i18n="remember">Remember on this device</span></label>
+      <p id="serve-err" hidden></p>
+      <button class="pill brand" type="submit" data-i18n="unlock">Unlock</button>
+    </form>
+    <div id="serve-links" hidden></div>
+    <p id="serve-lock-row" hidden><button type="button" class="lnkbtn" onclick="lockServe()" data-i18n="lock">Lock</button></p>
+  </div>
+</section>
+
+<section class="screen" id="s-team-code" hidden>
+  <div class="hdr"><button class="back" type="button" onclick="location.hash='#/more'"><svg class="i"><use href="#i-back"/></svg></button></div>
+  <h1 class="ptitle" data-i18n="teamTitle">Enter your team code</h1>
+  <p class="psub" data-i18n="teamBody"></p>
+  <form id="team-form">
+    <label data-i18n="teamLabel">Team code</label>
+    <input class="text" id="team-code-input" autocomplete="off" autocapitalize="characters">
+    <button class="pill brand block" type="submit" data-i18n="join">Join</button>
   </form>
-  <div id="serve-links" hidden></div>
-  <p id="serve-lock-row" hidden style="margin:8px 0 0"><button type="button" class="lnkbtn" onclick="lockServe()">Lock</button></p>
- </div>
- <h2>Worship</h2>
- <div class="card">
-  <p class="muted" style="margin:0">Chord charts for the team.</p>
-  <a class="btn btn-teal" href="#/worship/library">Open worship charts</a>
- </div>
- <h2>Church</h2>
- <a class="btn btn-gold" href="tel:+12065517321"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h4l2 5-3 2a11 11 0 0 0 6 6l2-3 5 2v4a2 2 0 0 1-2 2A17 17 0 0 1 3 5a2 2 0 0 1 2-2"/></svg>Call (206) 551-7321</a>
- <a class="btn btn-out" href="mailto:bethanychurch.wa@gmail.com" style="font-size:17px"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>bethanychurch.wa@gmail.com</a>
- <p style="text-align:center;margin:6px 0 4px;font-weight:700"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s7-7 7-12a7 7 0 0 0-14 0c0 5 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg> 15414 Ash Way, Lynnwood, WA 98087</p>
+  <p id="team-code-msg" class="mut" hidden></p>
+  <p><b data-i18n="onceOnly"></b> <span data-i18n="onceBody"></span></p>
+  <p class="mut" data-i18n="askDaniel"></p>
+</section>
 
- <details id="d-about"><summary>About Bethany</summary><div>
-  <img class="photo" src="assets/community.jpg" alt="Bethany Church gathering">
-  <p>Since 1982, Bethany Church has welcomed members of the greater Seattle community to join in song, service, worship and prayer. We are a multi-cultural, multi-ethnic church with English and Korean ministries.</p>
-  <p><b style="color:var(--teal)">Our mission:</b> To educate the next generation to grow in the love of Christ, to be God's witnesses to "the ends of the earth," and to be the salt and light of the earth, serving others in love and sharing the Gospel with our community.</p>
-  <p><a class="lnk" href="https://www.bethanychurchwa.org">bethanychurchwa.org</a></p></div></details>
+<section class="screen" id="s-ministry" hidden>
+  <div class="hdr"><button class="back" type="button" onclick="location.hash='#/more'"><svg class="i"><use href="#i-back"/></svg></button><h1 class="ptitle" style="font-size:26px" data-i18n="myMin">My Ministry</h1></div>
+  <p class="psub" data-i18n="toolsFor"></p>
+  <p id="ministry-empty" class="mut" data-i18n="noMinistry"></p>
+  <div id="my-tools"></div>
+</section>
 
- <details id="d-times"><summary>Service times &amp; Bible studies</summary><div>
-  <div class="srow"><div><b>Sunday English (EM)</b><small>Sun 10:00 AM</small></div></div><div class="srow"><div><b>Sunday Korean</b><small>Sun 11:30 AM</small></div></div><div class="srow"><div><b>Wednesday Korean</b><small>Wed 7:00 PM</small></div></div><div class="srow"><div><b>Sat Morning Prayer (Korean)</b><small>Sat 7:00 AM</small></div></div>
-  <h3 style="margin:18px 0 0;color:var(--teal)">Bible studies</h3>
-  <div class="srow"><div><b>Women's</b><small>Tue 6:30 PM</small></div></div><div class="srow"><div><b>Men's</b><small>Wed 7:15 PM</small></div></div><div class="srow"><div><b>Young Adult Men's</b><small>Sat 7:00 PM</small></div></div><div class="srow"><div><b>Youth</b><small>Sun 11:40 AM</small></div></div></div></details>
+<section class="screen" id="s-availability" hidden>
+  <div id="avail-pick">
+    <div class="hdr"><button class="back" type="button" onclick="history.back()"><svg class="i"><use href="#i-back"/></svg></button></div>
+    <h1 class="ptitle" data-i18n="who">Who are you?</h1>
+    <p class="psub" data-i18n="whoBody"></p>
+    <div class="card" id="roster"></div>
+  </div>
+  <div id="avail-member" hidden>
+    <div class="hdr"><button class="back" type="button" onclick="history.back()"><svg class="i"><use href="#i-back"/></svg></button><span id="avail-status" class="mut"></span></div>
+    <h1 class="ptitle" style="font-size:26px" data-i18n="availability">Team availability</h1>
+    <p><span data-i18n="answering"></span> <b id="avail-who"></b> · <button type="button" class="lnkbtn" id="avail-change" data-i18n="change">Change</button></p>
+    <div class="seg"><button type="button" id="view-answers" class="on" data-i18n="myAnswers">My answers</button><button type="button" id="view-team" data-i18n="teamView">Team view</button></div>
+    <div id="avail-member-pane"><div id="avail-days"></div><p class="mut" data-i18n="anytime"></p></div>
+    <div id="avail-team-pane" hidden>
+      <p class="mut" data-i18n="leaderView"></p>
+      <div class="card" style="overflow:auto"><table class="grid" id="avail-grid"></table></div>
+      <p class="mut" id="avail-empty" hidden></p>
+      <p class="warn" id="avail-warn" hidden></p>
+      <p class="mut">✓ <span data-i18n="available"></span> · ? <span data-i18n="maybe"></span> · ✕ <span data-i18n="unavailable"></span></p>
+    </div>
+  </div>
+</section>
 
- <details id="d-lead"><summary>Leadership</summary><div>
-  <div class="card"><h3>Pastor Woori Cheh</h3><div class="muted">Senior Pastor · Korean &amp; EM ministries</div></div>
-  <div class="card"><h3>Christine Cheh</h3><div class="muted">Director of Youth, Children's &amp; Nursery</div></div></div></details>
+<section class="screen" id="s-visit" hidden>
+  <div class="hdr"><button class="back" type="button" onclick="history.back()"><svg class="i"><use href="#i-back"/></svg></button><h1 class="ptitle" style="font-size:26px" data-i18n="visit">Visit & contact</h1></div>
+  <div class="card"><p id="visit-address"></p><p id="visit-phone"></p><a class="pill brand" id="visit-map" target="_blank" rel="noopener">Map</a></div>
+</section>
 
- <details id="d-min"><summary>Ministry teams</summary><div>
-  <div class="card"><h3>Worship Team</h3><div class="muted"><span class="ph">[ministry description needed]</span></div><div>Daniel Kim, Palmy Silarat, Pastor Woori Cheh</div></div>
-  <div class="card"><h3>Children's Ministry</h3><div class="muted"><span class="ph">[ministry description needed]</span></div><div>Judith Tweneboah</div><a class="lnk" href="https://www.youtube.com/channel/UCaGWjLYIOiZaAR4d76RlR9A">YouTube channel →</a></div>
-  <div class="card"><h3>Nursery</h3><div class="muted"><span class="ph">[ministry description needed]</span></div><div>Sophy Kim</div></div>
-  <div class="card"><h3>Youth</h3><div class="muted"><span class="ph">[ministry description needed]</span></div><div>Girls – Palmy Silarat<br>Boys – Steven Lee &amp; Abraham Ahn</div></div>
-  <div class="card"><h3>Missions</h3><div>Nepal · MorningStar <span class="ph">[description needed]</span></div><div style="margin-top:6px"><b>Bethany IMPACT</b> – a Community Development Hub supporting schools, families and leaders through financial literacy, health clinics, community nights, urban farming, and college and job readiness.</div></div></div></details>
+<section class="screen" id="s-notifications" hidden>
+  <div class="hdr"><button class="back" type="button" onclick="history.back()"><svg class="i"><use href="#i-back"/></svg></button><h1 class="ptitle" style="font-size:26px" data-i18n="notes">Notifications</h1></div>
+  <div class="card"><b data-i18n="notifOn"></b><p class="mut" data-i18n="notifBody"></p>
+    <label><input id="notif-toggle" type="checkbox"> <span data-i18n="notesSub"></span></label>
+  </div>
+</section>
 
- <details id="d-install"><summary>Add app to Home Screen</summary><div>
-  <p style="margin-top:0">Put Bethany on your phone like an app. No app store needed.</p>
-  <div class="card"><div class="h3i"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg><b>iPhone (Safari)</b></div><ol><li>Open this page in <b>Safari</b>.</li><li>Tap the <b>Share</b> button (square with arrow).</li><li>Tap <b>Add to Home Screen</b>, then <b>Add</b>.</li></ol></div>
-  <div class="card"><div class="h3i"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg><b>Android (Chrome)</b></div><ol><li>Open this page in <b>Chrome</b>.</li><li>Tap the <b>⋮</b> menu (top right).</li><li>Tap <b>Add to Home screen</b> or <b>Install app</b>.</li></ol></div></div></details>
-
- <h2>Follow us</h2>
- <div class="grid"><a class="btn btn-out" style="font-size:17px" href="https://www.facebook.com/bethanychurch.WA">Facebook</a><a class="btn btn-out" style="font-size:17px" href="https://www.instagram.com/bethanychurch_em/">Instagram</a></div>
- <a class="btn btn-out" style="font-size:17px" href="https://linktr.ee/bethanychurchlynnwood">All links (Linktree)</a>
- <p class="note">Design preview v2 · not production</p>
-</div></section>
-
-<section class="screen" id="s-worship">
+<section class="screen" id="s-worship" hidden>
  <div id="wo-app">
   <div id="wo-lib" class="pad">
+   <button class="lnkbtn" type="button" onclick="location.hash='#/ministry'">← <span data-i18n="myMin">My Ministry</span></button>
    <h1 style="margin:0">Library</h1>
-   <p id="wo-private-msg" class="muted" hidden></p>
-   <button class="btn btn-teal" type="button" onclick="woThisSunday()">This Sunday</button>
+   <p id="wo-private-msg" class="mut" hidden></p>
+   <button class="pill brand" type="button" onclick="woThisSunday()">This Sunday</button>
    <div class="lang-switch" role="tablist" aria-label="Library language">
     <button type="button" id="wo-lang-en" class="on" role="tab" aria-selected="true">English CCM</button>
     <button type="button" id="wo-lang-ko" role="tab" aria-selected="false">Korean CCM</button>
    </div>
    <label for="wo-q">Song name</label>
    <input id="wo-q" placeholder="Title or artist" autocomplete="off">
-   <button class="btn btn-out" id="wo-filter-btn" type="button" aria-expanded="false">Filters <span id="wo-filter-n" hidden>0</span></button>
+   <button class="btn" id="wo-filter-btn" type="button" aria-expanded="false">Filters <span id="wo-filter-n" hidden>0</span></button>
    <div id="wo-filters" hidden>
     <div id="wo-speed" class="chips"></div>
     <label for="wo-artist">Artist</label>
@@ -445,40 +409,29 @@ nav{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-rig
     <div id="wo-moment" class="chips"></div>
     <p class="flab" id="wo-time-lab">Time</p>
     <div id="wo-time" class="chips"></div>
-    <button class="btn btn-out" id="wo-clear" type="button">Clear filters</button>
+    <button class="btn" id="wo-clear" type="button">Clear filters</button>
    </div>
-   <p id="wo-count" class="muted" style="margin:8px 0"></p>
+   <p id="wo-count" class="mut"></p>
    <div id="wo-list"></div>
-   <button class="btn btn-out" type="button" onclick="location.hash='#/worship/add'">Add song</button>
+   <button class="btn" type="button" onclick="location.hash='#/worship/add'">Add song</button>
   </div>
   <div id="wo-sets" class="pad" hidden>
-   <h1 style="margin:0">Setlists</h1>
+   <button class="lnkbtn" type="button" onclick="location.hash='#/ministry'">← My Ministry</button>
+   <h1>Setlists</h1>
    <p id="wo-sync-list" class="wo-sync" hidden></p>
-   <p id="wo-import" class="muted" hidden></p>
+   <p id="wo-import" class="mut" hidden></p>
    <div id="wo-new" class="card" hidden>
-    <label for="wo-new-date">Date</label>
-    <input id="wo-new-date" type="date">
-    <label for="wo-new-title">Title</label>
-    <input id="wo-new-title" autocomplete="off">
+    <label for="wo-new-date">Date</label><input id="wo-new-date" type="date">
+    <label for="wo-new-title">Title</label><input id="wo-new-title" autocomplete="off">
     <label for="wo-new-leader">Leader</label>
-    <select id="wo-new-leader">
-     <option>Pastor Woori</option>
-     <option>Palmy</option>
-     <option>Daniel</option>
-    </select>
+    <select id="wo-new-leader"><option>Pastor Woori</option><option>Palmy</option><option>Daniel</option></select>
     <label for="wo-new-service">Service</label>
-    <select id="wo-new-service">
-     <option>English Service</option>
-     <option>Korean Service</option>
-    </select>
+    <select id="wo-new-service"><option>English Service</option><option>Korean Service</option></select>
     <label for="wo-new-lang">Language</label>
-    <select id="wo-new-lang">
-     <option value="en">English</option>
-     <option value="ko">Korean</option>
-    </select>
-    <p id="wo-new-err" hidden style="color:#b00020;font-weight:700;margin:8px 0"></p>
+    <select id="wo-new-lang"><option value="en">English</option><option value="ko">Korean</option></select>
+    <p id="wo-new-err" hidden></p>
     <button class="btn btn-teal" type="button" onclick="woCreateSet()">Create setlist</button>
-    <button class="btn btn-out" type="button" onclick="woCancelNew()">Cancel</button>
+    <button class="btn" type="button" onclick="woCancelNew()">Cancel</button>
    </div>
    <div id="wo-sets-list"></div>
    <button class="btn btn-teal" type="button" onclick="woNewSet()">New setlist</button>
@@ -487,36 +440,22 @@ nav{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-rig
   <div id="wo-edit" class="pad" hidden>
    <button type="button" class="lnkbtn" onclick="location.hash='#/worship/setlists'">← Setlists</button>
    <h1>Setlist</h1>
-   <p id="wo-live-banner" class="ann" hidden></p>
-   <p id="wo-leader-banner" class="ann" hidden></p>
+   <p id="wo-live-banner" hidden></p>
+   <p id="wo-leader-banner" hidden></p>
    <div class="card">
     <p id="wo-sync" class="wo-sync" hidden></p>
-    <label for="wo-leader">Leader note</label>
-    <textarea id="wo-leader" placeholder="Note for the band"></textarea>
-    <label for="wo-title">Title</label>
-    <input id="wo-title" autocomplete="off">
+    <label for="wo-leader">Leader note</label><textarea id="wo-leader" placeholder="Note for the band"></textarea>
+    <label for="wo-title">Title</label><input id="wo-title" autocomplete="off">
     <label for="wo-set-leader">Leader</label>
-    <select id="wo-set-leader">
-     <option>Pastor Woori</option>
-     <option>Palmy</option>
-     <option>Daniel</option>
-    </select>
-    <label for="wo-date">Date</label>
-    <input id="wo-date" type="date">
+    <select id="wo-set-leader"><option>Pastor Woori</option><option>Palmy</option><option>Daniel</option></select>
+    <label for="wo-date">Date</label><input id="wo-date" type="date">
     <label for="wo-service">Service</label>
-    <select id="wo-service">
-     <option>English Service</option>
-     <option>Korean Service</option>
-    </select>
+    <select id="wo-service"><option>English Service</option><option>Korean Service</option></select>
     <label for="wo-set-lang">Language</label>
-    <select id="wo-set-lang">
-     <option value="">No language tag</option>
-     <option value="en">English</option>
-     <option value="ko">Korean</option>
-    </select>
+    <select id="wo-set-lang"><option value="">No language tag</option><option value="en">English</option><option value="ko">Korean</option></select>
     <div id="wo-set"></div>
     <button class="btn btn-teal" type="button" onclick="woEnterPlay(true)">Play set</button>
-    <button class="btn btn-out" type="button" style="min-height:52px;font-size:18px" onclick="woShare()">Share link</button>
+    <button class="btn" type="button" onclick="woShare()">Share link</button>
     <input id="wo-share" hidden readonly onclick="this.select()">
    </div>
   </div>
@@ -525,13 +464,11 @@ nav{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-rig
    <button type="button" class="lnkbtn" onclick="location.hash='#/worship/library'">← Library</button>
    <h1>Add song</h1>
    <form id="wo-request" onsubmit="return woRequestSong(event)">
-    <p id="wo-req-off" class="muted" hidden>Song requests aren't connected yet.</p>
+    <p id="wo-req-off" class="mut" hidden>Song requests aren't connected yet.</p>
     <div id="wo-req-fields">
-     <label for="wo-req-title">Song title</label>
-     <input id="wo-req-title" autocomplete="off">
-     <label for="wo-req-artist">Artist name</label>
-     <input id="wo-req-artist" autocomplete="off">
-     <p id="wo-req-msg" class="muted" hidden></p>
+     <label for="wo-req-title">Song title</label><input id="wo-req-title" autocomplete="off">
+     <label for="wo-req-artist">Artist name</label><input id="wo-req-artist" autocomplete="off">
+     <p id="wo-req-msg" class="mut" hidden></p>
      <button class="btn btn-teal" type="submit">Send request</button>
     </div>
    </form>
@@ -555,172 +492,42 @@ nav{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-rig
   <button type="button" class="wo-edge left" aria-label="Previous song" onclick="woPlayStep(-1)"></button>
   <button type="button" class="wo-edge right" aria-label="Next song" onclick="woPlayStep(1)"></button>
   <p id="wo-play-banner" hidden style="margin:0;padding:8px 16px;background:#dcae1d;color:#00303f;font-weight:800"></p>
-  <h1 id="wo-play-title" style="margin:0;padding:8px 16px 0;font-size:34px"></h1>
+  <h1 id="wo-play-title" style="margin:0;padding:8px 16px 0"></h1>
   <div id="wo-play-body"></div>
  </div>
 </section>
-<nav aria-label="Main">
- <a href="#home" data-s="home"><svg class="" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>Home</a>
- <a href="#/worship/library" data-s="library" class="nav-wo"><svg class="" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19V5m0 14h6a3 3 0 0 0 3-3V5H7a3 3 0 0 0-3 3zM20 19V5m0 14h-6a3 3 0 0 1-3-3V5h6a3 3 0 0 1 3 3z"/></svg>Library</a>
- <a href="#/worship/setlists" data-s="setlists" class="nav-wo"><svg class="" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>Setlists</a>
- <a href="#watch" data-s="watch" class="nav-app"><svg class="" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="4"/><path d="M10 9l5 3-5 3z" fill="currentColor"/></svg>Watch</a>
- <a href="#events" data-s="events" class="nav-app"><svg class="" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Events</a>
- <a href="#give" data-s="give" class="nav-app"><svg class="" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-8-5-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 6-8 11-8 11z"/></svg>Give</a>
- <a href="#more" data-s="more"><svg class="" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="19" cy="12" r="1.6" fill="currentColor"/></svg>More</a>
-</nav></div>
+<nav class="nav" aria-label="Main">
+ <a href="#/home" data-nav="home"><svg class="i"><use href="#i-home"/></svg><span data-i18n="home">Home</span></a>
+ <a href="#/events" data-nav="events"><svg class="i"><use href="#i-cal"/></svg><span data-i18n="events">Events</span></a>
+ <a href="#/ministries" data-nav="ministries"><svg class="i"><use href="#i-users"/></svg><span data-i18n="ministries">Ministries</span></a>
+ <a href="#/give" data-nav="give"><svg class="i"><use href="#i-heart"/></svg><span data-i18n="give">Give</span></a>
+ <a href="#/more" data-nav="more"><svg class="i"><use href="#i-grid"/></svg><span data-i18n="more">More</span></a>
+</nav>
+</div>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+ <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5"/></symbol>
+ <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16.5" rx="3"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></symbol>
+ <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20.5s-8-4.6-8-10.6A4.4 4.4 0 0 1 12 7.3a4.4 4.4 0 0 1 8 2.6c0 6-8 10.6-8 10.6Z"/></symbol>
+ <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/></symbol>
+ <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/></symbol>
+ <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5 8 12l7 7"/></symbol>
+ <symbol id="i-arr" viewBox="0 0 24 24"><path d="M7 17 17 7M8 7h9v9"/></symbol>
+ <symbol id="i-bowl" viewBox="0 0 24 24"><path d="M3 11h18a9 9 0 0 1-18 0Z"/></symbol>
+ <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/></symbol>
+ <symbol id="i-ok" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+ <symbol id="i-x" viewBox="0 0 24 24"><path d="M6.5 6.5 17.5 17.5M17.5 6.5 6.5 17.5"/></symbol>
+ <symbol id="i-q" viewBox="0 0 24 24"><path d="M9 9a3 3 0 1 1 4.5 2.6c-.9.5-1.5 1.2-1.5 2.2"/></symbol>
+ <symbol id="i-music" viewBox="0 0 24 24"><path d="M9 18V5.5l11-2V16"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/></symbol>
+ <symbol id="i-smile" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5a4.5 4.5 0 0 0 7 0"/></symbol>
+</defs></svg>
 <script>
 const RSVP_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzlNMiNYPc-5jImVg_vvOwQnECRvJ18WKSmQ7bzSCz84LQhlTy68WICnmkXeXqkN0Fi/exec';
 const LIVE_SETLIST_ENDPOINT = '';
 const WORSHIP_BACKEND_URL = 'https://script.google.com/macros/s/AKfycbwWtdJUNT8nh1T4uhFwlDCYdukRE5eAUBq-In-lRSkqZlksSh1Jp7RbdsjR4A5ZRBKCtA/exec';
-// Schedule = church-info-for-app.md. dow: 0=Sun
-var SV={em:{n:"Sunday English (EM) Service",d:0,h:10,m:0},ko:{n:"Sunday Korean Service",d:0,h:11,m:30},wed:{n:"Wednesday Korean Service",d:3,h:19,m:0},sat:{n:"Saturday Morning Prayer (Korean)",d:6,h:7,m:0},
-women:{n:"Women's Bible Study",d:2,h:18,m:30},men:{n:"Men's Bible Study",d:3,h:19,m:15},yam:{n:"Young Adult Men's Bible Study",d:6,h:19,m:0},youth:{n:"Youth Bible Study",d:0,h:11,m:40}};
-var SERVICES=["em","ko","wed","sat"],DAYS=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],ADDR="15414 Ash Way, Lynnwood, WA 98087";
-function laNow(){var p={};new Intl.DateTimeFormat("en-US",{timeZone:"America/Los_Angeles",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hour12:false,weekday:"short"}).formatToParts(new Date()).forEach(x=>p[x.type]=x.value);
- return {y:+p.year,mo:+p.month,d:+p.day,h:+p.hour%24,mi:+p.minute,dow:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].indexOf(p.weekday)}}
-function fmt(h,m){return (h%12||12)+":"+String(m).padStart(2,"0")+" "+(h<12?"AM":"PM")}
-var NEXT=null;
-function nextService(){var n=laNow(),now=n.dow*1440+n.h*60+n.mi,best=null;
- SERVICES.forEach(k=>{var s=SV[k],t=s.d*1440+s.h*60+s.m,diff=(t-now+10080)%10080;if(diff===0)diff=10080;if(!best||diff<best.diff)best={k:k,diff:diff}});
- var s=SV[best.k],dd=Math.floor((now+best.diff)/1440)-n.dow,label=dd===0?"Today":dd===1?"Tomorrow":DAYS[s.d];
- var dt=new Date(Date.UTC(n.y,n.mo-1,n.d+dd));NEXT={k:best.k,date:dt};
- document.getElementById("nx-when").textContent=label+" · "+fmt(s.h,s.m);document.getElementById("nx-name").textContent=s.n}
-function firstDate(d){var n=laNow(),add=(d-n.dow+7)%7;return new Date(Date.UTC(n.y,n.mo-1,n.d+add))}
-function ymd(dt){return dt.getUTCFullYear()+String(dt.getUTCMonth()+1).padStart(2,"0")+String(dt.getUTCDate()).padStart(2,"0")}
-function hm(h,m){return "T"+String(h).padStart(2,"0")+String(m).padStart(2,"0")+"00"}
-var VTZ="BEGIN:VTIMEZONE\r\nTZID:America/Los_Angeles\r\nBEGIN:DAYLIGHT\r\nTZOFFSETFROM:-0800\r\nTZOFFSETTO:-0700\r\nTZNAME:PDT\r\nDTSTART:19700308T020000\r\nRRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=2SU\r\nEND:DAYLIGHT\r\nBEGIN:STANDARD\r\nTZOFFSETFROM:-0700\r\nTZOFFSETTO:-0800\r\nTZNAME:PST\r\nDTSTART:19701101T020000\r\nRRULE:FREQ=YEARLY;BYMONTH=11;BYDAY=1SU\r\nEND:STANDARD\r\nEND:VTIMEZONE\r\n";
-function ics(key){var ev,fn;
- if(key==="harvest"){ev={t:"Harvestfest – Bethany Church",start:"20261031T160000",end:"20261031T190000"};fn="harvestfest"}
- else{if(key==="next")key=NEXT.k;var s=SV[key];ev={t:s.n+" – Bethany Church",start:ymd(firstDate(s.d))+hm(s.h,s.m),rr:"FREQ=WEEKLY"};fn=key}
- var L=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Bethany Church//Member App Mockup//EN","CALSCALE:GREGORIAN"].join("\r\n")+"\r\n"+VTZ+
- ["BEGIN:VEVENT","UID:"+fn+"-"+Date.now()+"@bethanychurchwa.org","DTSTAMP:"+new Date().toISOString().replace(/[-:]/g,"").split(".")[0]+"Z",
-  "SUMMARY:"+ev.t,"DTSTART;TZID=America/Los_Angeles:"+ev.start].concat(ev.end?["DTEND;TZID=America/Los_Angeles:"+ev.end]:[]).concat(ev.rr?["RRULE:"+ev.rr]:[])
-  .concat(["LOCATION:"+ADDR.replace(/,/g,"\\,"),"URL:https://www.youtube.com/@bethanychurch2134/streams","END:VEVENT","END:VCALENDAR"]).join("\r\n")+"\r\n";
- var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([L],{type:"text/calendar"}));a.download="bethany-"+fn+".ics";document.body.appendChild(a);a.click();a.remove()}
-var MEMBER_KEY="bethany-demo-member",authStep="signin",pendingEmail="";
-function session(){try{return JSON.parse(localStorage.getItem(MEMBER_KEY)||"null")}catch(e){return null}}
-function saveMember(s){localStorage.setItem(MEMBER_KEY,JSON.stringify(s))}
-function setSwitch(id,on,labelId){var el=document.getElementById(id);if(!el)return;el.classList.toggle("off",!on);el.setAttribute("aria-checked",on?"true":"false");if(labelId){var l=document.getElementById(labelId);if(l)l.textContent=on?"ON":"OFF"}}
-function paintMember(){var s=session();if(!s)return;
- document.getElementById("hi-name").textContent=s.name||"there";
- document.getElementById("pf-name").textContent=s.name||"";
- document.getElementById("pf-email").textContent=s.email||"";
- setSwitch("sw-prof",s.emailUpdates!==false);
- setSwitch("sw-email",s.emailUpdates!==false,"sw-email-l");
- setSwitch("sw-push",!!s.push,"sw-push-l");
- document.getElementById("ann").hidden=!!s.annHidden;
- var on=s.emailUpdates!==false;
- document.getElementById("mail-why").textContent=on?'You\'re getting this because you turned on "Email me church updates."':"Email updates are off for this demo profile.";
- document.getElementById("mail-unsub").hidden=!on}
-function showAuth(){
- document.getElementById("auth-signin").hidden=authStep!=="signin";
- document.getElementById("auth-check").hidden=authStep!=="check";
- document.getElementById("auth-profile").hidden=authStep!=="profile";
- document.body.classList.toggle("on-signin",authStep==="signin");
- document.documentElement.classList.toggle("show-bar",authStep!=="signin");
- if(authStep==="check")document.getElementById("check-email").textContent=pendingEmail||(session()&&session().email)||"";
- if(authStep==="profile"){var s=session()||{};var n=document.getElementById("prof-name");if(!n.value)n.value=s.name||"";document.getElementById("prof-phone").value=s.phone||"";paintMember()}}
-function go(){var s=session(),ok=!!(s&&s.signedIn&&s.profileDone);
- document.body.classList.toggle("locked",!ok);
- document.documentElement.classList.toggle("need-auth",!ok);
- var auth=document.getElementById("s-auth");
- if(!ok){if(!(s&&s.signedIn))authStep=authStep||"signin";else authStep="profile";
-  auth.classList.add("on");
-  document.body.classList.remove("in-worship","wo-split");
-  var woMode=document.getElementById("wo-mode");if(woMode)woMode.hidden=true;
-  document.querySelectorAll(".screen").forEach(function(el){if(el!==auth)el.classList.remove("on")});
-  document.querySelectorAll("nav a").forEach(function(a){a.classList.remove("on");a.removeAttribute("aria-current")});
-  showAuth();scrollTo(0,0);return}
- auth.classList.remove("on");
- document.body.classList.remove("on-signin");
- paintMember();
- var raw=(location.hash||"#home").slice(1).replace(/^\/+/,""),toServe=raw==="serve";
- var inWo=raw==="worship"||raw.indexOf("worship/")===0;
- var h=raw.split("/")[0];
- if(toServe)h="more";
- else if(inWo)h="worship";
- if(h==="auth"||!document.getElementById("s-"+h))h="home";
- var mark=h;
- if(inWo)mark=/^worship\/setlists/.test(raw)||/^worship\/set\//.test(raw)?"setlists":"library";
- document.body.classList.toggle("in-worship",h==="worship");
- if(h!=="worship")document.body.classList.remove("wo-split");
- var woMode=document.getElementById("wo-mode");if(woMode)woMode.hidden=h!=="worship";
- document.querySelectorAll(".screen").forEach(function(el){el.classList.toggle("on",el.id==="s-"+h)});
- document.querySelectorAll("nav a").forEach(function(a){a.classList.toggle("on",a.dataset.s===mark);a.toggleAttribute("aria-current",a.dataset.s===mark)});
- scrollTo(0,0);
- if(toServe){var serve=document.getElementById("serve");if(serve)serve.scrollIntoView({block:"start"})}}
-function startEmail(ev){if(ev)ev.preventDefault();
- var email=document.getElementById("login-email").value.trim(),err=document.getElementById("login-err");
- if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){err.textContent="Please enter your email.";err.hidden=false;return}
- err.hidden=true;pendingEmail=email;document.getElementById("check-again").hidden=true;authStep="check";showAuth()}
-function sendAgainDemo(){var n=document.getElementById("check-again");n.hidden=false;n.textContent="Demo only — no email is sent. Use the button above."}
-function useDifferentEmail(){var s=session();if(s&&s.signedIn&&!s.profileDone){s.signedIn=false;saveMember(s)}authStep="signin";showAuth();document.getElementById("login-email").focus()}
-function openDemoLink(){continueWithEmail(pendingEmail||document.getElementById("check-email").textContent)}
-function providerSignIn(){var note=document.getElementById("oa-status"),btn=document.getElementById("oa-google");
- note.hidden=false;note.textContent="Signing in with Google…";btn.disabled=true;
- setTimeout(function(){btn.disabled=false;note.hidden=true;continueWithEmail("jane.doe@gmail.com")},800)}
-function continueWithEmail(email){if(!email)return;var prev=session(),same=!!(prev&&prev.email===email);
- var s={email:email,name:same?(prev.name||""):"",phone:same?(prev.phone||""):"",emailUpdates:same&&typeof prev.emailUpdates==="boolean"?prev.emailUpdates:true,push:same&&typeof prev.push==="boolean"?prev.push:false,profileDone:!!(same&&prev.profileDone&&prev.name),signedIn:true,annHidden:!!(prev&&prev.annHidden)};
- saveMember(s);
- if(s.profileDone){authStep="signin";if(/#\/?worship/.test(location.hash||""))go();else if(location.hash!=="#home")location.hash="#home";else go();return}
- authStep="profile";document.getElementById("prof-name").value=s.name||"";document.getElementById("prof-phone").value=s.phone||"";document.getElementById("prof-err").hidden=true;go()}
-function finishProfile(){var name=document.getElementById("prof-name").value.trim(),err=document.getElementById("prof-err");
- if(!name){err.hidden=false;return}err.hidden=true;var s=session()||{};
- s.name=name;s.phone=document.getElementById("prof-phone").value.trim();
- s.emailUpdates=document.getElementById("sw-prof").getAttribute("aria-checked")==="true";
- if(typeof s.push!=="boolean")s.push=false;s.profileDone=true;s.signedIn=true;saveMember(s);
- if(/#\/?worship/.test(location.hash||""))go();else if(location.hash!=="#home")location.hash="#home";else go()}
-function togglePref(key){var s=session()||{};if(key==="emailUpdates")s.emailUpdates=s.emailUpdates===false;else s.push=!s.push;saveMember(s);paintMember()}
-function hideAnn(){var s=session()||{};s.annHidden=true;saveMember(s);document.getElementById("ann").hidden=true}
-function unsubscribeDemo(){var s=session();if(!s)return;s.emailUpdates=false;saveMember(s);paintMember()}
-function editProfile(){var box=document.getElementById("pf-edit"),s=session()||{};
- if(box.hidden){document.getElementById("pf-name-in").value=s.name||"";document.getElementById("pf-phone-in").value=s.phone||"";document.getElementById("pf-edit-err").hidden=true}
- box.hidden=!box.hidden}
-function saveProfileEdit(){var name=document.getElementById("pf-name-in").value.trim(),err=document.getElementById("pf-edit-err");
- if(!name){err.hidden=false;return}err.hidden=true;var s=session()||{};s.name=name;s.phone=document.getElementById("pf-phone-in").value.trim();saveMember(s);document.getElementById("pf-edit").hidden=true;paintMember()}
-function signOut(){var s=session();if(s){s.signedIn=false;saveMember(s);var input=document.getElementById("login-email");input.value=s.email||""}
- document.getElementById("login-err").hidden=true;authStep="signin";
- if(location.hash)history.replaceState(null,"",location.pathname+location.search);
- go()}
-function openRsvp(){var r=document.getElementById("rsvp");var err=document.getElementById("r-err");err.textContent="Please enter your name.";err.hidden=true;r.hidden=false;document.getElementById("rsvp-form").hidden=false;document.getElementById("rsvp-ok").hidden=true;r.scrollIntoView({behavior:"smooth",block:"start"});setTimeout(()=>document.getElementById("r-name").focus({preventScroll:true}),300)}
-function closeRsvp(){document.getElementById("rsvp").hidden=true}
-function st(id,d){var i=document.getElementById(id);i.value=Math.max(0,(parseInt(i.value)||0)+d)}
-function sendRsvp(){var n=document.getElementById("r-name").value.trim();var err=document.getElementById("r-err");err.textContent="Please enter your name.";err.hidden=!!n;if(!n)return;
- var a=parseInt(document.getElementById("r-ad").value)||0,k=parseInt(document.getElementById("r-kd").value)||0;
- document.getElementById("r-sum").textContent=n+" · "+a+(a==1?" adult":" adults")+", "+k+(k==1?" kid":" kids");
- if(!RSVP_ENDPOINT){err.textContent="RSVP isn't set up yet";err.hidden=false;return}
- var b=event&&event.target;if(b){b.disabled=true;b.textContent="Sending…"}
- fetch(RSVP_ENDPOINT,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain"},body:JSON.stringify({event:"Harvestfest 2026-10-31",name:n,adults:a,kids:k,contact:document.getElementById("r-ph").value.trim()})})
- .then(function(){document.getElementById("rsvp-form").hidden=true;document.getElementById("rsvp-ok").hidden=false})
- .catch(function(){err.textContent="Sorry, that didn't go through. Please try again.";err.hidden=false})
- .finally(function(){if(b){b.disabled=false;b.textContent="Send RSVP"}})}
-var SERVE_KEY="bethany-serve-key",serveMetaPromise=null;
-function b64ToBytes(s){var bin=atob(s),out=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)out[i]=bin.charCodeAt(i);return out}
-function bytesToB64(buf){var bytes=new Uint8Array(buf),s="";for(var i=0;i<bytes.length;i++)s+=String.fromCharCode(bytes[i]);return btoa(s)}
-function loadServeMeta(){if(!serveMetaPromise)serveMetaPromise=fetch("serve-links.json").then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(meta){if(!meta||meta.iterations<100000||meta.iterations>2000000)throw 0;return meta});return serveMetaPromise}
-function deriveServeKey(password,meta){return crypto.subtle.importKey("raw",new TextEncoder().encode(password),"PBKDF2",false,["deriveKey"]).then(function(material){return crypto.subtle.deriveKey({name:"PBKDF2",salt:b64ToBytes(meta.salt),iterations:meta.iterations,hash:"SHA-256"},material,{name:"AES-GCM",length:256},true,["decrypt"])})}
-function decryptServe(meta,key){return crypto.subtle.decrypt({name:"AES-GCM",iv:b64ToBytes(meta.iv)},key,b64ToBytes(meta.ciphertext)).then(function(plain){return JSON.parse(new TextDecoder().decode(plain))})}
-function showServeLinks(links){if(!Array.isArray(links)||!links.length)throw 0;
- var box=document.getElementById("serve-links");box.replaceChildren();
- links.forEach(function(item,i){if(!item||typeof item.href!=="string"||!/^https:\/\//.test(item.href))throw 0;
-  var a=document.createElement("a");a.className=i%2?"btn btn-out":"btn btn-teal";a.target="_blank";a.rel="noopener";a.href=item.href;a.textContent=item.title||"Open";
-  var p=document.createElement("p");p.className="muted";p.style.margin="0 0 4px";p.textContent=item.note||"";
-  box.appendChild(a);box.appendChild(p)});
- document.getElementById("serve-form").hidden=true;box.hidden=false;document.getElementById("serve-lock-row").hidden=false}
-function lockServe(){localStorage.removeItem(SERVE_KEY);
- var box=document.getElementById("serve-links");box.replaceChildren();box.hidden=true;
- document.getElementById("serve-lock-row").hidden=true;document.getElementById("serve-form").hidden=false;
- document.getElementById("serve-pw").value="";document.getElementById("serve-remember").checked=false;document.getElementById("serve-err").hidden=true}
-function unlockServe(ev){if(ev)ev.preventDefault();
- var pw=document.getElementById("serve-pw").value,err=document.getElementById("serve-err"),btn=document.querySelector("#serve-form button");
- if(!pw){err.textContent="Please enter the team password.";err.hidden=false;return}
- btn.disabled=true;btn.textContent="Unlocking…";err.hidden=true;
- loadServeMeta().then(function(meta){return deriveServeKey(pw,meta).then(function(key){return decryptServe(meta,key).then(function(links){return {key:key,links:links}})})}).then(function(res){
-  if(document.getElementById("serve-remember").checked)return crypto.subtle.exportKey("raw",res.key).then(function(raw){localStorage.setItem(SERVE_KEY,bytesToB64(raw));showServeLinks(res.links);document.getElementById("serve-pw").value=""});
-  showServeLinks(res.links);document.getElementById("serve-pw").value=""}).catch(function(){err.textContent="That password isn't right. Try again.";err.hidden=false}).finally(function(){btn.disabled=false;btn.textContent="Unlock"})}
-function tryRememberServe(){var saved;try{saved=localStorage.getItem(SERVE_KEY)}catch(e){return}if(!saved)return;
- loadServeMeta().then(function(meta){return crypto.subtle.importKey("raw",b64ToBytes(saved),{name:"AES-GCM"},false,["decrypt"]).then(function(key){return decryptServe(meta,key)})}).then(showServeLinks).catch(function(){localStorage.removeItem(SERVE_KEY)})}
-addEventListener("hashchange",go);nextService();go();tryRememberServe();
 </script>
-<script src="worship.js?v=18"></script>
-</body></html>
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>
+<script src="worship.js?v=20"></script>
+<script src="js/serve.js"></script>
+</body>
+</html>

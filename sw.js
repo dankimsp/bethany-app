@@ -1,8 +1,11 @@
-var CACHE = "bethany-worship-v18";
+var CACHE = "bethany-worship-v20";
 var FILES = [
   "./",
   "index.html",
   "worship.js",
+  "js/config.js",
+  "js/app.js",
+  "js/serve.js",
   "songs.json",
   "manifest.webmanifest",
   "robots.txt",
