@@ -961,6 +961,16 @@ function woLibSignature() {
   var q = document.getElementById("wo-q");
   return [woF.lang, woF.speed, woF.artist, woF.theme, woF.az ? "1" : "0", woF.titleOnly ? "1" : "0", (woF.moment || []).join(","), (woF.season || []).join(","), (woF.range || []).join(","), (woF.time || []).join(","), (woF.difficulty || []).join(","), woF.scripture || "", q ? q.value : ""].join("|");
 }
+function woJumpLetter(letter, list) {
+  var at = -1;
+  list.forEach(function (s, i) { if (at < 0 && woLetter(s.title) === letter) at = i; });
+  if (at < 0) return;
+  if ((wo.libShown || 60) < at + 1) wo.libShown = Math.ceil((at + 1) / 60) * 60;
+  wo.holdScroll = true;
+  woRenderLib();
+  var target = document.getElementById("wo-L-" + encodeURIComponent(letter));
+  if (target) target.scrollIntoView({ block: "start" });
+}
 function woRenderLib() {
   if (!woF.langPicked) woF.lang = woPreferLibLang();
   var pane = document.getElementById("wo-lib");
@@ -989,21 +999,19 @@ function woRenderLib() {
       var letter = woLetter(s.title);
       if (!seenLetter[letter]) { seenLetter[letter] = 1; letters.push(letter); }
     });
-    letters.forEach(function (letter) {
+    var tight = false;
+    if (window.matchMedia && window.matchMedia("(max-width: 767px)").matches) {
+      var avail = window.innerHeight - 100 - 110;
+      tight = letters.length * 20 > avail;
+    }
+    letters.forEach(function (letter, i) {
       var jump = document.createElement("button");
       jump.type = "button";
-      jump.className = "wo-az-letter";
-      jump.textContent = letter;
-      jump.onclick = function () {
-        var at = -1;
-        list.forEach(function (s, i) { if (at < 0 && woLetter(s.title) === letter) at = i; });
-        if (at < 0) return;
-        if (wo.libShown < at + 1) wo.libShown = Math.ceil((at + 1) / 60) * 60;
-        wo.holdScroll = true;
-        woRenderLib();
-        var target = document.getElementById("wo-L-" + encodeURIComponent(letter));
-        if (target) target.scrollIntoView({ block: "start" });
-      };
+      var dot = tight && i % 2 === 1;
+      jump.className = dot ? "wo-az-dot" : "wo-az-letter";
+      jump.textContent = dot ? "·" : letter;
+      jump.setAttribute("aria-label", "Jump to " + letter);
+      jump.onclick = function () { woJumpLetter(letter, list); };
       rail.appendChild(jump);
     });
     box.appendChild(rail);

@@ -22,7 +22,7 @@ if ("serviceWorker" in navigator) {
     woRefreshing = true;
     location.reload();
   });
-  navigator.serviceWorker.register("sw.js?v=25").catch(function () {});
+  navigator.serviceWorker.register("sw.js?v=26").catch(function () {});
 }
 </script>
 <style>
@@ -311,6 +311,7 @@ body.wo-playing .app{padding-bottom:0}
   #wo-song .wbody .wsec{break-after:avoid}
   #wo-song .wbody .wline,#wo-song .wbody .wsec{break-inside:avoid}
   #wo-song .wbody > .wblock:first-child > .wsec{margin-top:0}
+  #wo-song .wbody .wsec{margin-top:0}
   #s-give,#s-visit,#s-more{max-width:760px}
   #ministry-list{grid-template-columns:1.4fr 1fr 1fr}
   #ministry-list .mcard.span2{grid-column:auto}
@@ -422,9 +423,16 @@ a.pill.line.createbtn{height:48px;margin-top:8px}
 #s-worship .wo-search{position:sticky;top:0;z-index:4;background:var(--bg);padding:4px 0 8px}
 #wo-list{position:relative;padding-right:52px}
 .wo-az{position:sticky;top:100px;float:right;display:flex;flex-direction:column;align-items:center;width:44px;margin-right:-52px;z-index:3;max-height:calc(100dvh - 200px);overflow:auto}
-.wo-az-letter{width:44px;min-height:28px;border:0;background:transparent;color:var(--accent);font-size:12px;font-weight:700;line-height:20px;padding:0;cursor:pointer}
+.wo-az-letter,.wo-az-dot{width:44px;border:0;background:transparent;color:var(--accent);font-size:12px;font-weight:700;padding:0;cursor:pointer}
+.wo-az-letter{min-height:28px;line-height:20px}
+.wo-az-dot{min-height:12px;line-height:12px;color:var(--text-3);font-size:16px}
 .wo-letter{font-size:12px;font-weight:800;letter-spacing:.08em;color:var(--text-2);margin:14px 0 4px;scroll-margin-top:112px}
 .wo-more{margin:12px 0}
+@media (max-width:767px){
+  .wo-az{top:100px;height:calc(100dvh - 100px - 110px);max-height:calc(100dvh - 100px - 110px);overflow:hidden;justify-content:space-between;align-items:stretch}
+  .wo-az-letter{min-height:16px;flex:1 1 auto;line-height:1.1;height:auto}
+  .wo-az-dot{flex:0 0 12px;min-height:12px}
+}
 @media (min-width:768px){
   .wo-az{max-height:calc(100dvh - 124px)}
 }
@@ -908,6 +916,6 @@ const WORSHIP_BACKEND_URL = 'https://script.google.com/macros/s/AKfycbwWtdJUNT8n
 <script src="js/config.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/app.js"></script>
-<script src="worship.js?v=25"></script>
+<script src="worship.js?v=26"></script>
 </body>
 </html>
