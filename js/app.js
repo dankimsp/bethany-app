@@ -25,6 +25,7 @@ function applyI18n() {
     el.textContent = t(el.getAttribute("data-i18n"));
   });
   document.querySelectorAll("[data-i18n-ph]").forEach(function (el) { el.placeholder = t(el.getAttribute("data-i18n-ph")); });
+  document.querySelectorAll("[data-i18n-aria]").forEach(function (el) { el.setAttribute("aria-label", t(el.getAttribute("data-i18n-aria"))); });
 }
 function deviceId() {
   try {
@@ -1103,9 +1104,110 @@ function renderVisit() {
 document.getElementById("watch-live").onclick = function () { window.open(BETHANY.watchUrl, "_blank", "noopener"); };
 document.getElementById("all-times").onclick = function () { location.hash = "#/events"; };
 document.getElementById("see-events").onclick = function () { location.hash = "#/events"; };
-document.getElementById("feedback-link").onclick = function () {
-  if (BETHANY.feedbackUrl) window.open(BETHANY.feedbackUrl, "_blank", "noopener");
-};
+var APP_VERSION = "v29";
+var fbCat = "idea";
+var fbGen = 0;
+function feedbackWho() {
+  var p = loadProfile() || {};
+  var u = (window.bethanyUser && window.bethanyUser()) || {};
+  return {
+    name: p.name || u.displayName || "",
+    email: p.email || u.email || ""
+  };
+}
+function setFeedbackCategory(cat) {
+  fbCat = cat || "idea";
+  document.querySelectorAll("#fb-sheet [data-cat]").forEach(function (btn) {
+    var on = btn.getAttribute("data-cat") === fbCat;
+    btn.classList.toggle("on", on);
+    btn.setAttribute("aria-checked", on ? "true" : "false");
+  });
+}
+function syncFeedbackSend() {
+  var btn = document.getElementById("fb-send");
+  var msg = document.getElementById("fb-msg");
+  if (!btn || !msg || btn.dataset.busy === "1") return;
+  btn.disabled = !msg.value.trim();
+}
+function openFeedback() {
+  fbGen++;
+  var who = feedbackWho();
+  document.getElementById("fb-name").textContent = who.name;
+  document.getElementById("fb-email").textContent = who.email;
+  document.getElementById("fb-msg").value = "";
+  document.getElementById("fb-contact").checked = false;
+  document.getElementById("fb-err").hidden = true;
+  document.getElementById("fb-form").hidden = false;
+  document.getElementById("fb-thanks").hidden = true;
+  var send = document.getElementById("fb-send");
+  send.dataset.busy = "";
+  send.disabled = true;
+  send.textContent = t("fbSend");
+  setFeedbackCategory("idea");
+  document.getElementById("fb-sheet").hidden = false;
+  document.body.classList.add("fb-open");
+  document.getElementById("fb-msg").focus();
+}
+function closeFeedback() {
+  fbGen++;
+  document.getElementById("fb-sheet").hidden = true;
+  document.body.classList.remove("fb-open");
+}
+function sendFeedback() {
+  var msgEl = document.getElementById("fb-msg");
+  var message = msgEl.value.trim();
+  var err = document.getElementById("fb-err");
+  var send = document.getElementById("fb-send");
+  if (!message || send.dataset.busy === "1") return;
+  if (message.length > 2000) message = message.slice(0, 2000);
+  var who = feedbackWho();
+  var gen = ++fbGen;
+  send.dataset.busy = "1";
+  send.disabled = true;
+  send.textContent = t("fbSending");
+  err.hidden = true;
+  api({
+    action: "feedback",
+    category: fbCat,
+    message: message,
+    name: who.name,
+    email: who.email,
+    contactBack: document.getElementById("fb-contact").checked ? "1" : "0",
+    lang: appLang(),
+    appVersion: APP_VERSION
+  }).then(function (res) {
+    if (gen !== fbGen || document.getElementById("fb-sheet").hidden) return;
+    if (!res || res.ok === false) {
+      send.dataset.busy = "";
+      send.textContent = t("fbSend");
+      syncFeedbackSend();
+      err.hidden = false;
+      err.textContent = t("fbError");
+      return;
+    }
+    document.getElementById("fb-form").hidden = true;
+    document.getElementById("fb-thanks").hidden = false;
+    setTimeout(function () { if (gen === fbGen) closeFeedback(); }, 1600);
+  }).catch(function () {
+    if (gen !== fbGen || document.getElementById("fb-sheet").hidden) return;
+    send.dataset.busy = "";
+    send.textContent = t("fbSend");
+    syncFeedbackSend();
+    err.hidden = false;
+    err.textContent = t("fbError");
+  });
+}
+document.getElementById("feedback-link").onclick = function () { openFeedback(); };
+document.getElementById("fb-close").onclick = function () { closeFeedback(); };
+document.getElementById("fb-scrim").onclick = function () { closeFeedback(); };
+document.getElementById("fb-msg").addEventListener("input", syncFeedbackSend);
+document.getElementById("fb-send").onclick = function () { sendFeedback(); };
+document.querySelectorAll("#fb-sheet [data-cat]").forEach(function (btn) {
+  btn.onclick = function () { setFeedbackCategory(btn.getAttribute("data-cat")); };
+});
+document.addEventListener("keydown", function (e) {
+  if (e.key === "Escape" && !document.getElementById("fb-sheet").hidden) closeFeedback();
+});
 window.addEventListener("hashchange", route);
 document.documentElement.lang = appLang() === "ko" ? "ko" : "en";
 window.bethanyOnAuth = function () {

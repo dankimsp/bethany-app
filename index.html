@@ -22,7 +22,7 @@ if ("serviceWorker" in navigator) {
     woRefreshing = true;
     location.reload();
   });
-  navigator.serviceWorker.register("sw.js?v=28").catch(function () {});
+  navigator.serviceWorker.register("sw.js?v=29").catch(function () {});
 }
 </script>
 <style>
@@ -254,6 +254,22 @@ body.wo-playing .app{padding-bottom:0}
 .mchip{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;border-radius:999px;background:var(--brand);color:#fff;font-weight:700;border:0}
 .mchip.add{background:#fff;color:var(--accent);box-shadow:inset 0 0 0 1.5px rgba(18,89,107,.35);cursor:pointer}
 .signout{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:50px;border-radius:999px;border:1.5px solid rgba(110,63,107,.35);color:var(--plum);font-weight:700;margin:16px 0;background:#fff;cursor:pointer}
+body.fb-open{overflow:hidden}
+.fb-layer{position:fixed;inset:0;z-index:60;display:flex;align-items:flex-end;justify-content:center}
+.fb-scrim{position:absolute;inset:0;border:0;padding:0;background:rgba(0,32,42,.46);cursor:pointer}
+.fb-panel{position:relative;z-index:1;width:min(480px,100%);max-height:min(92dvh,720px);overflow:auto;background:var(--bg);color:var(--text);border-radius:24px 24px 0 0;padding:18px 20px calc(18px + env(safe-area-inset-bottom));box-shadow:0 -12px 32px rgba(0,40,50,.18)}
+.fb-panel h2{font-family:var(--serif);font-size:22px;line-height:1.2;margin:0}
+.fb-cats{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 12px}
+.fb-cats button{min-height:44px;padding:0 16px;border-radius:999px;border:1.5px solid rgba(0,48,63,.16);background:#fff;color:var(--text-2);font-weight:700;cursor:pointer}
+.fb-cats button.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+.fb-panel textarea.text{min-height:120px;resize:vertical;margin-top:6px}
+.fb-check{display:flex;align-items:center;gap:10px;min-height:44px;font-weight:700;margin:4px 0 8px}
+.fb-check input{width:22px;height:22px;accent-color:var(--brand);flex:none}
+.fb-who{margin:0 0 14px;font-size:13px;line-height:1.35;color:var(--text-2)}
+.fb-who b{display:block;color:var(--text);font-size:14px}
+#fb-send:disabled{opacity:.45;cursor:default}
+.fb-thanks{padding:28px 8px 36px;text-align:center}
+.fb-thanks h2{text-wrap:balance;max-width:14em;margin:0 auto}
 .edhead{margin:-12px -20px 0;height:240px;background:linear-gradient(180deg,rgba(0,32,42,.35),rgba(247,245,238,1)),url(assets/img/fellowship-group.webp) center 30%/cover;padding:12px 20px;display:flex;justify-content:space-between}
 .edcard{margin-top:-48px}
 .calbtn{display:flex;align-items:center;gap:12px;width:100%;min-height:56px;border-radius:16px;padding:8px 14px;font-weight:700;font-size:16px;margin-top:10px;text-align:left;cursor:pointer;text-decoration:none}
@@ -976,6 +992,31 @@ a.pill.line.createbtn{height:48px;margin-top:8px}
  <a href="#/more" data-nav="more"><svg class="i"><use href="#i-grid"/></svg><span data-i18n="more">More</span></a>
  <div class="navav"><button class="av" id="nav-avatar" type="button"></button></div>
 </nav>
+<div id="fb-sheet" class="fb-layer" hidden>
+  <button class="fb-scrim" id="fb-scrim" type="button" data-i18n-aria="fbClose" aria-label="Close"></button>
+  <div class="fb-panel" role="dialog" aria-modal="true" aria-labelledby="fb-title">
+    <div id="fb-form">
+      <div class="row-between">
+        <h2 id="fb-title" data-i18n="feedback">Send feedback</h2>
+        <button class="back" id="fb-close" type="button" data-i18n-aria="fbClose" aria-label="Close"><svg class="i"><use href="#i-x"/></svg></button>
+      </div>
+      <div class="fb-cats" role="radiogroup" data-i18n-aria="fbCategory" aria-label="Category">
+        <button type="button" class="on" data-cat="idea" role="radio" aria-checked="true" data-i18n="fbIdea">Idea</button>
+        <button type="button" data-cat="bug" role="radio" aria-checked="false" data-i18n="fbBug">Bug</button>
+        <button type="button" data-cat="other" role="radio" aria-checked="false" data-i18n="fbOther">Other</button>
+      </div>
+      <label for="fb-msg" data-i18n="fbMessage">Message</label>
+      <textarea id="fb-msg" class="text" maxlength="2000" data-i18n-ph="fbPlaceholder" placeholder="What's on your mind?"></textarea>
+      <label class="fb-check"><input id="fb-contact" type="checkbox"><span data-i18n="fbContact">Contact me back</span></label>
+      <p class="fb-who"><b id="fb-name"></b><span id="fb-email"></span></p>
+      <p id="fb-err" class="auth-msg" hidden></p>
+      <button class="pill brand block" id="fb-send" type="button" disabled data-i18n="fbSend">Send</button>
+    </div>
+    <div id="fb-thanks" class="fb-thanks" hidden>
+      <h2 data-i18n="fbThanks">Thanks! Daniel will read this.</h2>
+    </div>
+  </div>
+</div>
 </div>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5"/></symbol>
@@ -1014,6 +1055,6 @@ const WORSHIP_BACKEND_URL = 'https://script.google.com/macros/s/AKfycbwWtdJUNT8n
 <script src="js/config.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/app.js"></script>
-<script src="worship.js?v=28"></script>
+<script src="worship.js?v=29"></script>
 </body>
 </html>
