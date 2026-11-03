@@ -553,7 +553,8 @@ function joinTeam(ev) {
   if (!code) { msg.hidden = false; msg.textContent = t("wrongCode"); return; }
   api({ action: "verifyTeamCode", team: team, code: code }).then(function (res) {
     if (res && res.ok && res.team) {
-      rememberTeam(res.team);
+      if (res.profile && res.profile.uid) saveProfileLocal(res.profile);
+      else rememberTeam(res.team);
       document.getElementById("team-code-input").value = "";
       location.hash = "#/ministry/" + res.team;
       return;
@@ -623,6 +624,7 @@ function addSignup(kind, iso) {
   msg.hidden = false;
   msg.textContent = t("saving");
   api({ action: "addSignup", kind: kind, sunday: iso, name: name, deviceId: deviceId(), uid: currentUid() }).then(function (res) {
+    if (res && res.error === "roster") { location.replace(hasTeam("nursery") ? "#/ministry/nursery" : "#/team-code?team=nursery"); return; }
     if (soonError(res)) { msg.textContent = t("soon"); return; }
     if (res && res.error === "taken") { msg.textContent = t("taken"); loadSignups(kind); return; }
     msg.hidden = true;
@@ -709,15 +711,55 @@ function renderRoster() {
   });
 }
 function initials(name) { return name.split(/\s+/).map(function (w) { return w[0]; }).join("").slice(0, 2).toUpperCase(); }
+var availSync = { timer: 0, pending: {}, base: null };
 function setAvail(person, iso, status, note) {
+  if (availSync.base == null) availSync.base = JSON.stringify(availMap());
   var map = availMap();
-  map[person + "|" + iso] = { status: status, note: note || "" };
+  var key = person + "|" + iso;
+  map[key] = { status: status, note: note || "" };
   saveAvailLocal(map);
-  document.getElementById("avail-status").textContent = t("saving");
-  api({ action: "setAvailability", team: "worship", person: person, sunday: iso, status: status, note: note || "" }).then(function (res) {
-    document.getElementById("avail-status").textContent = soonError(res) ? t("soon") : t("saved");
-    renderAvailability();
-  }).catch(function () { document.getElementById("avail-status").textContent = t("soon"); renderAvailability(); });
+  var statusEl = document.getElementById("avail-status");
+  if (statusEl && statusEl.textContent === t("saving")) statusEl.textContent = "";
+  renderAvailability();
+  availSync.pending[key] = { person: person, iso: iso, status: status, note: note || "" };
+  clearTimeout(availSync.timer);
+  availSync.timer = setTimeout(flushAvailSync, 280);
+}
+function flushAvailSync() {
+  var pending = availSync.pending;
+  var base = availSync.base;
+  var keys = Object.keys(pending);
+  availSync.pending = {};
+  availSync.base = null;
+  if (!keys.length) return;
+  var items = keys.map(function (key) {
+    var item = pending[key];
+    return { person: item.person, sunday: item.iso, status: item.status, note: item.note };
+  });
+  var last = items[items.length - 1];
+  api({
+    action: "setAvailability",
+    team: "worship",
+    person: last.person,
+    sunday: last.iso,
+    status: last.status,
+    note: last.note,
+    items: items
+  }).then(function (res) {
+    var bad = !res || res.ok === false;
+    if (!bad) return;
+    if (base != null && !Object.keys(availSync.pending).length) {
+      try { saveAvailLocal(JSON.parse(base)); } catch (e) {}
+      renderAvailability();
+    }
+    if (typeof showToast === "function") showToast(t("updateError"));
+  }).catch(function () {
+    if (base != null && !Object.keys(availSync.pending).length) {
+      try { saveAvailLocal(JSON.parse(base)); } catch (e) {}
+      renderAvailability();
+    }
+    if (typeof showToast === "function") showToast(t("updateError"));
+  });
 }
 function renderTeamGrid(days, map) {
   var g = document.getElementById("avail-grid");
@@ -775,7 +817,11 @@ function pullAvailability() {
   api({ action: "getAvailability", team: "worship" }).then(function (res) {
     if (!res || !res.rows) return;
     var map = availMap();
-    res.rows.forEach(function (row) { map[row.person + "|" + isoDay(row.sunday)] = { status: row.status, note: row.note || "" }; });
+    res.rows.forEach(function (row) {
+      var key = row.person + "|" + isoDay(row.sunday);
+      if (availSync.pending[key]) return;
+      map[key] = { status: row.status, note: row.note || "" };
+    });
     saveAvailLocal(map);
     if ((location.hash || "").indexOf("availability") >= 0) renderAvailability();
   }).catch(function () {});
@@ -877,12 +923,29 @@ function pushProfile(patch) {
     if (res && res.profile) saveProfileLocal(res.profile);
   }).catch(function () {});
 }
+function sendToNurseryCode() {
+  var list = teams().filter(function (id) { return id !== "nursery"; });
+  try { localStorage.setItem(TEAMS_KEY, JSON.stringify(list)); } catch (e) {}
+  var p = loadProfile();
+  if (p) {
+    p.teams = (Array.isArray(p.teams) ? p.teams : list).filter(function (id) { return id !== "nursery"; });
+    try { localStorage.setItem(PROFILE_KEY, JSON.stringify(p)); } catch (e) {}
+  }
+  var hash = location.hash || "";
+  if (hash.indexOf("team-code") >= 0) return;
+  if (hash.indexOf("nursery") >= 0) location.replace("#/team-code?team=nursery");
+  else if (window.paintHomeServingCard) window.paintHomeServingCard();
+  if (hash.indexOf("more") >= 0) renderAccount();
+}
 function pullProfile() {
+  var hadNursery = hasTeam("nursery");
   api({ action: "getProfile" }).then(function (res) {
-    if (res && res.profile && res.profile.uid) {
-      saveProfileLocal(res.profile);
-      if ((location.hash || "").indexOf("more") >= 0) renderAccount();
-    }
+    if (!(res && res.profile && res.profile.uid)) return;
+    saveProfileLocal(res.profile);
+    var serverHas = Array.isArray(res.profile.teams) && res.profile.teams.indexOf("nursery") >= 0;
+    if ((location.hash || "").indexOf("more") >= 0) renderAccount();
+    if (hadNursery && !serverHas) sendToNurseryCode();
+    else if ((location.hash || "").indexOf("home") >= 0 && window.paintHomeServingCard) window.paintHomeServingCard();
   }).catch(function () {});
 }
 function eventIdFromHash() {
@@ -1123,7 +1186,7 @@ function renderVisit() {
 document.getElementById("watch-live").onclick = function () { window.open(BETHANY.watchUrl, "_blank", "noopener"); };
 document.getElementById("all-times").onclick = function () { location.hash = "#/events"; };
 document.getElementById("see-events").onclick = function () { location.hash = "#/events"; };
-var APP_VERSION = (window.BETHANY && BETHANY.version) || "v32";
+var APP_VERSION = (window.BETHANY && BETHANY.version) || "v33";
 var fbCat = "idea";
 var fbGen = 0;
 function feedbackWho() {

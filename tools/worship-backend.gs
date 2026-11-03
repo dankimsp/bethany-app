@@ -111,8 +111,12 @@ function verifyTeamCode_(params) {
   var expected = PropertiesService.getScriptProperties().getProperty(key);
   if (!expected) return { ok: false, status: 503, error: "soon" };
   if (!codeOk_(code, expected)) return { ok: false, status: 401, error: "code" };
-  if (params._user && params._user.uid) addMemberTeam_(params._user, team);
-  return { ok: true, status: 200, team: team };
+  if (!(params._user && params._user.uid)) return { ok: false, status: 401, error: "auth" };
+  var profile = null;
+  try { profile = addMemberTeam_(params._user, team); } catch (err) { profile = null; }
+  var saved = profile && profile.teams ? profile.teams : [];
+  if (saved.indexOf(team) < 0) return { ok: false, status: 500, error: "team" };
+  return { ok: true, status: 200, team: team, profile: profile };
 }
 
 function codeOk_(code, expected) {
@@ -122,18 +126,37 @@ function codeOk_(code, expected) {
   return code === expected;
 }
 
+function isoFromDate_(date, zone) {
+  return Utilities.formatDate(date, zone || "America/Los_Angeles", "yyyy-MM-dd");
+}
 function isoCell_(v) {
-  if (Object.prototype.toString.call(v) === "[object Date]" && !isNaN(v.getTime())) {
-    return Utilities.formatDate(v, "America/Los_Angeles", "yyyy-MM-dd");
+  try {
+    if (v == null || v === "") return "";
+    if (Object.prototype.toString.call(v) === "[object Date]") {
+      var time = NaN;
+      try { time = v.getTime(); } catch (err) { time = NaN; }
+      if (isNaN(time)) return "";
+      return isoFromDate_(v, "America/Los_Angeles");
+    }
+    if (typeof v === "number" && isFinite(v) && v > 20000 && v < 80000) {
+      var utc = new Date(Math.round((v - 25569) * 86400000));
+      if (!isNaN(utc.getTime())) return isoFromDate_(utc, "UTC");
+    }
+    var s = String(v).replace(/^'+/, "").trim();
+    var iso = s.match(/(\d{4})-(\d{2})-(\d{2})/);
+    if (iso) return iso[1] + "-" + iso[2] + "-" + iso[3];
+    if (/[A-Za-z]/.test(s)) {
+      var parsed = new Date(s);
+      if (!isNaN(parsed.getTime())) return isoFromDate_(parsed, "America/Los_Angeles");
+    }
+    return s;
+  } catch (err) {
+    try {
+      var text = String(v == null ? "" : v);
+      var found = text.match(/(\d{4})-(\d{2})-(\d{2})/);
+      return found ? found[1] + "-" + found[2] + "-" + found[3] : "";
+    } catch (e2) { return ""; }
   }
-  var s = String(v == null ? "" : v).replace(/^'+/, "").trim();
-  var iso = s.match(/(\d{4})-(\d{2})-(\d{2})/);
-  if (iso) return iso[1] + "-" + iso[2] + "-" + iso[3];
-  if (s && /[A-Za-z]/.test(s)) {
-    var parsed = new Date(s);
-    if (!isNaN(parsed.getTime())) return Utilities.formatDate(parsed, "America/Los_Angeles", "yyyy-MM-dd");
-  }
-  return s;
 }
 
 function signupSheet_() {
@@ -207,39 +230,56 @@ function availabilitySheet_() {
   return ensureSheet_(ss, "Availability", ["updatedAt", "team", "person", "sunday", "status", "note"]);
 }
 
+function availabilityItems_(params) {
+  var items = params.items;
+  if (typeof items === "string") {
+    try { items = JSON.parse(items); } catch (err) { items = null; }
+  }
+  if (!items || !items.length) items = [{ person: params.person, sunday: params.sunday, status: params.status, note: params.note }];
+  var out = [];
+  items.forEach(function (item) {
+    if (!item) return;
+    var sunday = isoCell_(item.sunday);
+    var person = String(item.person || "");
+    if (!person || !/^\d{4}-\d{2}-\d{2}$/.test(sunday)) return;
+    out.push({ person: person, sunday: sunday, status: String(item.status || ""), note: String(item.note || "") });
+  });
+  return out;
+}
 function getAvailability_(params) {
   var team = String(params.team || "worship");
-  var rows = availabilitySheet_().getDataRange().getValues();
+  var values = availabilitySheet_().getDataRange().getValues();
   var latest = {};
-  for (var i = 1; i < rows.length; i++) {
-    if (String(rows[i][1]) !== team) continue;
-    var sunday = isoCell_(rows[i][3]);
-    latest[String(rows[i][2]) + "|" + sunday] = {
-      person: String(rows[i][2]),
+  for (var i = 1; i < values.length; i++) {
+    if (String(values[i][1]) !== team) continue;
+    var sunday = isoCell_(values[i][3]);
+    latest[String(values[i][2]) + "|" + sunday] = {
+      person: String(values[i][2]),
       sunday: sunday,
-      status: String(rows[i][4] || ""),
-      note: String(rows[i][5] || "")
+      status: String(values[i][4] || ""),
+      note: String(values[i][5] || "")
     };
   }
   var list = [];
-  Object.keys(latest).forEach(function (key) { if (latest[key].status) list.push(latest[key]); });
+  Object.keys(latest).forEach(function (id) { if (latest[id].status) list.push(latest[id]); });
   return { ok: true, status: 200, team: team, rows: list };
 }
 
 function setAvailability_(params) {
   var team = String(params.team || "worship");
-  var person = String(params.person || "");
-  var sunday = isoCell_(params.sunday);
-  var status = String(params.status || "");
-  var note = String(params.note || "");
-  if (!person || !/^\d{4}-\d{2}-\d{2}$/.test(sunday)) return { ok: false, status: 400, error: "fields" };
+  var items = availabilityItems_(params);
+  if (!items.length) return { ok: false, status: 400, error: "fields" };
   if (params._user && params._user.uid) {
     var member = memberByUid_(params._user.uid);
-    if (member && member.rosterId && String(member.rosterId) !== person) return { ok: false, status: 403, error: "roster" };
-    if (member && !member.rosterId) upsertMember_(params._user, { rosterId: person });
+    if (member && member.rosterId) {
+      var blocked = items.some(function (item) { return String(member.rosterId) !== item.person; });
+      if (blocked) return { ok: false, status: 403, error: "roster" };
+    } else if (member && !member.rosterId) upsertMember_(params._user, { rosterId: items[0].person });
   }
+  var sheet = availabilitySheet_();
   var when = Utilities.formatDate(new Date(), "America/Los_Angeles", "yyyy-MM-dd'T'HH:mm:ssXXX");
-  availabilitySheet_().appendRow([when, team, person, "'" + sunday, status, note]);
+  var rows = items.map(function (item) { return [when, team, item.person, "'" + item.sunday, item.status, item.note]; });
+  sheet.getRange(sheet.getLastRow() + 1, 1, rows.length, 6).setValues(rows);
   return { ok: true, status: 200, team: team };
 }
 
@@ -713,7 +753,7 @@ function flag_(v, fallback) {
 }
 
 function profileOut_(row) {
-  var teams = String(row.teams || "").split(",").filter(function (id) { return id; });
+  var teams = String(row.teams || "").split(",").map(function (id) { return id.trim().toLowerCase(); }).filter(Boolean);
   return {
     uid: String(row.uid || ""),
     email: String(row.email || ""),
@@ -759,10 +799,12 @@ function upsertMember_(user, patch) {
 }
 
 function addMemberTeam_(user, team) {
+  team = String(team || "").trim().toLowerCase();
+  if (!user || !user.uid || !team) return null;
   var row = memberByUid_(user.uid);
-  var teams = row && row.teams ? String(row.teams).split(",").filter(function (id) { return id; }) : [];
+  var teams = row && row.teams ? String(row.teams).split(",").map(function (id) { return id.trim().toLowerCase(); }).filter(Boolean) : [];
   if (teams.indexOf(team) < 0) teams.push(team);
-  return upsertMember_(user, { teams: teams.join(","), email: user.email || "" });
+  return upsertMember_(user, { teams: teams.join(","), email: user.email || "", name: user.name || "" });
 }
 
 function getProfile_(params) {
