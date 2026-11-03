@@ -22,7 +22,7 @@ if ("serviceWorker" in navigator) {
     woRefreshing = true;
     location.reload();
   });
-  navigator.serviceWorker.register("sw.js?v=24").catch(function () {});
+  navigator.serviceWorker.register("sw.js?v=25").catch(function () {});
 }
 </script>
 <style>
@@ -310,6 +310,7 @@ body.wo-playing .app{padding-bottom:0}
   #wo-song .wbody .wblock{break-inside:avoid}
   #wo-song .wbody .wsec{break-after:avoid}
   #wo-song .wbody .wline,#wo-song .wbody .wsec{break-inside:avoid}
+  #wo-song .wbody > .wblock:first-child > .wsec{margin-top:0}
   #s-give,#s-visit,#s-more{max-width:760px}
   #ministry-list{grid-template-columns:1.4fr 1fr 1fr}
   #ministry-list .mcard.span2{grid-column:auto}
@@ -420,10 +421,13 @@ a.pill.line.createbtn{height:48px;margin-top:8px}
 #wo-private-msg .lnkbtn{font-size:14px}
 #s-worship .wo-search{position:sticky;top:0;z-index:4;background:var(--bg);padding:4px 0 8px}
 #wo-list{position:relative;padding-right:52px}
-.wo-az{position:sticky;top:12px;float:right;display:flex;flex-direction:column;align-items:center;width:44px;margin-right:-52px;z-index:3;max-height:calc(100dvh - 200px);overflow:auto}
+.wo-az{position:sticky;top:100px;float:right;display:flex;flex-direction:column;align-items:center;width:44px;margin-right:-52px;z-index:3;max-height:calc(100dvh - 200px);overflow:auto}
 .wo-az-letter{width:44px;min-height:28px;border:0;background:transparent;color:var(--accent);font-size:12px;font-weight:700;line-height:20px;padding:0;cursor:pointer}
-.wo-letter{font-size:12px;font-weight:800;letter-spacing:.08em;color:var(--text-2);margin:14px 0 4px}
+.wo-letter{font-size:12px;font-weight:800;letter-spacing:.08em;color:var(--text-2);margin:14px 0 4px;scroll-margin-top:112px}
 .wo-more{margin:12px 0}
+@media (min-width:768px){
+  .wo-az{max-height:calc(100dvh - 124px)}
+}
 @media (min-width:768px){
   #special-list:has(> :only-child) .ev-img{display:grid;grid-template-columns:minmax(220px,34%) minmax(0,1fr)}
   #special-list:has(> :only-child) .ev-img img.ph{height:100%;min-height:210px}
@@ -904,6 +908,6 @@ const WORSHIP_BACKEND_URL = 'https://script.google.com/macros/s/AKfycbwWtdJUNT8n
 <script src="js/config.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/app.js"></script>
-<script src="worship.js?v=24"></script>
+<script src="worship.js?v=25"></script>
 </body>
 </html>
