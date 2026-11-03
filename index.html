@@ -22,7 +22,7 @@ if ("serviceWorker" in navigator) {
     woRefreshing = true;
     location.reload();
   });
-  navigator.serviceWorker.register("sw.js?v=29").catch(function () {});
+  navigator.serviceWorker.register("sw.js?v=30").catch(function () {});
 }
 </script>
 <style>
@@ -270,6 +270,57 @@ body.fb-open{overflow:hidden}
 #fb-send:disabled{opacity:.45;cursor:default}
 .fb-thanks{padding:28px 8px 36px;text-align:center}
 .fb-thanks h2{text-wrap:balance;max-width:14em;margin:0 auto}
+body.no-nav .nav{display:none}
+body.no-nav .screen{padding-bottom:32px}
+.signout{color:var(--no);border-color:rgba(169,71,61,.55)}
+.profile{width:100%;border:0;text-align:left;cursor:pointer}
+#home-serving{margin:16px 0 16px}
+.serve-card{position:relative;overflow:hidden;border-top:4px solid var(--plum)}
+.serve-card.quiet{border-top:1px solid var(--stroke)}
+.serve-card h2{font-family:var(--serif);font-size:22px;margin:4px 0}
+.tt.serve-plain{font-weight:400}
+.serve-next h2{font-family:var(--serif);font-size:20px;margin:2px 0 4px;font-weight:700}
+.serve-next .lnkbtn{min-height:44px;padding:0}
+.stack{display:flex;align-items:center}
+.stack span{width:32px;height:32px;border-radius:50%;background:#E4D0E2;color:#3A1C38;display:grid;place-items:center;font-size:12px;font-weight:800;font-style:normal;margin-left:-8px;border:2px solid #fff}
+.stack span:first-child{margin-left:0}
+.about-mic{background:#D5E4E8;color:#00303F}
+.setpw-label{display:block;margin:8px 0 2px;font-size:12px;font-weight:700;color:var(--text-2)}
+#setpw-email{margin:0 0 4px;font-weight:700;color:var(--text)}
+.setpw-hint{margin:2px 0 8px;color:var(--text-2);font-size:13px}
+#s-ministry{padding-bottom:calc(288px + env(safe-area-inset-bottom))}
+.serve-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.serve-actions .pill{height:50px}
+.roster-sum{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:4px 0 12px}
+#roster-list{padding:8px 12px 12px}
+.roster-row{display:flex;gap:10px;align-items:flex-start;padding:16px 0;border-top:1px solid var(--stroke)}
+.roster-row:first-child{border-top:0}
+.roster-row .names{white-space:nowrap;font-size:13px;line-height:1.35}
+.roster-row .meta-ok,.roster-row .meta-need,.roster-row .mut{white-space:nowrap}
+.rdate{width:56px;border-radius:16px;background:var(--surface-2);text-align:center;padding:6px 0;flex:none}
+.rdate.on{background:var(--plum-soft);color:var(--plum)}
+.rdate small{display:block;font-size:11px;font-weight:800;letter-spacing:.06em}
+.rdate b{display:block;font-family:var(--serif);font-size:22px;line-height:1.1}
+.chip.you{background:var(--plum);color:#fff}
+.meta-ok{color:var(--ok);font-weight:700;font-size:13px}
+.meta-need{color:var(--gold-ink);font-weight:700;font-size:13px}
+.cant{display:inline-flex;margin-top:8px;height:36px;min-height:36px;padding:0 12px;font-size:13px}
+.sun-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0 12px}
+.sun-chip{min-height:64px;border-radius:16px;border:1.5px solid rgba(0,48,63,.14);background:#fff;text-align:left;padding:8px 10px;cursor:pointer;color:var(--text)}
+.sun-chip b{display:block;font-size:15px}
+.sun-chip small{display:block;color:var(--text-2);font-weight:600;font-size:12px;white-space:nowrap}
+.sun-chip.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+.sun-chip.on small{color:rgba(255,255,255,.86)}
+.sun-chip.mine{border-style:dashed;border-color:var(--plum);background:var(--plum-soft);cursor:default}
+.tick{width:22px;height:22px;border-radius:50%;background:var(--gold);color:var(--brand);display:inline-grid;place-items:center;float:right}
+.skel{height:64px;border-radius:16px;background:var(--surface-2);margin:8px 0}
+.banner-err{background:var(--no-soft);color:var(--no);border-radius:16px;padding:12px 14px;font-weight:700}
+.toast{position:fixed;left:16px;right:16px;bottom:calc(96px + env(safe-area-inset-bottom));z-index:70;background:var(--brand);color:#fff;border-radius:16px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px;box-shadow:var(--shadow)}
+.toast button{background:transparent;border:0;color:#fff;font-weight:800;min-height:44px;cursor:pointer}
+.pill.danger{background:var(--no);color:#fff}
+.auth-banner{background:var(--no-soft);color:var(--text);border-radius:16px;padding:12px 14px;margin:0 0 12px}
+.hint-ok{color:var(--ok);font-size:13px;font-weight:700;margin:-6px 0 8px}
+.hint-no{color:var(--no);font-size:13px;font-weight:700;margin:-6px 0 8px}
 .edhead{margin:-12px -20px 0;height:240px;background:linear-gradient(180deg,rgba(0,32,42,.35),rgba(247,245,238,1)),url(assets/img/fellowship-group.webp) center 30%/cover;padding:12px 20px;display:flex;justify-content:space-between}
 .edcard{margin-top:-48px}
 .calbtn{display:flex;align-items:center;gap:12px;width:100%;min-height:56px;border-radius:16px;padding:8px 14px;font-weight:700;font-size:16px;margin-top:10px;text-align:left;cursor:pointer;text-decoration:none}
@@ -627,6 +678,7 @@ a.pill.line.createbtn{height:48px;margin-top:8px}
   <div class="tex"></div>
   <div class="hdr"><img class="logo phone-only" src="assets/logo-bethany-ink.svg" alt="Bethany Church"><div class="greet tab-only"><h1 id="greet-tab" style="margin:0"></h1></div><div class="hact"><div class="lang"><button type="button" id="lang-en">EN</button><button type="button" id="lang-ko">한</button></div><button class="av phone-only" id="home-avatar" type="button"></button></div></div>
   <div class="greet phone-only"><h1 id="greet"></h1></div>
+  <div id="home-serving" hidden></div>
   <div class="home-grid" id="home-grid">
   <div class="hero photo s-hero" id="home-hero">
     <div class="top"><span class="livebadge" id="hero-live" hidden><i></i><span data-i18n="liveWord">Live</span></span></div>
@@ -753,20 +805,16 @@ a.pill.line.createbtn{height:48px;margin-top:8px}
 <section class="screen" id="s-more" hidden>
   <div class="tex"></div>
   <div class="hdr"><h1 class="ptitle" data-i18n="more">More</h1></div>
-  <div class="profile">
+  <button class="profile" id="profile-card" type="button">
     <span class="av lg" id="acct-initial"></span>
     <div class="grow">
       <b id="acct-name" style="font-family:var(--serif);font-size:20px"></b>
       <div class="em" id="acct-email"></div>
-      <button class="lnkbtn" id="acct-edit" type="button" data-i18n="editName">Edit name</button>
-      <div class="name-edit" id="name-edit" hidden>
-        <input id="acct-first" autocomplete="given-name">
-        <input id="acct-last" autocomplete="family-name">
-        <button class="pill sm brand" id="acct-save-name" type="button" data-i18n="saveName">Save</button>
-      </div>
       <span class="meth" id="acct-provider"></span>
     </div>
-  </div>
+    <svg class="i" aria-hidden="true"><use href="#i-chev"/></svg>
+  </button>
+  <div id="more-serving" hidden></div>
   <div class="grp" data-i18n="myTeams">My ministries</div>
   <div class="card"><div class="mchips" id="acct-teams"></div>
     <div id="team-pick" hidden>
@@ -775,19 +823,33 @@ a.pill.line.createbtn{height:48px;margin-top:8px}
       <button class="pill line" type="button" data-join="nursery">Nursery</button>
     </div>
   </div>
-  <div class="grp" data-i18n="emailPrefs">Email preferences</div>
+  <div class="grp" data-i18n="settings">Settings</div>
   <div class="card">
-    <div class="lr"><span class="mic gold"><svg class="i"><use href="#i-news"/></svg></span><div class="grow"><div class="tt" data-i18n="newsletter">Newsletter</div><div class="ts" data-i18n="newsBody"></div></div><button class="sw on" id="pref-news" type="button" aria-pressed="true"></button></div>
-    <div class="lr"><span class="mic acc"><svg class="i"><use href="#i-mail"/></svg></span><div class="grow"><div class="tt" data-i18n="churchMail">Church communications</div><div class="ts" data-i18n="churchMailBody"></div></div><button class="sw on" id="pref-church" type="button" aria-pressed="true"></button></div>
-    <div class="lr"><span class="mic plum"><svg class="i"><use href="#i-bell"/></svg></span><div class="grow"><div class="tt" data-i18n="reminders">Email me event reminders</div><div class="ts" data-i18n="remindersBody"></div></div><button class="sw on" id="pref-remind" type="button" aria-pressed="true"></button></div>
+    <button class="lr" id="account-row" type="button"><span class="mic acc"><svg class="i"><use href="#i-key"/></svg></span><div class="grow"><div class="tt" data-i18n="account">Account &amp; sign-in</div><div class="ts" data-i18n="accountSub"></div></div><svg class="i" aria-hidden="true"><use href="#i-chev"/></svg></button>
+    <button class="lr" id="notif-row" type="button"><span class="mic gold"><svg class="i"><use href="#i-bell"/></svg></span><div class="grow"><div class="tt" data-i18n="notifications">Notifications</div><div class="ts" id="notif-summary"></div></div><svg class="i" aria-hidden="true"><use href="#i-chev"/></svg></button>
+    <div class="lr lang-row"><span class="mic acc"><svg class="i"><use href="#i-globe"/></svg></span><div class="grow"><div class="tt" data-i18n="language">Language</div><div class="seg2"><button type="button" id="acct-en">English</button><button type="button" id="acct-ko">한국어</button></div></div></div>
+  </div>
+  <div class="grp" data-i18n="church">Church</div>
+  <div class="card">
+    <button class="lr" id="service-row" type="button"><span class="mic acc"><svg class="i"><use href="#i-pin"/></svg></span><div class="grow"><div class="tt" data-i18n="serviceLoc">Service times &amp; location</div><div class="ts" id="service-summary"></div></div><svg class="i" aria-hidden="true"><use href="#i-chev"/></svg></button>
   </div>
   <div class="grp" data-i18n="appSec">App</div>
   <div class="card">
-    <div class="lr lang-row"><span class="mic acc"><svg class="i"><use href="#i-globe"/></svg></span><div class="grow"><div class="tt" data-i18n="language">Language</div><div class="seg2"><button type="button" id="acct-en">English</button><button type="button" id="acct-ko">한국어</button></div></div></div>
-    <a class="lr" href="#/visit"><span class="mic acc"><svg class="i"><use href="#i-pin"/></svg></span><div class="grow"><div class="tt" data-i18n="visit">Visit & contact</div><div class="ts" data-i18n="visitSub"></div></div></a>
-    <button class="lr" id="feedback-link" type="button"><span class="mic acc"><svg class="i"><use href="#i-chat"/></svg></span><div class="grow"><div class="tt" data-i18n="feedback">Send feedback</div><div class="ts" data-i18n="feedbackSub"></div></div></button>
+    <button class="lr" id="feedback-link" type="button"><span class="mic acc"><svg class="i"><use href="#i-chat"/></svg></span><div class="grow"><div class="tt" data-i18n="feedback">Send feedback</div><div class="ts" data-i18n="feedbackSub"></div></div><svg class="i" aria-hidden="true"><use href="#i-chev"/></svg></button>
+    <button class="lr" id="a2hs-row" type="button"><span class="mic gold"><svg class="i"><use href="#i-share"/></svg></span><div class="grow"><div class="tt" data-i18n="a2hs">Add to Home Screen</div></div><svg class="i" aria-hidden="true"><use href="#i-chev"/></svg></button>
+    <button class="lr" id="about-row" type="button"><span class="mic about-mic"><svg class="i"><use href="#i-q"/></svg></span><div class="grow"><div class="tt" data-i18n="about">About &amp; privacy</div><div class="ts" id="about-version"></div></div><svg class="i" aria-hidden="true"><use href="#i-chev"/></svg></button>
   </div>
   <button class="signout" id="sign-out" type="button"><svg class="i"><use href="#i-out"/></svg><span data-i18n="signOut">Sign out</span></button>
+</section>
+
+<section class="screen" id="s-account" hidden>
+  <div class="hdr"><button class="back" id="account-back" type="button" aria-label="Back"><svg class="i"><use href="#i-back"/></svg></button></div>
+  <h1 class="ptitle" data-i18n="accountTitle">Account &amp; sign-in</h1>
+  <div class="grp" data-i18n="profile">Profile</div>
+  <div class="card" id="account-profile"></div>
+  <div class="grp" data-i18n="methods">Sign-in methods</div>
+  <div class="card" id="account-methods"></div>
+  <div id="account-extra"></div>
 </section>
 
 <section class="screen" id="s-team-code" hidden>
@@ -809,7 +871,8 @@ a.pill.line.createbtn{height:48px;margin-top:8px}
 
 <section class="screen" id="s-ministry" hidden>
   <div id="ministry-head"></div>
-  <div class="grp" data-i18n="yourTools">Your tools</div>
+  <div id="nursery-root" hidden></div>
+  <div class="grp" id="ministry-tools-label" data-i18n="yourTools">Your tools</div>
   <div id="my-tools" class="tools"></div>
   <div id="ministry-empty" class="card empty" hidden></div>
 </section>
@@ -992,6 +1055,131 @@ a.pill.line.createbtn{height:48px;margin-top:8px}
  <a href="#/more" data-nav="more"><svg class="i"><use href="#i-grid"/></svg><span data-i18n="more">More</span></a>
  <div class="navav"><button class="av" id="nav-avatar" type="button"></button></div>
 </nav>
+<div id="app-toast" class="toast" hidden></div>
+<div id="sheet-notif" class="fb-layer" hidden>
+  <button class="fb-scrim" type="button" data-close="sheet-notif" aria-label="Close"></button>
+  <div class="fb-panel" role="dialog" aria-modal="true" aria-labelledby="notif-title">
+    <h2 id="notif-title" data-i18n="notifications">Notifications</h2>
+    <p class="psub" data-i18n="notifSheetBody"></p>
+    <div class="lr"><span class="mic gold"><svg class="i"><use href="#i-news"/></svg></span><div class="grow"><div class="tt" data-i18n="newsletter">Newsletter</div><div class="ts" data-i18n="newsBody"></div></div><button class="sw" id="pref-news" type="button" aria-pressed="false"></button></div>
+    <div class="lr"><span class="mic acc"><svg class="i"><use href="#i-mail"/></svg></span><div class="grow"><div class="tt" data-i18n="churchMail">Church communications</div><div class="ts" data-i18n="churchMailBody"></div></div><button class="sw" id="pref-church" type="button" aria-pressed="false"></button></div>
+    <div class="lr"><span class="mic plum"><svg class="i"><use href="#i-bell"/></svg></span><div class="grow"><div class="tt" data-i18n="reminders">Email me event reminders</div><div class="ts" data-i18n="remindersBody"></div></div><button class="sw" id="pref-remind" type="button" aria-pressed="false"></button></div>
+    <button class="pill brand block" type="button" data-close="sheet-notif" data-i18n="done">Done</button>
+  </div>
+</div>
+<div id="sheet-service" class="fb-layer" hidden>
+  <button class="fb-scrim" type="button" data-close="sheet-service" aria-label="Close"></button>
+  <div class="fb-panel" role="dialog" aria-modal="true">
+    <h2 data-i18n="serviceLoc">Service times &amp; location</h2>
+    <div id="service-list"></div>
+    <p><b id="service-address"></b></p>
+    <div class="serve-actions">
+      <a class="pill brand" id="service-directions" target="_blank" rel="noopener" data-i18n="directions">Directions</a>
+      <a class="pill line" id="service-call" data-i18n="call">Call</a>
+    </div>
+  </div>
+</div>
+<div id="sheet-a2hs" class="fb-layer" hidden>
+  <button class="fb-scrim" type="button" data-close="sheet-a2hs" aria-label="Close"></button>
+  <div class="fb-panel" role="dialog" aria-modal="true">
+    <h2 data-i18n="a2hs">Add to Home Screen</h2>
+    <p data-i18n="a2hsBody"></p>
+    <button class="pill brand block" type="button" data-close="sheet-a2hs" data-i18n="done">Done</button>
+  </div>
+</div>
+<div id="sheet-about" class="fb-layer" hidden>
+  <button class="fb-scrim" type="button" data-close="sheet-about" aria-label="Close"></button>
+  <div class="fb-panel" role="dialog" aria-modal="true">
+    <h2 data-i18n="about">About &amp; privacy</h2>
+    <p id="about-version-sheet" class="mut"></p>
+    <p data-i18n="aboutBody"></p>
+    <button class="pill brand block" id="check-updates" type="button" data-i18n="checkUpdates">Check for updates</button>
+  </div>
+</div>
+<div id="sheet-pick" class="fb-layer" hidden>
+  <button class="fb-scrim" type="button" data-close="sheet-pick" aria-label="Close"></button>
+  <div class="fb-panel" role="dialog" aria-modal="true" aria-labelledby="pick-title">
+    <h2 id="pick-title" data-i18n="pickTitle">Pick Sundays to serve</h2>
+    <p class="psub" data-i18n="pickBody"></p>
+    <div class="sun-grid" id="pick-grid"></div>
+    <p class="fb-who" id="pick-as"></p>
+    <p id="pick-err" class="hint-no" hidden></p>
+    <button class="pill brand block" id="pick-go" type="button" disabled data-i18n="selectSundays">Select Sundays</button>
+  </div>
+</div>
+<div id="sheet-cancel" class="fb-layer" hidden>
+  <button class="fb-scrim" type="button" data-close="sheet-cancel" aria-label="Close"></button>
+  <div class="fb-panel" role="dialog" aria-modal="true" aria-labelledby="cancel-title">
+    <h2 id="cancel-title"></h2>
+    <p id="cancel-body"></p>
+    <button class="pill danger block" id="cancel-yes" type="button" data-i18n="cancelYes">Yes, take me off</button>
+    <button class="pill line block" type="button" data-close="sheet-cancel" data-i18n="cancelKeep" style="margin-top:8px">Keep me on</button>
+  </div>
+</div>
+<div id="sheet-name" class="fb-layer" hidden>
+  <button class="fb-scrim" type="button" data-close="sheet-name" aria-label="Close"></button>
+  <div class="fb-panel" role="dialog" aria-modal="true">
+    <h2 data-i18n="editNameTitle">Edit name</h2>
+    <label for="edit-name" data-i18n="yourName">Your name</label>
+    <input class="text" id="edit-name" maxlength="40" autocomplete="name">
+    <p class="mut" id="edit-name-hint"></p>
+    <p id="edit-name-err" class="hint-no" hidden></p>
+    <button class="pill brand block" id="edit-name-save" type="button" data-i18n="saveName">Save</button>
+    <button class="pill line block" type="button" data-close="sheet-name" data-i18n="sheetCancel" style="margin-top:8px">Cancel</button>
+  </div>
+</div>
+<div id="sheet-setpw" class="fb-layer" hidden>
+  <button class="fb-scrim" type="button" data-close="sheet-setpw" aria-label="Close"></button>
+  <div class="fb-panel" role="dialog" aria-modal="true">
+    <h2 data-i18n="setPwTitle">Set a password</h2>
+    <p class="psub" data-i18n="setPwBody"></p>
+    <div id="setpw-banner" class="auth-banner" hidden></div>
+    <label class="setpw-label" data-i18n="email">Email</label>
+    <p id="setpw-email"></p>
+    <label class="setpw-label" for="setpw-new" data-i18n="newPw">New password</label>
+    <label class="fld"><input id="setpw-new" type="password" autocomplete="new-password"><button class="eye" type="button" data-eye="setpw-new" data-i18n="showPw">Show</button></label>
+    <p class="setpw-hint" data-i18n="min8">At least 8 characters</p>
+    <p id="setpw-len" class="hint-no" hidden></p>
+    <label for="setpw-confirm" data-i18n="confirmPw">Confirm password</label>
+    <label class="fld"><input id="setpw-confirm" type="password" autocomplete="new-password"><button class="eye" type="button" data-eye="setpw-confirm" data-i18n="showPw">Show</button></label>
+    <p id="setpw-match" hidden></p>
+    <button class="pill brand block" id="setpw-save" type="button" data-i18n="savePw">Save password</button>
+    <button class="pill line block" type="button" data-close="sheet-setpw" data-i18n="sheetCancel" style="margin-top:8px">Cancel</button>
+  </div>
+</div>
+<div id="sheet-changepw" class="fb-layer" hidden>
+  <button class="fb-scrim" type="button" data-close="sheet-changepw" aria-label="Close"></button>
+  <div class="fb-panel" role="dialog" aria-modal="true">
+    <h2 data-i18n="changePw">Change password</h2>
+    <p class="psub" data-i18n="confirmFirst"></p>
+    <div id="changepw-banner" class="auth-banner" hidden></div>
+    <label for="changepw-current" data-i18n="currentPw">Current password</label>
+    <label class="fld"><input id="changepw-current" type="password" autocomplete="current-password"><button class="eye" type="button" data-eye="changepw-current" data-i18n="showPw">Show</button></label>
+    <p id="changepw-current-err" class="hint-no" hidden></p>
+    <label for="changepw-new" data-i18n="newPw">New password</label>
+    <label class="fld"><input id="changepw-new" type="password" autocomplete="new-password"><button class="eye" type="button" data-eye="changepw-new" data-i18n="showPw">Show</button></label>
+    <p id="changepw-new-err" class="hint-no" hidden></p>
+    <button class="pill brand block" id="changepw-save" type="button" data-i18n="updatePw">Update password</button>
+    <button class="lnkbtn" id="changepw-forgot" type="button" data-i18n="forgotSend">Forgot it? Send a reset email</button>
+  </div>
+</div>
+<div id="sheet-reset" class="fb-layer" hidden>
+  <button class="fb-scrim" type="button" data-close="sheet-reset" aria-label="Close"></button>
+  <div class="fb-panel" role="dialog" aria-modal="true">
+    <div id="reset-form">
+      <h2 data-i18n="sendReset">Send password reset email</h2>
+      <p class="psub" id="reset-to"></p>
+      <p id="reset-err" class="hint-no" hidden></p>
+      <button class="pill brand block" id="reset-send" type="button" data-i18n="sendReset">Send password reset email</button>
+    </div>
+    <div id="reset-done" hidden>
+      <h2 data-i18n="checkEmail">Check your email</h2>
+      <p id="reset-neutral"></p>
+      <button class="pill brand block" type="button" data-close="sheet-reset" data-i18n="done">Done</button>
+      <button class="pill line block" id="reset-again" type="button" data-i18n="sendAgain" style="margin-top:8px">Didn't get it? Send again</button>
+    </div>
+  </div>
+</div>
 <div id="fb-sheet" class="fb-layer" hidden>
   <button class="fb-scrim" id="fb-scrim" type="button" data-i18n-aria="fbClose" aria-label="Close"></button>
   <div class="fb-panel" role="dialog" aria-modal="true" aria-labelledby="fb-title">
@@ -1055,6 +1243,7 @@ const WORSHIP_BACKEND_URL = 'https://script.google.com/macros/s/AKfycbwWtdJUNT8n
 <script src="js/config.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/app.js"></script>
-<script src="worship.js?v=29"></script>
+<script src="js/more.js?v=30"></script>
+<script src="worship.js?v=30"></script>
 </body>
 </html>
