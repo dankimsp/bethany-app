@@ -99,7 +99,7 @@ async function boot(page, opts) {
     } else if (action === "verifyTeamCode") {
       if (body.team === "nursery" && body.code) {
         if (state.teams.indexOf("nursery") < 0) state.teams.push("nursery");
-        payload = { ok: true, status: 200, team: "nursery" };
+        payload = { ok: true, status: 200, team: "nursery", profile: { uid: "uid-daniel", email: "daniel.kim@bethanychurch.test", name: "Daniel Kim", teams: state.teams.slice() } };
       } else payload = { ok: false, status: 401, error: "code" };
     } else if (action === "getSignups") payload = { ok: true, status: 200, kind: body.kind || "", signups: [] };
     else if (action === "addSignup") payload = body.kind === "nursery" ? { ok: false, status: 400, error: "roster" } : { ok: true, status: 200, signups: [] };
@@ -130,6 +130,9 @@ test("stale local nursery membership is sent to the team code, then signup works
   await page.locator("#team-code-input").fill("fixture");
   await page.locator("#team-form button[type=submit]").click();
   await expect(page).toHaveURL(/#\/ministry\/nursery/);
+  await expect.poll(function () {
+    return page.evaluate(function () { return JSON.parse(localStorage.getItem("bethany-teams") || "[]"); });
+  }).toContain("nursery");
   await expect(page.getByText("You're on 0 Sundays")).toBeVisible();
   await page.locator("#nursery-pick").click();
   const chips = page.locator("#pick-grid .sun-chip:not([disabled])");

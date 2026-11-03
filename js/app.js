@@ -553,7 +553,8 @@ function joinTeam(ev) {
   if (!code) { msg.hidden = false; msg.textContent = t("wrongCode"); return; }
   api({ action: "verifyTeamCode", team: team, code: code }).then(function (res) {
     if (res && res.ok && res.team) {
-      rememberTeam(res.team);
+      if (res.profile && res.profile.uid) saveProfileLocal(res.profile);
+      else rememberTeam(res.team);
       document.getElementById("team-code-input").value = "";
       location.hash = "#/ministry/" + res.team;
       return;
