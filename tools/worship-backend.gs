@@ -84,6 +84,20 @@ function codeOk_(code, expected) {
   return code === expected;
 }
 
+function isoCell_(v) {
+  if (Object.prototype.toString.call(v) === "[object Date]" && !isNaN(v.getTime())) {
+    return Utilities.formatDate(v, "America/Los_Angeles", "yyyy-MM-dd");
+  }
+  var s = String(v == null ? "" : v).replace(/^'+/, "").trim();
+  var iso = s.match(/(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) return iso[1] + "-" + iso[2] + "-" + iso[3];
+  if (s && /[A-Za-z]/.test(s)) {
+    var parsed = new Date(s);
+    if (!isNaN(parsed.getTime())) return Utilities.formatDate(parsed, "America/Los_Angeles", "yyyy-MM-dd");
+  }
+  return s;
+}
+
 function signupSheet_() {
   var ss = book_();
   return ensureSheet_(ss, "Signups", ["updatedAt", "kind", "sunday", "name", "deviceId", "active"]);
@@ -94,8 +108,9 @@ function signupList_(kind) {
   var latest = {};
   for (var i = 1; i < rows.length; i++) {
     if (String(rows[i][1]) !== String(kind)) continue;
-    latest[String(rows[i][2]) + "|" + String(rows[i][4])] = {
-      sunday: String(rows[i][2]),
+    var sunday = isoCell_(rows[i][2]);
+    latest[sunday + "|" + String(rows[i][4])] = {
+      sunday: sunday,
       name: String(rows[i][3]),
       deviceId: String(rows[i][4]),
       active: String(rows[i][5]) !== "0"
@@ -114,10 +129,10 @@ function getSignups_(params) {
 
 function addSignup_(params) {
   var kind = String(params.kind || "");
-  var sunday = String(params.sunday || "");
+  var sunday = isoCell_(params.sunday);
   var name = String(params.name || "").trim();
   var deviceId = String(params.deviceId || "");
-  if ((kind !== "snack" && kind !== "km-food" && kind !== "nursery") || !sunday || !name || !deviceId) {
+  if ((kind !== "snack" && kind !== "km-food" && kind !== "nursery") || !/^\d{4}-\d{2}-\d{2}$/.test(sunday) || !name || !deviceId) {
     return { ok: false, status: 400, error: "fields" };
   }
   var existing = signupList_(kind);
@@ -126,17 +141,17 @@ function addSignup_(params) {
     if (taken) return { ok: false, status: 409, error: "taken", signups: existing };
   }
   var when = Utilities.formatDate(new Date(), "America/Los_Angeles", "yyyy-MM-dd'T'HH:mm:ssXXX");
-  signupSheet_().appendRow([when, kind, sunday, name, deviceId, "1"]);
+  signupSheet_().appendRow([when, kind, "'" + sunday, name, deviceId, "1"]);
   return { ok: true, status: 200, kind: kind, signups: signupList_(kind) };
 }
 
 function cancelSignup_(params) {
   var kind = String(params.kind || "");
-  var sunday = String(params.sunday || "");
+  var sunday = isoCell_(params.sunday);
   var deviceId = String(params.deviceId || "");
-  if (!kind || !sunday || !deviceId) return { ok: false, status: 400, error: "fields" };
+  if (!kind || !/^\d{4}-\d{2}-\d{2}$/.test(sunday) || !deviceId) return { ok: false, status: 400, error: "fields" };
   var when = Utilities.formatDate(new Date(), "America/Los_Angeles", "yyyy-MM-dd'T'HH:mm:ssXXX");
-  signupSheet_().appendRow([when, kind, sunday, "", deviceId, "0"]);
+  signupSheet_().appendRow([when, kind, "'" + sunday, "", deviceId, "0"]);
   return { ok: true, status: 200, kind: kind, signups: signupList_(kind) };
 }
 
@@ -151,9 +166,10 @@ function getAvailability_(params) {
   var latest = {};
   for (var i = 1; i < rows.length; i++) {
     if (String(rows[i][1]) !== team) continue;
-    latest[String(rows[i][2]) + "|" + String(rows[i][3])] = {
+    var sunday = isoCell_(rows[i][3]);
+    latest[String(rows[i][2]) + "|" + sunday] = {
       person: String(rows[i][2]),
-      sunday: String(rows[i][3]),
+      sunday: sunday,
       status: String(rows[i][4] || ""),
       note: String(rows[i][5] || "")
     };
@@ -166,12 +182,12 @@ function getAvailability_(params) {
 function setAvailability_(params) {
   var team = String(params.team || "worship");
   var person = String(params.person || "");
-  var sunday = String(params.sunday || "");
+  var sunday = isoCell_(params.sunday);
   var status = String(params.status || "");
   var note = String(params.note || "");
-  if (!person || !sunday) return { ok: false, status: 400, error: "fields" };
+  if (!person || !/^\d{4}-\d{2}-\d{2}$/.test(sunday)) return { ok: false, status: 400, error: "fields" };
   var when = Utilities.formatDate(new Date(), "America/Los_Angeles", "yyyy-MM-dd'T'HH:mm:ssXXX");
-  availabilitySheet_().appendRow([when, team, person, sunday, status, note]);
+  availabilitySheet_().appendRow([when, team, person, "'" + sunday, status, note]);
   return { ok: true, status: 200, team: team };
 }
 
@@ -602,6 +618,8 @@ function ensureSheet_(ss, name, headers) {
   var sheet = ss.getSheetByName(name);
   if (!sheet) sheet = ss.insertSheet(name);
   if (sheet.getLastRow() === 0) sheet.appendRow(headers);
+  var dateCol = headers.indexOf("sunday") + 1;
+  if (dateCol > 0) sheet.getRange(1, dateCol, Math.max(sheet.getMaxRows(), 2), 1).setNumberFormat("@");
   return sheet;
 }
 

@@ -7,6 +7,7 @@
 <title>Bethany Church</title>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#00303f">
+<link rel="icon" href="assets/icon-192.png">
 <link rel="apple-touch-icon" href="assets/icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Bethany">
@@ -21,7 +22,7 @@ if ("serviceWorker" in navigator) {
     woRefreshing = true;
     location.reload();
   });
-  navigator.serviceWorker.register("sw.js?v=20").catch(function () {});
+  navigator.serviceWorker.register("sw.js?v=21").catch(function () {});
 }
 </script>
 <style>
@@ -121,17 +122,23 @@ svg.i{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.9;stro
 .signup-card .pill{width:100%;margin-top:12px;height:44px}
 .radio{width:22px;height:22px;border-radius:50%;border:2px solid #C9C3B4;flex:none;display:inline-block}
 .radio.on{border:7px solid var(--brand)}
-.signup-day{padding:5px 6px}
+.signup-day{padding:4px 6px}
+#s-signup .card{margin:8px 0}
+#s-signup .psub{margin-bottom:8px}
 .signup-day.on{background:var(--accent-soft);border-radius:12px}
 .signup-day.locked{opacity:.72}
 .signup-day .tt{font-size:14.5px}
 .signup-day .ts{font-size:12px;color:var(--text-2);font-weight:600;margin-top:1px}
 #signup-go{margin-top:8px}
 #signup-list.card{padding:6px 12px}
-#serve-form label{display:flex;align-items:flex-start;gap:8px;margin:4px 0 12px}
-#serve-form .pill{width:100%}
 #s-more .card{margin:8px 0}
 #s-more h2{margin:8px 0 4px}
+.hdr.start{justify-content:flex-start}
+.hdr.start .ptitle{text-align:left}
+.codefield{display:flex;align-items:center;gap:8px}
+.codefield input{flex:1;margin:6px 0 12px}
+.codefield .eye{width:46px;height:46px;border-radius:14px;border:1.5px solid var(--stroke);background:#fff;display:grid;place-items:center;cursor:pointer;flex:none;margin-bottom:6px}
+.signup-day .day{width:auto;min-width:42px;padding:0 6px}
 #more-code a,#more-ministry a{color:var(--accent);font-weight:800;text-decoration:none}
 #visit-map{margin-top:8px}
 .gold{color:var(--gold-ink)}
@@ -170,12 +177,16 @@ body.wo-playing .app{padding-bottom:0}
 .wo-sync{font-size:13px;font-weight:700;color:var(--ok)}
 #wo-play{position:fixed;inset:0;z-index:40;background:#041820;color:#f7f5ee;display:flex;flex-direction:column}
 #wo-play .chord{color:#041820;background:#dcae1d}
-#wo-play-bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:8px;background:#00303f}
+#wo-play{--wo-bar:52px}
+#wo-play-bar{display:flex;flex-wrap:nowrap;gap:6px;align-items:center;padding:8px;background:#00303f}
+#wo-play-tools{display:flex;flex:1;min-width:0;gap:6px;align-items:center;overflow-x:auto}
+#wo-play-tools .wmini,#wo-play-tools .wkeyname,#wo-play-pos{flex:none}
+#wo-play-exit{flex:none}
 #wo-play-body{flex:1;overflow:auto;padding:8px 10px 24px}
 #wo-play .wsec{color:var(--gold)}
-.wo-edge{position:absolute;top:84px;bottom:0;width:18%;border:0;background:transparent}
+.wo-edge{position:absolute;top:var(--wo-bar);bottom:0;width:18%;border:0;background:transparent;z-index:2}
 .wo-edge.left{left:0}.wo-edge.right{right:0}
-#wo-jump{position:absolute;left:12px;right:12px;top:84px;background:#fff;color:var(--text);border-radius:16px;max-height:70%;overflow:auto;z-index:6}
+#wo-jump{position:absolute;left:12px;right:12px;top:var(--wo-bar);background:#fff;color:var(--text);border-radius:16px;max-height:70%;overflow:auto;z-index:6}
 #wo-jump button{display:block;width:100%;text-align:left;min-height:44px;border:0;border-bottom:1px solid var(--stroke);background:#fff;font-weight:800;color:var(--brand)}
 .lyrics-only .wch{display:none}
 #wo-play.wo-fitting #wo-play-title{font-size:calc(var(--wo-fs,16px) * 1.2) !important}
@@ -225,10 +236,10 @@ body.wo-playing .app{padding-bottom:0}
 <section class="screen" id="s-events" hidden>
   <div class="hdr"><h1 class="ptitle" data-i18n="events">Events</h1></div>
   <p class="psub"><span data-i18n="where">All at 15414 Ash Way</span> · <b style="color:var(--accent)" data-i18n="liveWord">Live</b> = <span data-i18n="alsoLive">also livestreamed</span></p>
-  <div class="row-between"><h2 class="ptitle" style="font-size:20px" data-i18n="weekly">Weekly schedule</h2><span class="mut" data-i18n="every">Every week</span></div>
-  <div class="card" id="weekly-list"></div>
   <div class="row-between"><h2 class="ptitle" style="font-size:20px" data-i18n="specials">Special events</h2><span class="mut" data-i18n="once">One-time</span></div>
   <div id="special-list"></div>
+  <div class="row-between"><h2 class="ptitle" style="font-size:20px" data-i18n="weekly">Weekly schedule</h2><span class="mut" data-i18n="every">Every week</span></div>
+  <div class="card" id="weekly-list"></div>
 </section>
 
 <section class="screen" id="s-ministries" hidden>
@@ -293,45 +304,27 @@ body.wo-playing .app{padding-bottom:0}
 
 <section class="screen" id="s-more" hidden>
   <div class="hdr"><h1 class="ptitle" data-i18n="more">More</h1></div>
-  <div id="more-worship-card" class="hero" hidden>
-    <div class="htitle" style="font-size:20px">Worship Team</div>
-    <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
-      <a class="pill glass sm" href="#/worship/library">Chord sheets</a>
-      <a class="pill glass sm" href="#/worship/setlists">Setlists</a>
-      <a class="pill sm" style="background:var(--gold);color:var(--brand)" href="#/availability">Availability</a>
-    </div>
-  </div>
   <h2 data-i18n="church">Church</h2>
   <div class="card">
     <a class="lr" href="#/ministries"><div><div class="tt" data-i18n="ministries">Ministries</div><div class="ts mut">Worship, Nursery, Food Kitchen</div></div></a>
     <a class="lr" href="#/visit"><div><div class="tt" data-i18n="visit">Visit & contact</div><div class="ts mut" data-i18n="visitSub"></div></div></a>
-    <a class="lr" href="#/notifications"><div><div class="tt" data-i18n="notes">Notifications</div><div class="ts mut" data-i18n="notesSub"></div></div></a>
     <button class="lr" type="button" id="more-lang"><div><div class="tt" data-i18n="language">Language</div><div class="ts mut" data-i18n="langSub"></div></div></button>
   </div>
   <button class="card lr" id="feedback-link" type="button"><div><div class="tt" data-i18n="feedback">Send feedback</div><div class="ts mut" data-i18n="feedbackSub"></div></div></button>
   <p id="more-code"><span data-i18n="serveAsk"></span> <a href="#/team-code" data-i18n="haveCode">Have a team code?</a></p>
-  <p id="more-ministry" hidden><a href="#/ministry" data-i18n="myMin">My Ministry</a> · <a href="#/team-code" data-i18n="anotherLink"></a></p>
-  <div class="card" id="serve-card">
-    <b data-i18n="serveTitle">Serve links</b>
-    <form id="serve-form" onsubmit="unlockServe(event)">
-      <label for="serve-pw" data-i18n="servePw">Team password</label>
-      <input class="text" id="serve-pw" type="password" autocomplete="current-password">
-      <label class="mut"><input id="serve-remember" type="checkbox"> <span data-i18n="remember">Remember on this device</span></label>
-      <p id="serve-err" hidden></p>
-      <button class="pill brand" type="submit" data-i18n="unlock">Unlock</button>
-    </form>
-    <div id="serve-links" hidden></div>
-    <p id="serve-lock-row" hidden><button type="button" class="lnkbtn" onclick="lockServe()" data-i18n="lock">Lock</button></p>
-  </div>
+  <p id="more-ministry" hidden><a id="more-ministry-link" href="#/ministries" data-i18n="myMin">My Ministry</a> · <a href="#/team-code" data-i18n="anotherLink"></a></p>
 </section>
 
 <section class="screen" id="s-team-code" hidden>
-  <div class="hdr"><button class="back" type="button" onclick="location.hash='#/more'"><svg class="i"><use href="#i-back"/></svg></button></div>
+  <div class="hdr"><button class="back" type="button" onclick="location.hash='#/ministries'"><svg class="i"><use href="#i-back"/></svg></button></div>
   <h1 class="ptitle" data-i18n="teamTitle">Enter your team code</h1>
   <p class="psub" data-i18n="teamBody"></p>
   <form id="team-form">
     <label data-i18n="teamLabel">Team code</label>
-    <input class="text" id="team-code-input" autocomplete="off" autocapitalize="characters">
+    <div class="codefield">
+      <input class="text" id="team-code-input" type="password" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="go">
+      <button class="eye" id="team-code-eye" type="button" aria-pressed="false" aria-label="Show code"><svg class="i"><use href="#i-eye"/></svg></button>
+    </div>
     <button class="pill brand block" type="submit" data-i18n="join">Join</button>
   </form>
   <p id="team-code-msg" class="mut" hidden></p>
@@ -340,8 +333,8 @@ body.wo-playing .app{padding-bottom:0}
 </section>
 
 <section class="screen" id="s-ministry" hidden>
-  <div class="hdr"><button class="back" type="button" onclick="location.hash='#/more'"><svg class="i"><use href="#i-back"/></svg></button><h1 class="ptitle" style="font-size:26px" data-i18n="myMin">My Ministry</h1></div>
-  <p class="psub" data-i18n="toolsFor"></p>
+  <div class="hdr start"><button class="back" type="button" onclick="location.hash='#/ministries'"><svg class="i"><use href="#i-back"/></svg></button><h1 class="ptitle" id="ministry-title" style="font-size:22px" data-i18n="myMin">My Ministry</h1></div>
+  <p class="psub" id="ministry-sub" data-i18n="toolsFor"></p>
   <p id="ministry-empty" class="mut" data-i18n="noMinistry"></p>
   <div id="my-tools"></div>
 </section>
@@ -354,7 +347,7 @@ body.wo-playing .app{padding-bottom:0}
     <div class="card" id="roster"></div>
   </div>
   <div id="avail-member" hidden>
-    <div class="hdr"><button class="back" type="button" onclick="history.back()"><svg class="i"><use href="#i-back"/></svg></button><span id="avail-status" class="mut"></span></div>
+    <div class="hdr start"><button class="back" type="button" onclick="location.hash='#/ministry/worship'"><svg class="i"><use href="#i-back"/></svg></button><span id="avail-status" class="mut"></span></div>
     <h1 class="ptitle" style="font-size:26px" data-i18n="availability">Team availability</h1>
     <p><span data-i18n="answering"></span> <b id="avail-who"></b> · <button type="button" class="lnkbtn" id="avail-change" data-i18n="change">Change</button></p>
     <div class="seg"><button type="button" id="view-answers" class="on" data-i18n="myAnswers">My answers</button><button type="button" id="view-team" data-i18n="teamView">Team view</button></div>
@@ -371,39 +364,38 @@ body.wo-playing .app{padding-bottom:0}
 
 <section class="screen" id="s-visit" hidden>
   <div class="hdr"><button class="back" type="button" onclick="history.back()"><svg class="i"><use href="#i-back"/></svg></button><h1 class="ptitle" style="font-size:26px" data-i18n="visit">Visit & contact</h1></div>
-  <div class="card"><p id="visit-address"></p><p id="visit-phone"></p><a class="pill brand" id="visit-map" target="_blank" rel="noopener">Map</a></div>
+  <div class="card"><p id="visit-address"></p><p><a id="visit-phone" href=""></a></p><a class="pill brand" id="visit-map" target="_blank" rel="noopener">Map</a></div>
 </section>
 
 <section class="screen" id="s-notifications" hidden>
   <div class="hdr"><button class="back" type="button" onclick="history.back()"><svg class="i"><use href="#i-back"/></svg></button><h1 class="ptitle" style="font-size:26px" data-i18n="notes">Notifications</h1></div>
-  <div class="card"><b data-i18n="notifOn"></b><p class="mut" data-i18n="notifBody"></p>
-    <label><input id="notif-toggle" type="checkbox"> <span data-i18n="notesSub"></span></label>
-  </div>
+  <div class="card"><p class="mut" data-i18n="notYet">Reminders aren't available yet.</p></div>
 </section>
 
 <section class="screen" id="s-worship" hidden>
  <div id="wo-app">
   <div id="wo-lib" class="pad">
-   <button class="lnkbtn" type="button" onclick="location.hash='#/ministry'">← <span data-i18n="myMin">My Ministry</span></button>
-   <h1 style="margin:0">Library</h1>
+   <button class="lnkbtn" type="button" onclick="location.hash='#/ministry/worship'">← <span data-i18n="myMin">My Ministry</span></button>
+   <h1 id="wo-lib-title" style="margin:0">Library</h1>
    <p id="wo-private-msg" class="mut" hidden></p>
-   <button class="pill brand" type="button" onclick="woThisSunday()">This Sunday</button>
+   <p id="wo-lib-empty" class="card mut" hidden></p>
+   <button class="pill brand" id="wo-this-sunday" type="button" onclick="woThisSunday()">This Sunday</button>
    <div class="lang-switch" role="tablist" aria-label="Library language">
     <button type="button" id="wo-lang-en" class="on" role="tab" aria-selected="true">English CCM</button>
     <button type="button" id="wo-lang-ko" role="tab" aria-selected="false">Korean CCM</button>
    </div>
-   <label for="wo-q">Song name</label>
+   <label id="wo-q-lab" for="wo-q">Song name</label>
    <input id="wo-q" placeholder="Title or artist" autocomplete="off">
-   <button class="btn" id="wo-filter-btn" type="button" aria-expanded="false">Filters <span id="wo-filter-n" hidden>0</span></button>
+   <button class="btn" id="wo-filter-btn" type="button" aria-expanded="false"><span id="wo-filter-label">Filters</span> <span id="wo-filter-n" hidden>0</span></button>
    <div id="wo-filters" hidden>
     <div id="wo-speed" class="chips"></div>
-    <label for="wo-artist">Artist</label>
+    <label id="wo-artist-lab" for="wo-artist">Artist</label>
     <select id="wo-artist"></select>
     <div class="chips">
      <button class="chip" id="wo-az" type="button">A–Z</button>
      <button class="chip" id="wo-titleonly" type="button">Title only</button>
     </div>
-    <label for="wo-theme">Theme</label>
+    <label id="wo-theme-lab" for="wo-theme">Theme</label>
     <select id="wo-theme"></select>
     <p class="flab" id="wo-moment-lab">Moment</p>
     <div id="wo-moment" class="chips"></div>
@@ -413,10 +405,10 @@ body.wo-playing .app{padding-bottom:0}
    </div>
    <p id="wo-count" class="mut"></p>
    <div id="wo-list"></div>
-   <button class="btn" type="button" onclick="location.hash='#/worship/add'">Add song</button>
+   <button class="btn" id="wo-add-song" type="button" onclick="location.hash='#/worship/add'">Add song</button>
   </div>
   <div id="wo-sets" class="pad" hidden>
-   <button class="lnkbtn" type="button" onclick="location.hash='#/ministry'">← My Ministry</button>
+   <button class="lnkbtn" type="button" onclick="location.hash='#/ministry/worship'">← <span data-i18n="myMin">My Ministry</span></button>
    <h1>Setlists</h1>
    <p id="wo-sync-list" class="wo-sync" hidden></p>
    <p id="wo-import" class="mut" hidden></p>
@@ -476,17 +468,19 @@ body.wo-playing .app{padding-bottom:0}
  </div>
  <div id="wo-play" hidden>
   <div id="wo-play-bar">
-   <button type="button" class="wmini" onclick="woPlayStep(-1)">Prev</button>
-   <button type="button" class="wmini" onclick="woPlayStep(1)">Next</button>
-   <b id="wo-play-key" class="wkeyname" style="color:#fff"></b>
-   <button type="button" class="wmini" id="wo-play-num" onclick="woTogglePlayNumbers()">Numbers</button>
-   <button type="button" class="wmini" id="wo-play-lyrics" onclick="woTogglePlayLyrics()">Lyrics only</button>
-   <button type="button" class="wmini" id="wo-fit-down" onclick="woNudgePlaySize(-2)" aria-label="Smaller text">A−</button>
-   <button type="button" class="wmini" id="wo-fit-up" onclick="woNudgePlaySize(2)" aria-label="Larger text">A+</button>
-   <button type="button" class="wmini" id="wo-fit" onclick="woResetPlaySize()">Fit</button>
-   <button type="button" class="wmini" onclick="woToggleJump()">Songs</button>
-   <button type="button" class="wmini" onclick="woExitPlay()">Exit</button>
-   <span id="wo-play-pos" style="margin-left:auto;font-weight:800"></span>
+   <div id="wo-play-tools">
+    <button type="button" class="wmini" onclick="woPlayStep(-1)">Prev</button>
+    <button type="button" class="wmini" onclick="woPlayStep(1)">Next</button>
+    <b id="wo-play-key" class="wkeyname" style="color:#fff"></b>
+    <button type="button" class="wmini" id="wo-play-num" onclick="woTogglePlayNumbers()">Numbers</button>
+    <button type="button" class="wmini" id="wo-play-lyrics" onclick="woTogglePlayLyrics()">Lyrics only</button>
+    <button type="button" class="wmini" id="wo-fit-down" onclick="woNudgePlaySize(-2)" aria-label="Smaller text">A−</button>
+    <button type="button" class="wmini" id="wo-fit-up" onclick="woNudgePlaySize(2)" aria-label="Larger text">A+</button>
+    <button type="button" class="wmini" id="wo-fit" onclick="woResetPlaySize()">Fit</button>
+    <button type="button" class="wmini" onclick="woToggleJump()">Songs</button>
+    <span id="wo-play-pos" style="font-weight:800"></span>
+   </div>
+   <button type="button" class="wmini" id="wo-play-exit" onclick="woExitPlay()">Exit</button>
   </div>
   <div id="wo-jump" hidden></div>
   <button type="button" class="wo-edge left" aria-label="Previous song" onclick="woPlayStep(-1)"></button>
@@ -519,6 +513,7 @@ body.wo-playing .app{padding-bottom:0}
  <symbol id="i-q" viewBox="0 0 24 24"><path d="M9 9a3 3 0 1 1 4.5 2.6c-.9.5-1.5 1.2-1.5 2.2"/></symbol>
  <symbol id="i-music" viewBox="0 0 24 24"><path d="M9 18V5.5l11-2V16"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/></symbol>
  <symbol id="i-smile" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5a4.5 4.5 0 0 0 7 0"/></symbol>
+ <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></symbol>
 </defs></svg>
 <script>
 const RSVP_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzlNMiNYPc-5jImVg_vvOwQnECRvJ18WKSmQ7bzSCz84LQhlTy68WICnmkXeXqkN0Fi/exec';
@@ -527,7 +522,6 @@ const WORSHIP_BACKEND_URL = 'https://script.google.com/macros/s/AKfycbwWtdJUNT8n
 </script>
 <script src="js/config.js"></script>
 <script src="js/app.js"></script>
-<script src="worship.js?v=20"></script>
-<script src="js/serve.js"></script>
+<script src="worship.js?v=21"></script>
 </body>
 </html>
