@@ -499,6 +499,10 @@ function renderMinistry() {
   box.replaceChildren();
   if (!m) { location.replace("#/ministries"); return; }
   paintMinistryHead(head, m, function () { location.hash = "#/ministries"; });
+  if (id === "nursery" && window.paintNurseryPage) {
+    window.paintNurseryPage();
+    return;
+  }
   m.tools.forEach(function (tool, i) {
     var a = document.createElement("a");
     a.className = "tool" + (m.tools.length === 1 || i === m.tools.length - 1 && m.tools.length > 2 ? " wide" : "");
@@ -781,6 +785,9 @@ function show(name) {
   document.querySelectorAll(".screen").forEach(function (el) { el.hidden = el.id !== "s-" + name; });
   document.body.classList.toggle("in-worship", name === "worship");
   document.querySelectorAll(".nav a").forEach(function (a) { a.classList.toggle("on", a.getAttribute("data-nav") === navFor(name)); });
+  document.body.classList.toggle("no-nav", name === "account");
+  document.querySelectorAll(".fb-layer").forEach(function (el) { el.hidden = true; });
+  document.body.classList.remove("fb-open");
   if (name === "home") renderHome();
   if (name === "events") renderEvents();
   if (name === "event") renderEvent(eventIdFromHash());
@@ -790,13 +797,15 @@ function show(name) {
   if (name === "signup") loadSignups(signupKind());
   if (name === "availability") { renderAvailability(); pullAvailability(); }
   if (name === "more") renderAccount();
+  if (name === "account" && window.paintAccountPage) window.paintAccountPage();
+  if (name === "home" && window.paintHomeServingCard) window.paintHomeServingCard();
   paintAuthLang();
 }
 function navFor(name) {
   if (name === "events" || name === "event") return "events";
   if (name === "ministries" || name === "food-kitchen" || name === "signup" || name === "ministry" || name === "team-code" || name === "availability" || name === "worship") return "ministries";
   if (name === "give") return "give";
-  if (name === "more" || name === "visit" || name === "notifications") return "more";
+  if (name === "more" || name === "visit" || name === "notifications" || name === "account") return "more";
   return "home";
 }
 function signupKind() {
@@ -837,6 +846,7 @@ function renderAccount() {
   setSwitch("pref-remind", p.reminders !== false);
   document.getElementById("acct-en").classList.toggle("on", appLang() !== "ko");
   document.getElementById("acct-ko").classList.toggle("on", appLang() === "ko");
+  if (window.paintMorePage) window.paintMorePage();
 }
 function setSwitch(id, on) {
   var el = document.getElementById(id);
@@ -908,11 +918,16 @@ function route() {
   }
   var name = path.split("/")[0] || "home";
   if (name === "signup") {
-    if (signupKind() === "nursery" && !hasTeam("nursery")) { location.replace("#/team-code?team=nursery"); return; }
+    if (signupKind() === "nursery") {
+      if (!hasTeam("nursery")) { location.replace("#/team-code?team=nursery"); return; }
+      location.replace("#/ministry/nursery");
+      return;
+    }
     prepareSignup();
     show("signup");
     return;
   }
+  if (name === "account") { show("account"); return; }
   if (name === "ministry") {
     var mid = path.split("/")[1] || "";
     if (!mid) { location.replace(ministryHomeHash()); return; }
@@ -982,6 +997,7 @@ document.querySelectorAll("[data-eye]").forEach(function (btn) {
     if (!input) return;
     var show = input.type === "password";
     input.type = show ? "text" : "password";
+    if (btn.getAttribute("data-i18n") === "showPw") btn.textContent = t(show ? "hidePw" : "showPw");
   };
 });
 document.getElementById("signin-form").onsubmit = function (e) {
@@ -1033,8 +1049,10 @@ document.getElementById("name-form").onsubmit = function (e) {
   route();
 };
 document.getElementById("name-back").onclick = function () { location.hash = "#/create"; };
-document.getElementById("acct-edit").onclick = function () { document.getElementById("name-edit").hidden = false; };
-document.getElementById("acct-save-name").onclick = function () {
+var acctEdit = document.getElementById("acct-edit");
+if (acctEdit) acctEdit.onclick = function () { var box = document.getElementById("name-edit"); if (box) box.hidden = false; };
+var acctSave = document.getElementById("acct-save-name");
+if (acctSave) acctSave.onclick = function () {
   var full = (document.getElementById("acct-first").value.trim() + " " + document.getElementById("acct-last").value.trim()).trim();
   if (!full) return;
   pushProfile({ name: full });
@@ -1104,7 +1122,7 @@ function renderVisit() {
 document.getElementById("watch-live").onclick = function () { window.open(BETHANY.watchUrl, "_blank", "noopener"); };
 document.getElementById("all-times").onclick = function () { location.hash = "#/events"; };
 document.getElementById("see-events").onclick = function () { location.hash = "#/events"; };
-var APP_VERSION = "v29";
+var APP_VERSION = (window.BETHANY && BETHANY.version) || "v30";
 var fbCat = "idea";
 var fbGen = 0;
 function feedbackWho() {

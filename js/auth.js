@@ -59,11 +59,29 @@
     if (typeof window.bethanyOnAuth === "function") window.bethanyOnAuth();
   }
   function setUser(next) { user = next; finish(); }
+  function providerList(u) {
+    var list = [];
+    if (u && u.providers && u.providers.length) return u.providers.slice();
+    if (u && u.providerData) {
+      u.providerData.forEach(function (p) { if (p && p.providerId && list.indexOf(p.providerId) < 0) list.push(p.providerId); });
+    }
+    if (!list.length && u && u.provider) list.push(u.provider);
+    if (!list.length) list.push("password");
+    return list;
+  }
   function fromFirebase(u) {
     if (!u) return null;
-    var provider = (u.providerData && u.providerData[0] && u.providerData[0].providerId) || "password";
-    return { uid: u.uid, email: u.email || "", displayName: u.displayName || "", provider: provider };
+    var providers = providerList(u);
+    return { uid: u.uid, email: u.email || "", displayName: u.displayName || "", provider: providers[0], providers: providers };
   }
+  function useMock() { return Object.prototype.hasOwnProperty.call(window, "BETHANY_MOCK_AUTH"); }
+  function mockReject() {
+    var code = window.BETHANY_MOCK_AUTH_ERROR;
+    if (!code) return null;
+    window.BETHANY_MOCK_AUTH_ERROR = "";
+    return code;
+  }
+  var pendingLink = "";
   function fail(err) {
     var code = err && err.code ? err.code : "config";
     return Promise.reject(code);
@@ -82,8 +100,58 @@
     return fb.createUserWithEmailAndPassword(auth, email, password).then(function (res) { return fromFirebase(res.user); }).catch(fail);
   };
   window.bethanyReset = function (email) {
+    if (useMock()) {
+      var code = mockReject();
+      if (code) return Promise.reject(code);
+      return Promise.resolve();
+    }
     if (!fb || !auth) return Promise.reject("config");
     return fb.sendPasswordResetEmail(auth, email).catch(fail);
+  };
+  window.bethanySetPendingPassword = function (pw) { pendingLink = pw || ""; };
+  window.bethanyTakePendingPassword = function () { var pw = pendingLink; pendingLink = ""; return pw; };
+  window.bethanyLinkPassword = function (password) {
+    if (useMock()) {
+      var code = mockReject();
+      if (code) return Promise.reject(code);
+      if (!user.providers) user.providers = [];
+      if (user.providers.indexOf("password") < 0) user.providers.push("password");
+      if (window.BETHANY_MOCK_AUTH) window.BETHANY_MOCK_AUTH.providers = user.providers.slice();
+      return Promise.resolve(user);
+    }
+    if (!fb || !auth || !auth.currentUser) return Promise.reject("config");
+    if (!password || String(password).length < 8) return Promise.reject("auth/weak-password");
+    var cred = fb.EmailAuthProvider.credential(auth.currentUser.email, password);
+    return fb.linkWithCredential(auth.currentUser, cred).then(function () {
+      return auth.currentUser.reload().then(function () { setUser(fromFirebase(auth.currentUser)); return user; });
+    }).catch(fail);
+  };
+  window.bethanyChangePassword = function (current, next) {
+    if (useMock()) {
+      var code = mockReject();
+      if (code) return Promise.reject(code);
+      return Promise.resolve();
+    }
+    if (!fb || !auth || !auth.currentUser) return Promise.reject("config");
+    if (!next || String(next).length < 8) return Promise.reject("auth/weak-password");
+    var cred = fb.EmailAuthProvider.credential(auth.currentUser.email, current);
+    return fb.reauthenticateWithCredential(auth.currentUser, cred).then(function () {
+      return fb.updatePassword(auth.currentUser, next);
+    }).catch(fail);
+  };
+  window.bethanyReauthGoogle = function () {
+    if (useMock()) {
+      var code = mockReject();
+      if (code) return Promise.reject(code);
+      return Promise.resolve(user);
+    }
+    if (!fb || !auth || !auth.currentUser) return Promise.reject("config");
+    var standalone = (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone === true;
+    var provider = new fb.GoogleAuthProvider();
+    if (standalone) return fb.reauthenticateWithRedirect(auth, provider);
+    return fb.reauthenticateWithPopup(auth, provider).then(function () {
+      return auth.currentUser.reload().then(function () { setUser(fromFirebase(auth.currentUser)); return user; });
+    }).catch(fail);
   };
   window.bethanySignOut = function () {
     if (Object.prototype.hasOwnProperty.call(window, "BETHANY_MOCK_AUTH")) {
@@ -96,12 +164,19 @@
     return fb.signOut(auth);
   };
   window.bethanyUpdateName = function (name) {
+    if (useMock()) {
+      if (user) user.displayName = name;
+      if (window.BETHANY_MOCK_AUTH) window.BETHANY_MOCK_AUTH.displayName = name;
+      return Promise.resolve();
+    }
     if (!fb || !auth || !auth.currentUser) return Promise.resolve();
-    return fb.updateProfile(auth.currentUser, { displayName: name }).catch(function () {});
+    return fb.updateProfile(auth.currentUser, { displayName: name }).then(function () {
+      if (user) user.displayName = name;
+    }).catch(function () {});
   };
 
   if (Object.prototype.hasOwnProperty.call(window, "BETHANY_MOCK_AUTH")) {
-    user = window.BETHANY_MOCK_AUTH;
+    user = fromFirebase(window.BETHANY_MOCK_AUTH);
     ready = true;
     return;
   }

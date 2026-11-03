@@ -1,4 +1,4 @@
-var CACHE = "bethany-worship-v29";
+var CACHE = "bethany-worship-v30";
 var FILES = [
   "./",
   "index.html",
@@ -6,6 +6,7 @@ var FILES = [
   "js/config.js",
   "js/auth.js",
   "js/app.js",
+  "js/more.js",
   "assets/img/sanctuary.webp",
   "assets/img/worship-stage.webp",
   "assets/img/fellowship-group.webp",
