@@ -45,9 +45,9 @@ var BETHANY_MINISTRIES = [
     code: true,
     icon: "music",
     tools: [
-      { id: "chords", name: "Chord sheets", ko: "악보", href: "#/worship/library", hint: "Sharps only · fit to screen" },
-      { id: "setlists", name: "Setlists", ko: "셋리스트", href: "#/worship/setlists", hint: "This Sunday" },
-      { id: "availability", name: "Team availability", ko: "섬김 가능", href: "#/availability", hint: "Mark the Sundays you can serve" }
+      { id: "chords", name: "Chord sheets", ko: "악보", href: "#/worship/library", hint: "Sharps only · fit to screen", koHint: "샤프만 · 화면에 맞추기", icon: "music" },
+      { id: "setlists", name: "Setlists", ko: "셋리스트", href: "#/worship/setlists", hint: "This Sunday", koHint: "이번 주일", icon: "list" },
+      { id: "availability", name: "Team availability", ko: "섬김 가능", href: "#/availability", hint: "Mark the Sundays you can serve", koHint: "섬길 수 있는 주일을 표시하세요", icon: "users" }
     ]
   },
   {
@@ -59,7 +59,7 @@ var BETHANY_MINISTRIES = [
     code: true,
     icon: "smile",
     tools: [
-      { id: "nursery-signup", name: "Nursery sign-up", ko: "유아부 신청", href: "#/signup/nursery", hint: "Name and Sunday" }
+      { id: "nursery-signup", name: "Nursery sign-up", ko: "유아부 신청", href: "#/signup/nursery", hint: "Name and Sunday", koHint: "이름과 주일", icon: "smile" }
     ]
   },
   {
@@ -80,7 +80,12 @@ var BETHANY_MINISTRIES = [
 var BETHANY_ROSTER = [
   { id: "woori", name: "Pastor Woori", role: "" },
   { id: "palmy", name: "Palmy", role: "" },
-  { id: "daniel", name: "Daniel", role: "" }
+  { id: "daniel", name: "Daniel", role: "" },
+  { id: "steven", name: "Steven", role: "" },
+  { id: "byungil", name: "Byungil", role: "" },
+  { id: "clarence", name: "Clarence", role: "" },
+  { id: "john", name: "John", role: "" },
+  { id: "abe", name: "Abe", role: "" }
 ];
 
 var BETHANY_I18N = {
@@ -98,7 +103,7 @@ var BETHANY_I18N = {
     feedback: "Send feedback", feedbackSub: "Opens a short Google Form · 1 min",
     haveCode: "Have a team code?", serveAsk: "Serve on a team?",
     teamTitle: "Enter your team code", teamBody: "Your ministry leader shares one code with the team. It unlocks only your team's tools.",
-    teamLabel: "Team code", join: "Join", onceOnly: "One time only.", onceBody: "This phone remembers your code, so you won't be asked again. No account or password needed.",
+    teamLabel: "Team code", join: "Join", showCode: "Show code", hideCode: "Hide code", onceOnly: "One time only.", onceBody: "This phone remembers your code, so you won't be asked again. No account or password needed.",
     askDaniel: "Don't have a code? Ask Daniel for your team's code.",
     toolsFor: "Tools for the teams you serve on.", unlocked: "Unlocked on this phone", joined: "Joined",
     another: "On another team too?", anotherLink: "Join another team with a code",
@@ -112,17 +117,16 @@ var BETHANY_I18N = {
     find: "Find your people at Bethany.", openAll: "Open to everyone",
     kitchen: "Food Kitchen", km: "KM Food Sign-up", kmBody: "For the Korean ministry fellowship meal.",
     snack: "EM Sunday Snack Sign-up", snackBody: "After the 10:00 AM English service.",
-    name: "Name", which: "Which Sunday", signUp: "Sign up", cancel: "Cancel my sign-up",
+    name: "Name", which: "Which Sunday", nameNeed: "Please enter your name.", pickSunday: "Pick a Sunday.", signUp: "Sign up", cancel: "Cancel my sign-up",
     yours: "Yours", open: "Open", taken: "Taken", you: "You",
     donation: "Want to make a snack donation instead? Contact Jennifer.",
     several: "Several people can sign up for the same Sunday.",
+    notYet: "Reminders aren't available yet.",
     giveLead: "Thank you for supporting the ministry of Bethany Church.",
     giveOnline: "Give online", giveBody: "Secure giving through Tithe.ly. Set up a one-time or recurring gift.",
     giveBtn: "Give with Tithe.ly", venmo: "Venmo", sendTo: "Send to", openVenmo: "Open Venmo",
     byCheck: "Give by check", payable: "Payable to", mailTo: "Mail to", memo: "Memo",
-    serveTitle: "Serve links", servePw: "Team password", remember: "Remember on this device", unlock: "Unlock", lock: "Lock",
-    wrong: "That password isn't right. Try again.", wrongCode: "That code isn't right.",
-    notifOn: "Reminders on this phone", notifBody: "A simple reminder switch for this device. It does not text or email anyone.",
+    wrongCode: "That code isn't right.",
     back: "Back", sample: "Sample", yourSignup: "Your sign-up", bringing: "signed up",
     noMinistry: "No team tools on this phone yet.",
     takenOf: "of 6 Sundays taken",
@@ -143,7 +147,7 @@ var BETHANY_I18N = {
     feedback: "의견 보내기", feedbackSub: "짧은 구글 폼 · 1분",
     haveCode: "팀 코드가 있나요?", serveAsk: "팀으로 섬기나요?",
     teamTitle: "팀 코드를 입력하세요", teamBody: "사역 인도자가 팀과 코드 하나를 나눕니다. 그 팀의 도구만 열립니다.",
-    teamLabel: "팀 코드", join: "참여", onceOnly: "한 번만 입력합니다.", onceBody: "이 기기가 코드를 기억합니다. 계정이나 비밀번호는 없습니다.",
+    teamLabel: "팀 코드", join: "참여", showCode: "코드 보기", hideCode: "코드 숨기기", onceOnly: "한 번만 입력합니다.", onceBody: "이 기기가 코드를 기억합니다. 계정이나 비밀번호는 없습니다.",
     askDaniel: "코드가 없나요? Daniel에게 팀 코드를 물어보세요.",
     toolsFor: "섬기는 팀의 도구입니다.", unlocked: "이 기기에서 열림", joined: "참여함",
     another: "다른 팀도 있나요?", anotherLink: "코드로 다른 팀 참여",
@@ -157,17 +161,16 @@ var BETHANY_I18N = {
     find: "베다니의 사람들을 찾아보세요.", openAll: "모두에게 열림",
     kitchen: "음식 사역", km: "한국어 예배 음식 신청", kmBody: "한국어 사역 교제 식사입니다.",
     snack: "영어 예배 간식 신청", snackBody: "오전 10시 영어 예배 후.",
-    name: "이름", which: "어느 주일", signUp: "신청", cancel: "내 신청 취소",
+    name: "이름", which: "어느 주일", nameNeed: "이름을 입력해 주세요.", pickSunday: "주일을 골라 주세요.", signUp: "신청", cancel: "내 신청 취소",
     yours: "내 신청", open: "비어 있음", taken: "마감", you: "나",
     donation: "간식을 기부하고 싶나요? Jennifer에게 문의하세요.",
     several: "같은 주일에 여러 사람이 신청할 수 있습니다.",
+    notYet: "알림은 아직 준비되지 않았습니다.",
     giveLead: "베다니 교회 사역을 후원해 주셔서 감사합니다.",
     giveOnline: "온라인 헌금", giveBody: "Tithe.ly로 안전하게 헌금합니다. 한 번 또는 정기 헌금을 설정할 수 있습니다.",
     giveBtn: "Tithe.ly로 헌금", venmo: "Venmo", sendTo: "받을 사람", openVenmo: "Venmo 열기",
     byCheck: "수표 헌금", payable: "수표 명의", mailTo: "우편", memo: "메모",
-    serveTitle: "섬김 링크", servePw: "팀 비밀번호", remember: "이 기기에 기억", unlock: "열기", lock: "잠그기",
-    wrong: "비밀번호가 맞지 않습니다.", wrongCode: "코드가 맞지 않습니다.",
-    notifOn: "이 기기의 알림", notifBody: "이 기기의 스위치입니다. 문자나 이메일을 보내지 않습니다.",
+    wrongCode: "코드가 맞지 않습니다.",
     back: "뒤로", sample: "예시", yourSignup: "내 신청", bringing: "신청",
     noMinistry: "이 기기에는 아직 팀 도구가 없습니다.",
     takenOf: "6주일 중 신청됨",

@@ -49,9 +49,24 @@ function laParts() {
 }
 function pad(n) { return (n < 10 ? "0" : "") + n; }
 function fmtTime(h, m) {
-  var ap = h < 12 ? "AM" : "PM";
   var hr = h % 12 || 12;
-  return hr + ":" + pad(m) + " " + ap;
+  var clock = hr + ":" + pad(m);
+  if (appLang() === "ko") return (h < 12 ? "오전" : "오후") + " " + clock;
+  return clock + " " + (h < 12 ? "AM" : "PM");
+}
+function isoDay(v) {
+  var s = String(v == null ? "" : v).replace(/^'+/, "").trim();
+  var iso = s.match(/(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) return iso[1] + "-" + iso[2] + "-" + iso[3];
+  if (!s || !/[A-Za-z]/.test(s)) return s;
+  var d = new Date(s);
+  if (isNaN(d.getTime())) return s;
+  var p = {};
+  new Intl.DateTimeFormat("en-US", { timeZone: "America/Los_Angeles", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(d).forEach(function (x) { p[x.type] = x.value; });
+  return p.year + "-" + p.month + "-" + p.day;
+}
+function normSignup(row) {
+  return { sunday: isoDay(row && row.sunday), name: row && row.name || "", deviceId: row && row.deviceId || "" };
 }
 function dayName(d) { return ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][d]; }
 function dayKo(d) { return ["일", "월", "화", "수", "목", "금", "토"][d]; }
@@ -84,16 +99,27 @@ function upcomingSundays(count) {
   return out;
 }
 function prettySunday(iso) {
-  var p = iso.split("-");
+  var p = String(iso || "").split("-");
   var dt = new Date(Date.UTC(+p[0], +p[1] - 1, +p[2]));
+  var wd = dt.getUTCDay();
+  if (appLang() === "ko") {
+    return { mon: (dt.getUTCMonth() + 1) + "월", day: String(dt.getUTCDate()), label: (dt.getUTCMonth() + 1) + "월 " + dt.getUTCDate() + "일 (" + dayKo(wd) + ")" };
+  }
   var mon = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][dt.getUTCMonth()];
-  return { mon: mon.toUpperCase(), day: String(dt.getUTCDate()), label: "Sun, " + mon + " " + dt.getUTCDate() };
+  return { mon: mon.toUpperCase(), day: String(dt.getUTCDate()), label: dayName(wd) + ", " + mon + " " + dt.getUTCDate() };
 }
 function weekItems() {
   var n = laParts();
+  var nowMin = n.h * 60 + n.mi;
   return BETHANY_WEEKLY.filter(function (s) {
     var ahead = (s.day - n.dow + 7) % 7;
-    return ahead <= 6;
+    if (ahead === 0 && (s.h * 60 + s.m) <= nowMin) return false;
+    return true;
+  }).sort(function (a, b) {
+    var aa = (a.day - n.dow + 7) % 7;
+    var bb = (b.day - n.dow + 7) % 7;
+    if (aa !== bb) return aa - bb;
+    return (a.h * 60 + a.m) - (b.h * 60 + b.m);
   }).slice(0, 3);
 }
 function specials() {
@@ -101,9 +127,60 @@ function specials() {
   var today = n.y + "-" + pad(n.mo) + "-" + pad(n.d);
   return BETHANY_EVENTS.filter(function (ev) { return ev.date >= today; });
 }
+function icsStamp(dt) {
+  return dt.getUTCFullYear() + pad(dt.getUTCMonth() + 1) + pad(dt.getUTCDate()) + "T" + pad(dt.getUTCHours()) + pad(dt.getUTCMinutes()) + pad(dt.getUTCSeconds()) + "Z";
+}
+function icsEnd(date, time, end) {
+  var parts = String(end || "").split(":");
+  var sh = +String(time || "0:0").split(":")[0];
+  var sm = +String(time || "0:0").split(":")[1] || 0;
+  var eh = parts.length > 1 ? +parts[0] : sh + 2;
+  var em = parts.length > 1 ? (+parts[1] || 0) : sm;
+  var extra = 0;
+  if (eh >= 24) { extra = Math.floor(eh / 24); eh = eh % 24; }
+  var p = date.split("-");
+  var dt = new Date(Date.UTC(+p[0], +p[1] - 1, +p[2] + extra));
+  var endDate = dt.getUTCFullYear() + pad(dt.getUTCMonth() + 1) + pad(dt.getUTCDate());
+  return endDate + "T" + pad(eh) + pad(em) + "00";
+}
 function icsFor(ev) {
-  var start = ev.date.replace(/-/g, "") + "T" + ev.time.replace(":", "") + "00";
-  var body = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Bethany Church//EN", "BEGIN:VEVENT", "SUMMARY:" + ev.title + " – Bethany Church", "DTSTART;TZID=America/Los_Angeles:" + start, "LOCATION:15414 Ash Way\\, Lynnwood\\, WA 98087", "END:VEVENT", "END:VCALENDAR"].join("\r\n");
+  var hm = String(ev.time || "12:00").split(":");
+  var start = ev.date.replace(/-/g, "") + "T" + pad(+hm[0]) + pad(+hm[1] || 0) + "00";
+  var end = icsEnd(ev.date, ev.time, ev.end);
+  var lines = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//Bethany Church//EN",
+    "CALSCALE:GREGORIAN",
+    "BEGIN:VTIMEZONE",
+    "TZID:America/Los_Angeles",
+    "X-LIC-LOCATION:America/Los_Angeles",
+    "BEGIN:DAYLIGHT",
+    "TZOFFSETFROM:-0800",
+    "TZOFFSETTO:-0700",
+    "TZNAME:PDT",
+    "DTSTART:19700308T020000",
+    "RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=2SU",
+    "END:DAYLIGHT",
+    "BEGIN:STANDARD",
+    "TZOFFSETFROM:-0700",
+    "TZOFFSETTO:-0800",
+    "TZNAME:PST",
+    "DTSTART:19701101T020000",
+    "RRULE:FREQ=YEARLY;BYMONTH=11;BYDAY=1SU",
+    "END:STANDARD",
+    "END:VTIMEZONE",
+    "BEGIN:VEVENT",
+    "UID:" + ev.id + "@bethanychurchwa.org",
+    "DTSTAMP:" + icsStamp(new Date()),
+    "SUMMARY:" + ev.title + " – Bethany Church",
+    "DTSTART;TZID=America/Los_Angeles:" + start,
+    "DTEND;TZID=America/Los_Angeles:" + end,
+    "LOCATION:15414 Ash Way\\, Lynnwood\\, WA 98087",
+    "END:VEVENT",
+    "END:VCALENDAR"
+  ];
+  var body = lines.join("\r\n") + "\r\n";
   var a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob([body], { type: "text/calendar" }));
   a.download = "bethany-" + ev.id + ".ics";
@@ -164,7 +241,8 @@ function specialCard(ev, compact) {
   var mon = dt.toLocaleDateString("en-US", { month: "short", timeZone: "UTC" }).toUpperCase();
   var box = document.createElement("div");
   box.className = compact ? "special-home" : "card ecard";
-  box.innerHTML = '<div class="dblk"><small>' + mon + '</small><b>' + dt.getUTCDate() + '</b><span>' + (appLang() === "ko" ? "일" : "Sun") + '</span></div><div class="grow"><div class="eyebrow gold">' + t("special") + '</div><div class="tt">' + escapeHtml(appLang() === "ko" ? (ev.ko || ev.title) : ev.title) + '</div><div class="row-between"><span class="mut">' + fmtTime(+ev.time.split(":")[0], +ev.time.split(":")[1]) + '</span><button type="button" class="pill sm white cal">' + t("addCal") + "</button></div></div>";
+  var wd = dt.getUTCDay();
+  box.innerHTML = '<div class="dblk"><small>' + mon + '</small><b>' + dt.getUTCDate() + '</b><span>' + (appLang() === "ko" ? dayKo(wd) : dayName(wd)) + '</span></div><div class="grow"><div class="eyebrow gold">' + t("special") + '</div><div class="tt">' + escapeHtml(appLang() === "ko" ? (ev.ko || ev.title) : ev.title) + '</div><div class="row-between"><span class="mut">' + fmtTime(+ev.time.split(":")[0], +ev.time.split(":")[1]) + '</span><button type="button" class="pill sm white cal">' + t("addCal") + "</button></div></div>";
   box.querySelector(".cal").onclick = function () { icsFor(ev); };
   return box;
 }
@@ -174,7 +252,7 @@ function renderEvents() {
   BETHANY_WEEKLY.forEach(function (item) {
     var row = document.createElement("div");
     row.className = "wkrow";
-    row.innerHTML = '<span class="day">' + dayName(item.day) + '</span><div class="tt">' + escapeHtml(appLang() === "ko" ? item.ko : item.name) + "</div>" + (item.live ? '<span class="chip acc">' + t("liveWord") + "</span>" : "") + '<span class="tm">' + fmtTime(item.h, item.m) + "</span>";
+    row.innerHTML = '<span class="day">' + (appLang() === "ko" ? dayKo(item.day) : dayName(item.day)) + '</span><div class="tt">' + escapeHtml(appLang() === "ko" ? item.ko : item.name) + "</div>" + (item.live ? '<span class="chip acc">' + t("liveWord") + "</span>" : "") + '<span class="tm">' + fmtTime(item.h, item.m) + "</span>";
     weekly.appendChild(row);
   });
   var box = document.getElementById("special-list");
@@ -206,34 +284,49 @@ function openMinistry(id) {
   if (!m) return;
   if (m.code && !hasTeam(id)) { location.hash = "#/team-code?team=" + id; return; }
   if (id === "kitchen") { location.hash = "#/food-kitchen"; return; }
-  location.hash = "#/ministry";
+  location.hash = "#/ministry/" + id;
+}
+function ministryHomeHash() {
+  var ids = teams().filter(function (id) { var m = ministryById(id); return m && m.code; });
+  if (ids.length === 1) return "#/ministry/" + ids[0];
+  return "#/ministries";
 }
 function ministryById(id) {
   var found = null;
   BETHANY_MINISTRIES.forEach(function (m) { if (m.id === id) found = m; });
   return found;
 }
+function ministryIdFromHash() {
+  var raw = (location.hash || "").replace(/^#\/?/, "").split("?")[0];
+  var parts = raw.split("/");
+  return parts[0] === "ministry" ? (parts[1] || "") : "";
+}
 function renderMinistry() {
+  var id = ministryIdFromHash();
+  var m = ministryById(id);
   var box = document.getElementById("my-tools");
+  var title = document.getElementById("ministry-title");
+  var sub = document.getElementById("ministry-sub");
   box.replaceChildren();
-  var joined = BETHANY_MINISTRIES.filter(function (m) { return hasTeam(m.id); });
-  document.getElementById("ministry-empty").hidden = !!joined.length;
-  joined.forEach(function (m) {
-    var head = document.createElement("div");
-    head.className = "card who";
-    head.innerHTML = '<span class="mic acc"><svg class="i"><use href="#i-' + m.icon + '"/></svg></span><div class="grow"><b>' + escapeHtml(m.name) + '</b><div class="mut">' + t("unlocked") + '</div></div><span class="chip acc">' + t("joined") + "</span>";
-    box.appendChild(head);
-    var grid = document.createElement("div");
-    grid.className = "tgrid";
-    m.tools.forEach(function (tool) {
-      var a = document.createElement("a");
-      a.className = "card tool";
-      a.href = tool.href;
-      a.innerHTML = '<div class="top"><span class="mic gold"><svg class="i"><use href="#i-list"/></svg></span></div><div><h3>' + escapeHtml(appLang() === "ko" ? tool.ko : tool.name) + "</h3><p>" + escapeHtml(tool.hint) + "</p></div>";
-      grid.appendChild(a);
-    });
-    box.appendChild(grid);
+  document.getElementById("ministry-empty").hidden = !!m;
+  if (!m) {
+    if (title) title.textContent = t("myMin");
+    return;
+  }
+  if (title) title.textContent = appLang() === "ko" ? m.ko : m.name;
+  if (sub) sub.textContent = appLang() === "ko" ? (m.koBlurb || "") : (m.blurb || "");
+  var grid = document.createElement("div");
+  grid.className = "tgrid";
+  m.tools.forEach(function (tool) {
+    var a = document.createElement("a");
+    a.className = "card tool";
+    a.href = tool.href;
+    var icon = tool.icon || "list";
+    var hint = appLang() === "ko" ? (tool.koHint || tool.hint) : tool.hint;
+    a.innerHTML = '<div class="top"><span class="mic gold"><svg class="i"><use href="#i-' + icon + '"/></svg></span></div><div><h3>' + escapeHtml(appLang() === "ko" ? tool.ko : tool.name) + "</h3><p>" + escapeHtml(hint) + "</p></div>";
+    grid.appendChild(a);
   });
+  box.appendChild(grid);
 }
 function renderKitchen() {
   document.getElementById("kitchen-blurb").textContent = appLang() === "ko" ? ministryById("kitchen").koBlurb : ministryById("kitchen").blurb;
@@ -246,7 +339,7 @@ function paintKitchenCard(kind, hintId) {
   hint.hidden = true;
   api({ action: "getSignups", kind: kind }).then(function (res) {
     if (soonError(res) || !res) return;
-    var rows = res.signups || [];
+    var rows = (res.signups || []).map(normSignup);
     var days = upcomingSundays(6);
     if (kind === "snack") {
       var taken = days.filter(function (iso) { return rows.some(function (row) { return row.sunday === iso; }); }).length;
@@ -271,7 +364,7 @@ function joinTeam(ev) {
     if (res && res.ok && res.team) {
       rememberTeam(res.team);
       document.getElementById("team-code-input").value = "";
-      location.hash = res.team === "worship" ? "#/ministry" : "#/ministry";
+      location.hash = "#/ministry/" + res.team;
       return;
     }
     msg.hidden = false;
@@ -292,7 +385,7 @@ function loadSignups(kind) {
   api({ action: "getSignups", kind: kind }).then(function (res) {
     if (soonError(res)) { msg.hidden = false; msg.textContent = t("soon"); signupCache[kind] = signupCache[kind] || []; return; }
     msg.hidden = true;
-    signupCache[kind] = (res && res.signups) || [];
+    signupCache[kind] = ((res && res.signups) || []).map(normSignup);
     paintSignups(kind, signupCache[kind]);
   }).catch(function () { msg.hidden = false; msg.textContent = t("soon"); });
 }
@@ -333,8 +426,8 @@ function addSignup(kind, iso) {
   var name = document.getElementById("signup-name").value.trim();
   var msg = document.getElementById("signup-msg");
   if (!iso) iso = signupPick;
-  if (!name) { msg.hidden = false; msg.textContent = t("name"); return; }
-  if (!iso) { msg.hidden = false; msg.textContent = t("which"); return; }
+  if (!name) { msg.hidden = false; msg.textContent = t("nameNeed"); return; }
+  if (!iso) { msg.hidden = false; msg.textContent = t("pickSunday"); return; }
   try { localStorage.setItem("bethany-signup-name", name); } catch (e) {}
   msg.hidden = false;
   msg.textContent = t("saving");
@@ -478,7 +571,7 @@ function pullAvailability() {
   api({ action: "getAvailability", team: "worship" }).then(function (res) {
     if (!res || !res.rows) return;
     var map = availMap();
-    res.rows.forEach(function (row) { map[row.person + "|" + row.sunday] = { status: row.status, note: row.note || "" }; });
+    res.rows.forEach(function (row) { map[row.person + "|" + isoDay(row.sunday)] = { status: row.status, note: row.note || "" }; });
     saveAvailLocal(map);
     if ((location.hash || "").indexOf("availability") >= 0) renderAvailability();
   }).catch(function () {});
@@ -499,10 +592,9 @@ function show(name) {
 }
 function navFor(name) {
   if (name === "events") return "events";
-  if (name === "ministries" || name === "food-kitchen" || name === "signup") return "ministries";
+  if (name === "ministries" || name === "food-kitchen" || name === "signup" || name === "ministry" || name === "team-code" || name === "availability" || name === "worship") return "ministries";
   if (name === "give") return "give";
-  if (name === "more" || name === "team-code" || name === "ministry" || name === "availability" || name === "visit" || name === "notifications" || name === "serve") return "more";
-  if (name === "worship") return "more";
+  if (name === "more" || name === "visit" || name === "notifications") return "more";
   return "home";
 }
 function signupKind() {
@@ -514,8 +606,8 @@ function signupKind() {
 function renderMore() {
   document.getElementById("more-ministry").hidden = !teams().length;
   document.getElementById("more-code").hidden = !!teams().length;
-  var worship = hasTeam("worship");
-  document.getElementById("more-worship-card").hidden = !worship;
+  var link = document.getElementById("more-ministry-link");
+  if (link) link.href = ministryHomeHash();
 }
 function route() {
   var raw = (location.hash || "#/home").replace(/^#\/?/, "");
@@ -532,10 +624,19 @@ function route() {
     show("signup");
     return;
   }
+  if (name === "ministry") {
+    var mid = path.split("/")[1] || "";
+    if (!mid) { location.replace(ministryHomeHash()); return; }
+    var ministry = ministryById(mid);
+    if (!ministry || (ministry.code && !hasTeam(mid))) { location.replace("#/team-code?team=" + mid); return; }
+    if (mid === "kitchen") { location.replace("#/food-kitchen"); return; }
+    show("ministry");
+    return;
+  }
   if (name === "availability" && !hasTeam("worship")) { location.replace("#/team-code?team=worship"); return; }
   if (name === "give") renderGive();
   if (name === "visit") renderVisit();
-  if (name === "team-code" || name === "ministry" || name === "availability" || name === "food-kitchen" || name === "events" || name === "ministries" || name === "give" || name === "more" || name === "visit" || name === "notifications" || name === "serve") {
+  if (name === "team-code" || name === "availability" || name === "food-kitchen" || name === "events" || name === "ministries" || name === "give" || name === "more" || name === "visit" || name === "notifications") {
     show(name);
     return;
   }
@@ -581,10 +682,13 @@ document.getElementById("view-team").onclick = function () {
   renderAvailability();
 };
 document.getElementById("more-lang").onclick = function () { setLang(appLang() === "ko" ? "en" : "ko"); };
-document.getElementById("notif-toggle").onchange = function (e) {
-  try { localStorage.setItem("bethany-reminders", e.target.checked ? "1" : "0"); } catch (err) {}
+document.getElementById("team-code-eye").onclick = function () {
+  var input = document.getElementById("team-code-input");
+  var show = input.type === "password";
+  input.type = show ? "text" : "password";
+  this.setAttribute("aria-pressed", show ? "true" : "false");
+  this.setAttribute("aria-label", show ? t("hideCode") : t("showCode"));
 };
-try { document.getElementById("notif-toggle").checked = localStorage.getItem("bethany-reminders") === "1"; } catch (e) {}
 function renderGive() {
   document.getElementById("give-link").href = BETHANY.tithelyUrl;
   document.getElementById("venmo-link").href = BETHANY.venmoUrl;
@@ -595,14 +699,18 @@ function renderGive() {
 }
 function renderVisit() {
   document.getElementById("visit-address").textContent = BETHANY.address;
-  document.getElementById("visit-phone").textContent = BETHANY.phone;
+  var phone = document.getElementById("visit-phone");
+  var digits = String(BETHANY.phone || "").replace(/[^\d+]/g, "");
+  if (digits && digits.charAt(0) !== "+") digits = "+1" + digits.replace(/^1/, "");
+  phone.textContent = BETHANY.phone;
+  phone.href = digits ? "tel:" + digits : "";
   var map = document.getElementById("visit-map");
   map.href = BETHANY.mapsUrl;
 }
 document.getElementById("watch-live").onclick = function () { window.open(BETHANY.watchUrl, "_blank", "noopener"); };
 document.getElementById("all-times").onclick = function () { location.hash = "#/events"; };
 document.getElementById("see-events").onclick = function () { location.hash = "#/events"; };
-document.getElementById("home-ministry").onclick = function () { location.hash = "#/ministry"; };
+document.getElementById("home-ministry").onclick = function () { location.hash = ministryHomeHash(); };
 document.getElementById("feedback-link").onclick = function () {
   if (BETHANY.feedbackUrl) window.open(BETHANY.feedbackUrl, "_blank", "noopener");
 };
