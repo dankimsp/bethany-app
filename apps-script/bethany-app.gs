@@ -53,7 +53,7 @@ function handle_(params) {
   var auth = auth_(params.token);
   if (auth) return auth;
   var action = String(params.action || "getSongs");
-  var open = { listSongs: true, getSongs: true, get: true, request: true };
+  var open = { listSongs: true, getSongs: true, get: true, request: true, feedback: true };
   if (!open[action]) {
     var user = requireUser_(params);
     if (!user) return { ok: false, status: 401, error: "auth" };
@@ -63,6 +63,7 @@ function handle_(params) {
   if (action === "publish") return publish_(params.payload || params);
   if (action === "get") return readSet_(params.id);
   if (action === "request") return request_(params);
+  if (action === "feedback") return feedback_(params);
   if (action === "verifyTeamCode") return verifyTeamCode_(params);
   if (action === "getSignups") return getSignups_(params);
   if (action === "addSignup") return addSignup_(params);
@@ -642,6 +643,55 @@ function request_(params) {
   return { ok: true, status: 200, mailed: mailed };
 }
 
+function feedback_(params) {
+  var message = String(params.message == null ? "" : params.message).replace(/\r\n/g, "\n").trim();
+  if (message.length > 2000) return { ok: false, status: 400, error: "long" };
+  if (!message) return { ok: false, status: 400, error: "fields" };
+  var category = String(params.category || "").trim().toLowerCase();
+  if (category !== "idea" && category !== "bug" && category !== "other") category = "other";
+  var name = String(params.name || "").trim().slice(0, 120);
+  var emailIn = String(params.email || "").trim().slice(0, 200);
+  var lang = String(params.lang || "").trim().toLowerCase() === "ko" ? "ko" : "en";
+  var version = String(params.appVersion || "").trim().slice(0, 40);
+  var contact = (params.contactBack === true || params.contactBack === 1 || params.contactBack === "1" || params.contactBack === "true") ? "1" : "0";
+  var user = null;
+  var token = String(params.idToken || "");
+  if (token) {
+    try { user = requireUser_(params); } catch (err) { user = null; }
+  }
+  var verified = !!(user && user.uid);
+  if (!name && verified) name = String(user.name || "").trim().slice(0, 120);
+  var email = verified ? String((user.email || emailIn) || "") : (emailIn ? ("unverified: " + emailIn) : "unverified");
+  var uid = verified ? String(user.uid) : "";
+  var who = (uid || emailIn || "anon").toLowerCase();
+  var cache = CacheService.getScriptCache();
+  var key = "fb_" + hashPass_(who).slice(0, 40);
+  var nowMs = Date.now();
+  var raw = cache.get(key) || "";
+  var bits = raw.split("|");
+  var count = Number(bits[0]) || 0;
+  var until = Number(bits[1]) || 0;
+  if (!until || nowMs > until) {
+    count = 0;
+    until = nowMs + 10 * 60 * 1000;
+  }
+  if (count >= 5) return { ok: false, status: 429, error: "limit" };
+  cache.put(key, (count + 1) + "|" + until, 600);
+  var when = Utilities.formatDate(new Date(), "America/Los_Angeles", "yyyy-MM-dd'T'HH:mm:ssXXX");
+  book_().getSheetByName("Feedback").appendRow([when, category, message, name, email, uid, contact, lang, version]);
+  var mailed = false;
+  try {
+    var to = PropertiesService.getScriptProperties().getProperty("REQUEST_EMAIL") || "danielcyk123@gmail.com";
+    var subjectBit = message.replace(/\s+/g, " ").slice(0, 60);
+    var note = "Category: " + category + "\nFrom: " + name + (email ? " <" + email + ">" : "") + "\nContact back: " + contact + "\nLang: " + lang + "\nApp: " + version + "\n\n" + message;
+    MailApp.sendEmail(to, "[Bethany app feedback] " + category + ": " + subjectBit, note);
+    mailed = true;
+  } catch (err) {
+    mailed = false;
+  }
+  return { ok: true, status: 200, mailed: mailed };
+}
+
 function leaderOk_(passphrase) {
   var expected = PropertiesService.getScriptProperties().getProperty("LEADER_HASH");
   if (!expected) return true;
@@ -663,6 +713,7 @@ function book_() {
   }
   ensureSheet_(ss, "Live Setlists", ["updatedAt", "id", "change", "leaderNote", "songs"]);
   ensureSheet_(ss, "Song Requests", ["time", "title", "artist", "name"]);
+  ensureSheet_(ss, "Feedback", ["time", "category", "message", "name", "email", "uid", "contactBack", "lang", "appVersion"]);
   return ss;
 }
 

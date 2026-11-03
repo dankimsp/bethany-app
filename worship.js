@@ -1101,6 +1101,52 @@ function woToolBtn(label, fn, pressed) {
   b.onclick = fn;
   return b;
 }
+function woPlacePopover(pop, anchor) {
+  var margin = 12;
+  var vw = window.innerWidth;
+  var vh = window.innerHeight;
+  pop.style.position = "fixed";
+  pop.style.right = "auto";
+  pop.style.bottom = "auto";
+  pop.style.maxWidth = (vw - margin * 2) + "px";
+  pop.style.maxHeight = (vh - margin * 2) + "px";
+  pop.style.left = "0px";
+  pop.style.top = "0px";
+  var rect = pop.getBoundingClientRect();
+  var width = Math.min(rect.width, vw - margin * 2);
+  var height = Math.min(rect.height, vh - margin * 2);
+  var box = anchor.getBoundingClientRect();
+  var left = box.right - width;
+  if (left < margin) left = margin;
+  if (left + width > vw - margin) left = Math.max(margin, vw - margin - width);
+  var top = box.bottom + 8;
+  if (top + height > vh - margin) {
+    var above = box.top - 8 - height;
+    top = above >= margin ? above : Math.max(margin, vh - margin - height);
+  }
+  pop.style.left = Math.round(left) + "px";
+  pop.style.top = Math.round(top) + "px";
+}
+function woCloseSongMenu() {
+  document.querySelectorAll(".songmenu").forEach(function (menu) { menu.hidden = true; });
+  document.querySelectorAll(".songmore > button").forEach(function (btn) { btn.setAttribute("aria-expanded", "false"); });
+}
+function woBindMenus() {
+  if (wo.menuBound) return;
+  wo.menuBound = true;
+  document.addEventListener("click", function (e) {
+    if (e.target.closest && (e.target.closest(".songmenu") || e.target.closest(".songmore"))) return;
+    woCloseSongMenu();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") { woCloseSongMenu(); woCloseAddPicker(); }
+  });
+  window.addEventListener("resize", function () {
+    var menu = document.querySelector(".songmenu");
+    var btn = document.querySelector(".songmore > button");
+    if (menu && !menu.hidden && btn) woPlacePopover(menu, btn);
+  });
+}
 function woRenderSong() {
   var s = wo.cur;
   var box = document.getElementById("wo-song");
@@ -1148,12 +1194,14 @@ function woRenderSong() {
   var menu = document.createElement("div");
   menu.className = "songmenu";
   menu.hidden = true;
+  menu.setAttribute("role", "menu");
   function menuItem(label, fn) {
     var b = document.createElement("button");
     b.type = "button";
     b.className = "songmenu-item";
+    b.setAttribute("role", "menuitem");
     b.textContent = label;
-    b.onclick = function () { menu.hidden = true; more.setAttribute("aria-expanded", "false"); fn(); };
+    b.onclick = function () { woCloseSongMenu(); fn(); };
     menu.appendChild(b);
   }
   menuItem("Reset", bumped(function () { wo.semi = 0; wo.flats = false; }));
@@ -1170,9 +1218,14 @@ function woRenderSong() {
   menuItem("Add to setlist", function () { woShowAddPicker(s.id); });
   more.onclick = function (e) {
     e.stopPropagation();
-    menu.hidden = !menu.hidden;
-    more.setAttribute("aria-expanded", menu.hidden ? "false" : "true");
+    var open = menu.hidden;
+    woCloseSongMenu();
+    if (!open) return;
+    menu.hidden = false;
+    more.setAttribute("aria-expanded", "true");
+    woPlacePopover(menu, more);
   };
+  woBindMenus();
   wrap.appendChild(more);
   wrap.appendChild(menu);
   tools.appendChild(step);
@@ -2145,6 +2198,7 @@ function woApplyRoute() {
   else woShow("lib");
 }
 function worshipRoute() { woApplyRoute(); }
+woBindMenus();
 document.getElementById("wo-q").addEventListener("input", woRenderLib);
 document.getElementById("wo-date").addEventListener("change", woDateChanged);
 document.getElementById("wo-title").addEventListener("input", woTitleChanged);
