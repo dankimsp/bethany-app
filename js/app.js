@@ -623,6 +623,7 @@ function addSignup(kind, iso) {
   msg.hidden = false;
   msg.textContent = t("saving");
   api({ action: "addSignup", kind: kind, sunday: iso, name: name, deviceId: deviceId(), uid: currentUid() }).then(function (res) {
+    if (res && res.error === "roster") { location.replace(hasTeam("nursery") ? "#/ministry/nursery" : "#/team-code?team=nursery"); return; }
     if (soonError(res)) { msg.textContent = t("soon"); return; }
     if (res && res.error === "taken") { msg.textContent = t("taken"); loadSignups(kind); return; }
     msg.hidden = true;
@@ -877,12 +878,29 @@ function pushProfile(patch) {
     if (res && res.profile) saveProfileLocal(res.profile);
   }).catch(function () {});
 }
+function sendToNurseryCode() {
+  var list = teams().filter(function (id) { return id !== "nursery"; });
+  try { localStorage.setItem(TEAMS_KEY, JSON.stringify(list)); } catch (e) {}
+  var p = loadProfile();
+  if (p) {
+    p.teams = (Array.isArray(p.teams) ? p.teams : list).filter(function (id) { return id !== "nursery"; });
+    try { localStorage.setItem(PROFILE_KEY, JSON.stringify(p)); } catch (e) {}
+  }
+  var hash = location.hash || "";
+  if (hash.indexOf("team-code") >= 0) return;
+  if (hash.indexOf("nursery") >= 0) location.replace("#/team-code?team=nursery");
+  else if (window.paintHomeServingCard) window.paintHomeServingCard();
+  if (hash.indexOf("more") >= 0) renderAccount();
+}
 function pullProfile() {
+  var hadNursery = hasTeam("nursery");
   api({ action: "getProfile" }).then(function (res) {
-    if (res && res.profile && res.profile.uid) {
-      saveProfileLocal(res.profile);
-      if ((location.hash || "").indexOf("more") >= 0) renderAccount();
-    }
+    if (!(res && res.profile && res.profile.uid)) return;
+    saveProfileLocal(res.profile);
+    var serverHas = Array.isArray(res.profile.teams) && res.profile.teams.indexOf("nursery") >= 0;
+    if ((location.hash || "").indexOf("more") >= 0) renderAccount();
+    if (hadNursery && !serverHas) sendToNurseryCode();
+    else if ((location.hash || "").indexOf("home") >= 0 && window.paintHomeServingCard) window.paintHomeServingCard();
   }).catch(function () {});
 }
 function eventIdFromHash() {
@@ -1123,7 +1141,7 @@ function renderVisit() {
 document.getElementById("watch-live").onclick = function () { window.open(BETHANY.watchUrl, "_blank", "noopener"); };
 document.getElementById("all-times").onclick = function () { location.hash = "#/events"; };
 document.getElementById("see-events").onclick = function () { location.hash = "#/events"; };
-var APP_VERSION = (window.BETHANY && BETHANY.version) || "v32";
+var APP_VERSION = (window.BETHANY && BETHANY.version) || "v33";
 var fbCat = "idea";
 var fbGen = 0;
 function feedbackWho() {

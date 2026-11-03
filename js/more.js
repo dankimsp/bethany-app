@@ -148,6 +148,7 @@ function loadRoster() {
   if (!navigator.onLine) { rosterState.offline = true; return Promise.resolve(rosterState.roster); }
   rosterState.offline = false;
   return api({ action: "getNurseryRoster", weeks: 8 }).then(function (res) {
+    if (res && res.ok === false && res.error === "team") { sendToNurseryCode(); return null; }
     if (!res || res.ok === false) { rosterState.error = !rosterState.roster; return rosterState.roster; }
     writeRosterCache(res.roster || []);
     return rosterState.roster;
@@ -379,6 +380,7 @@ function confirmPick() {
   var btn = document.getElementById("pick-go");
   btn.disabled = true;
   api({ action: "addNurseryDates", sundays: dates }).then(function (res) {
+    if (res && res.ok === false && res.error === "team") { sendToNurseryCode(); return; }
     if (!res || res.ok === false) { document.getElementById("pick-err").hidden = false; document.getElementById("pick-err").textContent = t("updateError"); btn.disabled = false; return; }
     writeRosterCache(res.roster || []);
     var failed = res.failed || [];
@@ -435,6 +437,7 @@ function confirmCancel() {
     });
   });
   api({ action: "cancelNurseryDate", sunday: iso }).then(function (res) {
+    if (res && res.ok === false && res.error === "team") { sendToNurseryCode(); return; }
     if (!res || res.ok === false) throw new Error("fail");
     if (res.roster) writeRosterCache(res.roster);
     paintNurseryRoster();
