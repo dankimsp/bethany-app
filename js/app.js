@@ -40,13 +40,7 @@ function rememberTeam(id) {
 }
 window.bethanyAllowWorship = function () { return hasTeam("worship"); };
 function displayName() {
-  try {
-    var custom = localStorage.getItem(NAME_KEY);
-    if (custom) return custom;
-    var member = JSON.parse(localStorage.getItem("bethany-demo-member") || "null");
-    if (member && member.name) return member.name;
-  } catch (e) {}
-  return "";
+  try { return localStorage.getItem("bethany-signup-name") || ""; } catch (e) { return ""; }
 }
 function laParts() {
   var p = {};
@@ -66,6 +60,7 @@ function nextService() {
   var now = n.dow * 1440 + n.h * 60 + n.mi;
   var best = null;
   BETHANY_WEEKLY.forEach(function (s) {
+    if (!s.worship) return;
     var tmin = s.day * 1440 + s.h * 60 + s.m;
     var diff = (tmin - now + 10080) % 10080;
     if (diff === 0) diff = 10080;
@@ -133,11 +128,12 @@ function renderHome() {
   var hour = laParts().h;
   var part = hour < 12 ? "morning" : hour < 17 ? "afternoon" : "evening";
   var hello = document.getElementById("greet");
-  if (appLang() === "ko") hello.innerHTML = t("afternoon") + (name ? ", <em>" + escapeHtml(name) + "</em>님" : "");
-  else hello.innerHTML = "Good " + t(part) + (name ? ", <em>" + escapeHtml(name) + "</em>" : "");
+  var helloWord = appLang() === "ko" ? t(part) : ("Good " + t(part));
+  hello.innerHTML = helloWord + (name ? ", <em>" + escapeHtml(name) + "</em>" + (appLang() === "ko" ? "님" : "") : "");
   document.getElementById("hero-name").textContent = appLang() === "ko" ? s.ko : s.name;
   document.getElementById("hero-when").textContent = nx.date.toLocaleDateString(appLang() === "ko" ? "ko-KR" : "en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
   document.getElementById("hero-time").textContent = fmtTime(s.h, s.m);
+  document.getElementById("watch-live").hidden = !s.live;
   var up = document.getElementById("home-events");
   up.replaceChildren();
   var head = document.createElement("div");
@@ -241,6 +237,28 @@ function renderMinistry() {
 }
 function renderKitchen() {
   document.getElementById("kitchen-blurb").textContent = appLang() === "ko" ? ministryById("kitchen").koBlurb : ministryById("kitchen").blurb;
+  paintKitchenCard("km-food", "km-hint");
+  paintKitchenCard("snack", "snack-hint");
+}
+function paintKitchenCard(kind, hintId) {
+  var hint = document.getElementById(hintId);
+  if (!hint) return;
+  hint.hidden = true;
+  api({ action: "getSignups", kind: kind }).then(function (res) {
+    if (soonError(res) || !res) return;
+    var rows = res.signups || [];
+    var days = upcomingSundays(6);
+    if (kind === "snack") {
+      var taken = days.filter(function (iso) { return rows.some(function (row) { return row.sunday === iso; }); }).length;
+      hint.hidden = false;
+      hint.textContent = taken + " " + t("takenOf");
+    } else {
+      var first = days[0];
+      var n = rows.filter(function (row) { return row.sunday === first; }).length;
+      hint.hidden = false;
+      hint.textContent = n + " " + t("signedThis");
+    }
+  }).catch(function () {});
 }
 function joinTeam(ev) {
   if (ev) ev.preventDefault();
@@ -267,16 +285,16 @@ function teamFromHash() {
 }
 
 var signupCache = {};
+var signupPick = "";
 function loadSignups(kind) {
-  var box = document.getElementById("signup-list");
   var msg = document.getElementById("signup-msg");
-  box.replaceChildren();
+  paintSignups(kind, signupCache[kind] || []);
   api({ action: "getSignups", kind: kind }).then(function (res) {
-    if (soonError(res)) { msg.hidden = false; msg.textContent = t("soon"); signupCache[kind] = []; paintSignups(kind, []); return; }
+    if (soonError(res)) { msg.hidden = false; msg.textContent = t("soon"); signupCache[kind] = signupCache[kind] || []; return; }
     msg.hidden = true;
     signupCache[kind] = (res && res.signups) || [];
     paintSignups(kind, signupCache[kind]);
-  }).catch(function () { msg.hidden = false; msg.textContent = t("soon"); paintSignups(kind, []); });
+  }).catch(function () { msg.hidden = false; msg.textContent = t("soon"); });
 }
 function paintSignups(kind, rows) {
   var box = document.getElementById("signup-list");
@@ -298,15 +316,13 @@ function paintSignups(kind, rows) {
     var taken = exclusive && people.length && !mineRow;
     var btn = document.createElement("button");
     btn.type = "button";
-    btn.className = "lr signup-day" + (taken ? " locked" : "");
+    btn.className = "lr signup-day" + (taken ? " locked" : "") + (signupPick === iso ? " on" : "");
     btn.disabled = !!taken;
     var meta = prettySunday(iso);
-    var sub = t("open");
-    if (mineRow) sub = t("yours");
-    else if (kind === "km-food" && people.length) sub = people.map(function (p) { return p.name; }).join(", ");
-    else if (taken) sub = t("taken") + " · " + people[0].name;
-    btn.innerHTML = '<span class="day">' + meta.mon + '</span><div class="grow"><div class="tt">' + meta.label + '</div><div class="ts">' + escapeHtml(sub) + "</div></div>";
-    if (!taken) btn.onclick = function () { addSignup(kind, iso); };
+    var names = people.map(function (p) { return p.deviceId === dev ? t("you") : p.name; }).join(", ");
+    var sub = names ? (taken ? t("taken") + " · " + names : names) : (taken ? t("taken") : t("open"));
+    btn.innerHTML = '<span class="day">' + meta.mon + '</span><div class="grow"><div class="tt">' + meta.label + '</div><div class="ts">' + escapeHtml(sub) + '</div></div>' + (taken ? "" : '<span class="radio' + (signupPick === iso ? " on" : "") + '"></span>');
+    if (!taken) btn.onclick = function () { signupPick = iso; paintSignups(kind, rows); };
     box.appendChild(btn);
   });
   mine.hidden = !own;
@@ -316,7 +332,10 @@ function paintSignups(kind, rows) {
 function addSignup(kind, iso) {
   var name = document.getElementById("signup-name").value.trim();
   var msg = document.getElementById("signup-msg");
+  if (!iso) iso = signupPick;
   if (!name) { msg.hidden = false; msg.textContent = t("name"); return; }
+  if (!iso) { msg.hidden = false; msg.textContent = t("which"); return; }
+  try { localStorage.setItem("bethany-signup-name", name); } catch (e) {}
   msg.hidden = false;
   msg.textContent = t("saving");
   api({ action: "addSignup", kind: kind, sunday: iso, name: name, deviceId: deviceId() }).then(function (res) {
@@ -406,7 +425,7 @@ function setAvail(person, iso, status, note) {
 function renderTeamGrid(days, map) {
   var g = document.getElementById("avail-grid");
   if (!g) return;
-  var html = "<tr><th></th>" + days.map(function (iso) { var p = prettySunday(iso); return "<th>" + p.mon + "<b>" + p.day + "</b></th>"; }).join("") + "</tr>";
+  var html = '<colgroup><col class="who"><col span="' + days.length + '"></colgroup><tr><th></th>' + days.map(function (iso) { var p = prettySunday(iso); return "<th>" + p.mon + "<b>" + p.day + "</b></th>"; }).join("") + "</tr>";
   BETHANY_ROSTER.forEach(function (person) {
     html += '<tr><td class="nm">' + escapeHtml(person.name) + (person.role ? "<small>" + escapeHtml(person.role) + "</small>" : "") + "</td>";
     days.forEach(function (iso) {
@@ -420,18 +439,40 @@ function renderTeamGrid(days, map) {
   html += '<tr><td class="nm">' + t("available") + "</td>";
   days.forEach(function (iso) {
     var n = BETHANY_ROSTER.filter(function (p) { return (map[p.id + "|" + iso] || {}).status === "available"; }).length;
-    html += '<td><div class="cnt">' + n + "<small>" + t("of") + " " + BETHANY_ROSTER.length + "</small></div></td>";
+    html += '<td><div class="cnt">' + n + "\u00a0" + t("of") + "\u00a0" + BETHANY_ROSTER.length + "</div></td>";
   });
   html += "</tr>";
   g.innerHTML = html;
   var warn = document.getElementById("avail-warn");
-  var last = days[days.length - 1];
-  var answered = BETHANY_ROSTER.filter(function (p) { return (map[p.id + "|" + last] || {}).status; }).length;
-  var available = BETHANY_ROSTER.filter(function (p) { return (map[p.id + "|" + last] || {}).status === "available"; }).length;
-  if (available < 3) {
+  var empty = document.getElementById("avail-empty");
+  var anyAnswer = false;
+  days.forEach(function (iso) {
+    BETHANY_ROSTER.forEach(function (p) { if ((map[p.id + "|" + iso] || {}).status) anyAnswer = true; });
+  });
+  if (empty) {
+    empty.hidden = anyAnswer;
+    empty.textContent = t("emptyAvail");
+  }
+  var warnDay = null;
+  if (anyAnswer) {
+    days.forEach(function (iso) {
+      if (warnDay) return;
+      var answered = BETHANY_ROSTER.filter(function (p) { return (map[p.id + "|" + iso] || {}).status; }).length;
+      var available = BETHANY_ROSTER.filter(function (p) { return (map[p.id + "|" + iso] || {}).status === "available"; }).length;
+      var soon = daysUntil(iso) <= 7;
+      if (available < 3 && (answered > 0 || soon)) warnDay = { iso: iso, available: available, missing: BETHANY_ROSTER.length - answered };
+    });
+  }
+  if (warnDay) {
     warn.hidden = false;
-    warn.textContent = prettySunday(last).label + " " + t("short") + ": " + available + " " + t("available").toLowerCase() + ", " + (BETHANY_ROSTER.length - answered) + " " + t("havent") + ".";
+    warn.textContent = prettySunday(warnDay.iso).label + " " + t("short") + ": " + warnDay.available + " " + t("available").toLowerCase() + ", " + warnDay.missing + " " + t("havent") + ".";
   } else warn.hidden = true;
+}
+function daysUntil(iso) {
+  var n = laParts();
+  var today = Date.UTC(n.y, n.mo - 1, n.d);
+  var p = iso.split("-");
+  return Math.round((Date.UTC(+p[0], +p[1] - 1, +p[2]) - today) / 86400000);
 }
 function pullAvailability() {
   api({ action: "getAvailability", team: "worship" }).then(function (res) {
@@ -505,7 +546,10 @@ function prepareSignup() {
   document.getElementById("signup-title").textContent = kind === "km-food" ? t("km") : kind === "nursery" ? (appLang() === "ko" ? "유아부 신청" : "Nursery sign-up") : t("snack");
   document.getElementById("signup-sub").textContent = kind === "km-food" ? t("kmBody") : kind === "snack" ? t("snackBody") : t("several");
   document.getElementById("signup-multi").hidden = kind !== "km-food";
-  document.getElementById("signup-donation").hidden = kind === "nursery";
+  document.getElementById("signup-donation").hidden = kind !== "snack";
+  signupPick = "";
+  var savedName = displayName();
+  if (savedName && !document.getElementById("signup-name").value) document.getElementById("signup-name").value = savedName;
   document.getElementById("signup-cancel").onclick = function () { cancelSignup(kind); };
 }
 function escapeHtml(s) { return String(s || "").replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
@@ -521,6 +565,7 @@ function renderAll() {
 document.getElementById("lang-en").onclick = function () { setLang("en"); };
 document.getElementById("lang-ko").onclick = function () { setLang("ko"); };
 document.getElementById("team-form").onsubmit = joinTeam;
+document.getElementById("signup-go").onclick = function () { addSignup(signupKind()); };
 document.getElementById("avail-change").onclick = function () { try { localStorage.removeItem(PERSON_KEY); } catch (e) {} renderAvailability(); };
 document.getElementById("view-answers").onclick = function () {
   document.getElementById("avail-member-pane").hidden = false;

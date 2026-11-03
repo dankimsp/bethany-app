@@ -19,11 +19,11 @@ var BETHANY = {
 };
 
 var BETHANY_WEEKLY = [
-  { day: 0, name: "English (EM) Service", ko: "영어 예배 (EM)", h: 10, m: 0, live: true },
-  { day: 0, name: "Korean Service", ko: "한국어 예배", h: 11, m: 30, live: true },
+  { day: 0, name: "English (EM) Service", ko: "영어 예배 (EM)", h: 10, m: 0, live: true, worship: true },
+  { day: 0, name: "Korean Service", ko: "한국어 예배", h: 11, m: 30, live: true, worship: true },
   { day: 0, name: "Youth Bible Study", ko: "청소년 성경공부", h: 11, m: 40, live: false },
   { day: 2, name: "Women's Bible Study", ko: "여성 성경공부", h: 18, m: 30, live: false },
-  { day: 3, name: "Korean Service", ko: "수요 한국어 예배", h: 19, m: 0, live: true },
+  { day: 3, name: "Korean Service", ko: "수요 한국어 예배", h: 19, m: 0, live: true, worship: true },
   { day: 3, name: "Men's Bible Study", ko: "남성 성경공부", h: 19, m: 15, live: false },
   { day: 6, name: "Morning Prayer (Korean)", ko: "새벽 기도 (한국어)", h: 7, m: 0, live: false },
   { day: 6, name: "Young Adult Men's Bible Study", ko: "청년 남성 성경공부", h: 19, m: 0, live: false }
@@ -66,8 +66,8 @@ var BETHANY_MINISTRIES = [
     id: "kitchen",
     name: "Food Kitchen",
     ko: "음식 사역",
-    blurb: "A short description goes here.",
-    koBlurb: "소개 글이 여기에 들어갑니다.",
+    blurb: "Sign up to help with food on Sundays.",
+    koBlurb: "주일 음식을 돕기 위해 신청하세요.",
     code: false,
     icon: "bowl",
     tools: [
@@ -124,11 +124,14 @@ var BETHANY_I18N = {
     wrong: "That password isn't right. Try again.", wrongCode: "That code isn't right.",
     notifOn: "Reminders on this phone", notifBody: "A simple reminder switch for this device. It does not text or email anyone.",
     back: "Back", sample: "Sample", yourSignup: "Your sign-up", bringing: "signed up",
-    noMinistry: "No team tools on this phone yet."
+    noMinistry: "No team tools on this phone yet.",
+    takenOf: "of 6 Sundays taken",
+    signedThis: "signed up this Sunday",
+    emptyAvail: "No answers yet. Ask the team to mark their Sundays."
   },
   ko: {
     home: "홈", events: "행사", ministries: "사역", give: "헌금", more: "더보기",
-    good: "", morning: "좋은 아침", afternoon: "안녕하세요", evening: "좋은 저녁",
+    good: "", morning: "좋은 아침이에요", afternoon: "좋은 오후예요", evening: "좋은 저녁이에요",
     next: "다음 예배", livePill: "현장 예배 · 생중계", watch: "생중계 보기", allTimes: "전체 예배 시간",
     upcoming: "다가오는 행사", seeAll: "전체 보기", special: "특별 행사", addCal: "캘린더에 추가",
     thisWeek: "이번 주 · 정기 모임", sermon: "설교 노트", sermonBody: "지난 설교 요약 읽기", sermonOpen: "bethanychurchwa.org에서 열기",
@@ -166,6 +169,9 @@ var BETHANY_I18N = {
     wrong: "비밀번호가 맞지 않습니다.", wrongCode: "코드가 맞지 않습니다.",
     notifOn: "이 기기의 알림", notifBody: "이 기기의 스위치입니다. 문자나 이메일을 보내지 않습니다.",
     back: "뒤로", sample: "예시", yourSignup: "내 신청", bringing: "신청",
-    noMinistry: "이 기기에는 아직 팀 도구가 없습니다."
+    noMinistry: "이 기기에는 아직 팀 도구가 없습니다.",
+    takenOf: "6주일 중 신청됨",
+    signedThis: "이번 주일 신청",
+    emptyAvail: "아직 답이 없습니다. 팀에게 주일을 표시해 달라고 하세요."
   }
 };

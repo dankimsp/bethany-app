@@ -21,7 +21,7 @@ if ("serviceWorker" in navigator) {
     woRefreshing = true;
     location.reload();
   });
-  navigator.serviceWorker.register("sw.js?v=19").catch(function () {});
+  navigator.serviceWorker.register("sw.js?v=20").catch(function () {});
 }
 </script>
 <style>
@@ -41,9 +41,9 @@ if ("serviceWorker" in navigator) {
 html[lang="ko"]{word-break:keep-all}
 [hidden]{display:none !important}
 button,input,select,textarea{font:inherit;color:inherit}
-a{color:inherit}
-.app{max-width:480px;margin:0 auto;min-height:100vh;min-height:100dvh;position:relative;padding-bottom:128px}
-.screen{padding:12px 20px 24px}
+a{color:inherit;text-decoration:none}
+.app{max-width:480px;margin:0 auto;min-height:100vh;min-height:100dvh;position:relative}
+.screen{padding:12px 20px calc(168px + env(safe-area-inset-bottom))}
 .hdr{display:flex;align-items:center;justify-content:space-between;min-height:50px;gap:8px}
 .logo{height:36px}
 .ptitle{font-family:var(--serif);font-size:30px;font-weight:700;letter-spacing:-.02em;line-height:1.15;margin:0}
@@ -64,7 +64,7 @@ a{color:inherit}
 .lang{display:flex;height:34px;padding:3px;border-radius:999px;background:#fff;border:1px solid var(--stroke)}
 .lang button{border:0;background:transparent;border-radius:999px;font-weight:700;min-width:32px;cursor:pointer}
 .lang button.on{background:var(--brand);color:#fff}
-.nav{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);width:min(440px,calc(100% - 28px));height:64px;border-radius:999px;background:rgba(255,255,255,.94);border:1px solid rgba(0,48,63,.07);box-shadow:0 12px 32px rgba(0,40,50,.16);display:flex;padding:0 6px;z-index:30}
+.nav{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom));transform:translateX(-50%);width:min(440px,calc(100% - 28px));height:64px;border-radius:999px;background:rgba(255,255,255,.94);border:1px solid rgba(0,48,63,.07);box-shadow:0 12px 32px rgba(0,40,50,.16);display:flex;padding:0 6px;z-index:30}
 .nav a{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-decoration:none;color:var(--text-3);font-size:10.5px;font-weight:600;border-radius:999px}
 .nav a.on{background:var(--brand);color:#fff;flex:1.15}
 .nav a svg{width:21px;height:21px}
@@ -97,9 +97,12 @@ svg.i{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.9;stro
 .av3 button.unavailable{background:var(--no);color:#fff}
 .sun.needs{outline:2px solid var(--gold)}
 .note{width:100%;margin-top:8px}
-.grid{width:100%;border-collapse:separate;border-spacing:0 6px}
-.grid th{font-size:10px;color:var(--text-2)} .grid th b{display:block;font-size:15px;color:var(--text)}
-.grid td.nm{text-align:left;font-size:12.5px;font-weight:700} .grid td.nm small{display:block;color:var(--text-3);font-weight:600}
+.grid{width:100%;table-layout:fixed;border-collapse:separate;border-spacing:3px 6px}
+.grid col.who{width:96px}
+.grid th{font-size:10px;color:var(--text-2);text-align:center;font-weight:700} .grid th b{display:block;font-size:14px;color:var(--text)}
+.grid td{text-align:center;vertical-align:middle}
+.grid td.nm{text-align:left;font-size:12px;font-weight:700;line-height:1.2;white-space:normal} .grid td.nm small{display:block;color:var(--text-3);font-weight:600}
+.cnt{font-size:10px;font-weight:800;line-height:1.15;white-space:nowrap;color:var(--text)}
 .cl{height:34px;border-radius:10px;display:grid;place-items:center}
 .cl.a{background:var(--ok-soft);color:var(--ok)} .cl.m{background:var(--maybe-soft);color:var(--maybe)}
 .cl.u{background:var(--no-soft);color:var(--no)} .cl.e{border:1.5px dashed var(--surface-3)}
@@ -108,7 +111,29 @@ svg.i{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.9;stro
 .seg button.on{background:var(--brand);color:#fff}
 .warn{background:var(--no-soft);color:var(--no);border-radius:16px;padding:12px}
 .avt{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent);font-weight:800}
-.ministry-row{width:100%;display:flex;gap:12px;align-items:center;text-align:left;cursor:pointer}
+.ministry-row,.signup-card{width:100%;display:flex;gap:12px;align-items:flex-start;text-align:left;cursor:pointer;color:inherit}
+.signup-card{flex-direction:column;align-items:stretch;cursor:default}
+.signup-card h3{margin:0;font-size:16.5px;font-weight:800;text-decoration:none}
+.signup-head{display:flex;gap:12px;align-items:flex-start}
+.signup-head h3{margin:0 0 2px;font-size:16.5px;font-weight:800;text-decoration:none}
+.signup-card .mut{margin:0}
+.signup-card .hint{font-size:13px;font-weight:700;color:var(--accent);margin:10px 0 0}
+.signup-card .pill{width:100%;margin-top:12px;height:44px}
+.radio{width:22px;height:22px;border-radius:50%;border:2px solid #C9C3B4;flex:none;display:inline-block}
+.radio.on{border:7px solid var(--brand)}
+.signup-day{padding:5px 6px}
+.signup-day.on{background:var(--accent-soft);border-radius:12px}
+.signup-day.locked{opacity:.72}
+.signup-day .tt{font-size:14.5px}
+.signup-day .ts{font-size:12px;color:var(--text-2);font-weight:600;margin-top:1px}
+#signup-go{margin-top:8px}
+#signup-list.card{padding:6px 12px}
+#serve-form label{display:flex;align-items:flex-start;gap:8px;margin:4px 0 12px}
+#serve-form .pill{width:100%}
+#s-more .card{margin:8px 0}
+#s-more h2{margin:8px 0 4px}
+#more-code a,#more-ministry a{color:var(--accent);font-weight:800;text-decoration:none}
+#visit-map{margin-top:8px}
 .gold{color:var(--gold-ink)}
 body.wo-playing .nav{display:none}
 body.wo-playing .app{padding-bottom:0}
@@ -215,8 +240,28 @@ body.wo-playing .app{padding-bottom:0}
 <section class="screen" id="s-food-kitchen" hidden>
   <div class="hdr"><button class="back" type="button" onclick="history.back()"><svg class="i"><use href="#i-back"/></svg></button><h1 class="ptitle" style="font-size:22px" data-i18n="kitchen">Food Kitchen</h1></div>
   <p class="psub" id="kitchen-blurb"></p>
-  <a class="card ministry-row" href="#/signup/km-food"><span class="mic acc"><svg class="i"><use href="#i-bowl"/></svg></span><div class="grow"><b data-i18n="km">KM Food Sign-up</b><div class="mut" data-i18n="kmBody"></div></div></a>
-  <a class="card ministry-row" href="#/signup/snack"><span class="mic gold"><svg class="i"><use href="#i-heart"/></svg></span><div class="grow"><b data-i18n="snack">EM Sunday Snack Sign-up</b><div class="mut" data-i18n="snackBody"></div></div></a>
+  <article class="card signup-card">
+    <div class="signup-head">
+      <span class="mic acc"><svg class="i"><use href="#i-bowl"/></svg></span>
+      <div class="grow">
+        <h3 data-i18n="km">KM Food Sign-up</h3>
+        <p class="mut" data-i18n="kmBody"></p>
+        <p class="hint" id="km-hint" hidden></p>
+      </div>
+    </div>
+    <a class="pill brand" href="#/signup/km-food" data-i18n="signUp">Sign up</a>
+  </article>
+  <article class="card signup-card">
+    <div class="signup-head">
+      <span class="mic gold"><svg class="i"><use href="#i-heart"/></svg></span>
+      <div class="grow">
+        <h3 data-i18n="snack">EM Sunday Snack Sign-up</h3>
+        <p class="mut" data-i18n="snackBody"></p>
+        <p class="hint" id="snack-hint" hidden></p>
+      </div>
+    </div>
+    <a class="pill brand" href="#/signup/snack" data-i18n="signUp">Sign up</a>
+  </article>
   <p class="card mut" data-i18n="donation">Want to make a snack donation instead? Contact Jennifer.</p>
 </section>
 
@@ -229,6 +274,7 @@ body.wo-playing .app{padding-bottom:0}
   <input class="text" id="signup-name" autocomplete="name">
   <div class="eyebrow" data-i18n="which">Which Sunday</div>
   <div class="card" id="signup-list"></div>
+  <button class="pill brand block" id="signup-go" type="button" data-i18n="signUp">Sign up</button>
   <p id="signup-msg" class="mut" hidden></p>
   <div class="card row-between" id="signup-mine" hidden>
     <div><div class="eyebrow" data-i18n="yourSignup">Your sign-up</div><b id="signup-mine-label"></b></div>
@@ -316,6 +362,7 @@ body.wo-playing .app{padding-bottom:0}
     <div id="avail-team-pane" hidden>
       <p class="mut" data-i18n="leaderView"></p>
       <div class="card" style="overflow:auto"><table class="grid" id="avail-grid"></table></div>
+      <p class="mut" id="avail-empty" hidden></p>
       <p class="warn" id="avail-warn" hidden></p>
       <p class="mut">✓ <span data-i18n="available"></span> · ? <span data-i18n="maybe"></span> · ✕ <span data-i18n="unavailable"></span></p>
     </div>
@@ -324,7 +371,7 @@ body.wo-playing .app{padding-bottom:0}
 
 <section class="screen" id="s-visit" hidden>
   <div class="hdr"><button class="back" type="button" onclick="history.back()"><svg class="i"><use href="#i-back"/></svg></button><h1 class="ptitle" style="font-size:26px" data-i18n="visit">Visit & contact</h1></div>
-  <div class="card"><p id="visit-address"></p><p id="visit-phone"></p><a id="visit-map" target="_blank" rel="noopener">Map</a></div>
+  <div class="card"><p id="visit-address"></p><p id="visit-phone"></p><a class="pill brand" id="visit-map" target="_blank" rel="noopener">Map</a></div>
 </section>
 
 <section class="screen" id="s-notifications" hidden>
@@ -480,7 +527,7 @@ const WORSHIP_BACKEND_URL = 'https://script.google.com/macros/s/AKfycbwWtdJUNT8n
 </script>
 <script src="js/config.js"></script>
 <script src="js/app.js"></script>
-<script src="worship.js?v=19"></script>
+<script src="worship.js?v=20"></script>
 <script src="js/serve.js"></script>
 </body>
 </html>
