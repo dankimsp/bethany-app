@@ -48,6 +48,8 @@ test("member phone screens", async ({ page }) => {
   await expect(page.locator("#home-hero")).toBeVisible();
   await expect(page.locator("#home-hero")).not.toContainText("in 2 days");
   await expect(page.locator("#greet")).toContainText("Grace");
+  await expect(page.locator("#home-ministry")).toContainText("Worship Team");
+  await expect(page.locator("#home-ministry")).toHaveCSS("background-image", /worship-stage/);
   await page.screenshot({ path: "/opt/cursor/artifacts/v3/home-phone.png" });
   await page.goto("/#/ministries");
   await expect(page.locator("#ministry-list")).toContainText("Worship");
@@ -70,6 +72,23 @@ test("member phone screens", async ({ page }) => {
   await expect(page.locator("#event-google")).toHaveAttribute("href", /calendar\.google\.com/);
   await expect(page.locator("#event-ics")).toBeVisible();
   await page.screenshot({ path: "/opt/cursor/artifacts/v3/event-detail.png" });
+  await page.evaluate(() => { localStorage.setItem("bethany-teams", JSON.stringify(["worship"])); });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/#/worship/library");
+  await page.locator("#wo-list .wopen").first().click();
+  await page.getByRole("button", { name: /^Play/ }).click();
+  const clipped = await page.evaluate(() => {
+    var bar = document.getElementById("wo-play-bar").getBoundingClientRect();
+    var exit = document.getElementById("wo-play-exit").getBoundingClientRect();
+    var tools = document.getElementById("wo-play-tools").getBoundingClientRect();
+    var exitOk = exit.left >= bar.left - 1 && exit.right <= bar.right + 1 && exit.width > 20;
+    var buttons = [].map.call(document.querySelectorAll("#wo-play-tools .wmini"), function (b) {
+      var r = b.getBoundingClientRect();
+      return { t: b.textContent, w: r.width, cut: r.width > 0 && r.right > tools.right + 2 && r.left < tools.right - 8 };
+    });
+    return { exitOk: exitOk, buttons: buttons };
+  });
+  if (!clipped.exitOk) throw new Error("Exit clipped " + JSON.stringify(clipped));
   await page.goto("/#/more");
   await expect(page.locator("#acct-email")).toHaveText("grace.lee@example.com");
   await expect(page.locator("#pref-news")).toHaveClass(/on/);
@@ -77,7 +96,17 @@ test("member phone screens", async ({ page }) => {
   await expect(page.locator("#pref-remind")).toHaveClass(/on/);
   await expect(page.locator("#acct-teams")).toContainText("Join with a code");
   await expect(page.locator("#s-more")).not.toContainText("Serve links");
+  const langBox = await page.locator("#acct-en").boundingBox();
+  const langLabel = await page.locator("#s-more .lang-row .tt").boundingBox();
+  expect(langBox.y).toBeGreaterThan(langLabel.y + langLabel.height - 4);
   await page.screenshot({ path: "/opt/cursor/artifacts/v3/more-account.png" });
+  await page.locator("#sign-out").scrollIntoViewIfNeeded();
+  const gap = await page.evaluate(() => {
+    var nav = document.querySelector(".nav").getBoundingClientRect();
+    var btn = document.getElementById("sign-out").getBoundingClientRect();
+    return nav.top - btn.bottom;
+  });
+  expect(gap).toBeGreaterThan(8);
 });
 
 test("tablet home, library, and play", async ({ page }) => {
@@ -87,6 +116,9 @@ test("tablet home, library, and play", async ({ page }) => {
   await expect(page.locator(".nav")).toBeVisible();
   const navBox = await page.locator(".nav").boundingBox();
   expect(navBox.height).toBeGreaterThan(navBox.width);
+  const mark = await page.locator(".nav .mark img").boundingBox();
+  expect(mark.width).toBeGreaterThan(36);
+  expect(mark.height).toBeGreaterThan(36);
   await page.screenshot({ path: "/opt/cursor/artifacts/v3/tablet-home-portrait.png" });
   await page.setViewportSize({ width: 1180, height: 820 });
   await page.screenshot({ path: "/opt/cursor/artifacts/v3/tablet-home-landscape.png" });

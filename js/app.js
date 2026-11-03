@@ -286,9 +286,34 @@ function renderHome() {
     row.innerHTML = '<span class="day">' + (appLang() === "ko" ? dayKo(item.day) : dayName(item.day)) + '</span><div class="tt">' + escapeHtml(appLang() === "ko" ? item.ko : item.name) + '</div><span class="tm">' + fmtTime(item.h, item.m) + "</span>";
     up.appendChild(row);
   });
+  paintHomeMinistry();
+}
+function joinedMinistries() {
+  return teams().map(ministryById).filter(Boolean);
+}
+function paintHomeMinistry() {
   var tile = document.getElementById("home-ministry");
-  tile.hidden = !teams().length;
-  document.getElementById("sermon-tile").classList.toggle("wide", !teams().length);
+  var sermon = document.getElementById("sermon-tile");
+  var list = joinedMinistries();
+  tile.hidden = !list.length;
+  sermon.classList.toggle("wide", list.length === 0);
+  tile.className = "tile";
+  tile.style.backgroundImage = "";
+  if (!list.length) return;
+  if (list.length === 1) {
+    var m = list[0];
+    var title = appLang() === "ko" ? m.ko : m.name;
+    var info = appLang() === "ko" ? (m.koBlurb || m.blurb) : m.blurb;
+    tile.classList.add("cover");
+    if (m.illus) tile.classList.add("illus");
+    var overlay = m.illus ? "" : "linear-gradient(180deg,rgba(0,32,42,.05),rgba(0,32,42,.78)),";
+    tile.style.backgroundImage = overlay + "url(" + (m.cover || "") + ")";
+    tile.innerHTML = '<div class="eyebrow"' + (m.illus ? "" : ' style="color:#F0D57A"') + ">" + t("myMin") + "</div><div><b>" + escapeHtml(title) + '</b><div class="mut"' + (m.illus ? "" : ' style="color:rgba(255,255,255,.88)"') + ">" + escapeHtml(info) + "</div></div>";
+    return;
+  }
+  tile.innerHTML = '<div class="eyebrow">' + t("myTeams") + '</div><div class="home-chips">' + list.map(function (m) {
+    return "<span>" + escapeHtml(appLang() === "ko" ? m.ko : m.name) + "</span>";
+  }).join("") + "</div>";
 }
 function homeSpecial(ev) {
   var p = ev.date.split("-");
@@ -730,6 +755,7 @@ function pullAvailability() {
 }
 
 function show(name) {
+  if (name !== "worship" && document.body.classList.contains("wo-playing") && typeof woExitPlay === "function") woExitPlay();
   document.querySelectorAll(".screen").forEach(function (el) { el.hidden = el.id !== "s-" + name; });
   document.body.classList.toggle("in-worship", name === "worship");
   document.querySelectorAll(".nav a").forEach(function (a) { a.classList.toggle("on", a.getAttribute("data-nav") === navFor(name)); });

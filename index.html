@@ -65,8 +65,11 @@ a{color:inherit;text-decoration:none}
 .chip{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:999px;font-size:11px;font-weight:700}
 .chip.acc{background:var(--accent-soft);color:var(--accent)} .chip.gold{background:var(--gold-soft);color:var(--gold-ink)}
 .lang{display:flex;height:34px;padding:3px;border-radius:999px;background:#fff;border:1px solid var(--stroke)}
-.lang button{border:0;background:transparent;border-radius:999px;font-weight:700;min-width:32px;cursor:pointer}
+.lang button{border:0;background:transparent;border-radius:999px;font-weight:700;min-width:32px;cursor:pointer;color:var(--text)}
 .lang button.on{background:var(--brand);color:#fff}
+.lang.glass{background:rgba(0,32,42,.72);border-color:rgba(255,255,255,.45);color:#fff}
+.lang.glass button{color:#fff}
+.lang.glass button.on{background:#fff;color:var(--brand)}
 .nav{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom));transform:translateX(-50%);width:min(440px,calc(100% - 28px));height:64px;border-radius:999px;background:rgba(255,255,255,.94);border:1px solid rgba(0,48,63,.07);box-shadow:0 12px 32px rgba(0,40,50,.16);display:flex;padding:0 6px;z-index:30}
 .nav a{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-decoration:none;color:var(--text-3);font-size:10.5px;font-weight:600;border-radius:999px}
 .nav a.on{background:var(--brand);color:#fff;flex:1.15}
@@ -82,6 +85,10 @@ svg.i{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.9;stro
 .bento{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .tile{background:#fff;border:1px solid var(--stroke);border-radius:24px;box-shadow:var(--shadow);padding:14px;text-decoration:none;color:inherit;display:flex;flex-direction:column;justify-content:space-between;min-height:104px}
 .tile.wide{grid-column:span 2}
+.tile.cover{color:#fff;background-size:cover;background-position:center;border:0;min-height:124px;text-align:left;cursor:pointer}
+.tile.cover.illus{color:var(--text);background-color:#fff}
+.home-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.home-chips span{background:var(--accent-soft);color:var(--accent);border-radius:999px;padding:4px 8px;font-size:12px;font-weight:700}
 .lr{display:flex;align-items:center;gap:12px;padding:11px 0;border-top:1px solid var(--stroke);width:100%;background:none;border-left:0;border-right:0;border-bottom:0;text-align:left;cursor:pointer}
 .lr:first-child{border-top:0}
 .grow{flex:1;min-width:0}
@@ -211,7 +218,16 @@ body.wo-playing .app{padding-bottom:0}
 .auth-msg{color:var(--no);font-weight:700;font-size:13.5px;min-height:1.2em}
 .profile{display:flex;gap:14px;align-items:center;background:var(--hero);color:#fff;border-radius:26px;padding:16px;position:relative;overflow:hidden;margin:8px 0}
 .profile .em{color:rgba(255,255,255,.82);font-size:13px}
+.profile #acct-name{display:block}
+.profile #acct-edit{display:block;width:fit-content;margin:4px 0 0;padding:0;background:none;color:#F0D57A;font-size:13px;font-weight:700}
+#s-more .grp{margin:12px 4px 4px}
+#s-more .card{margin:8px 0;padding:8px 16px}
+#s-more .profile{padding:14px}
+#s-more .lr{padding:8px 0}
 .profile .meth{display:inline-flex;align-items:center;gap:6px;margin-top:8px;height:26px;padding:0 10px;border-radius:999px;background:#fff;color:var(--text);font-size:11.5px;font-weight:700}
+#s-more .lang-row{align-items:flex-start}
+#s-more .lang-row .seg2{margin-top:8px;width:max-content;max-width:100%}
+#s-more{padding-bottom:calc(200px + env(safe-area-inset-bottom))}
 .grp{font-size:11.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--text-2);margin:18px 4px 6px}
 .sw{width:46px;height:28px;border-radius:999px;background:#D7D2C5;position:relative;border:0;flex:none;cursor:pointer}
 .sw::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff}
@@ -241,14 +257,14 @@ body.wo-playing .app{padding-bottom:0}
   .phone-only{display:none !important}
   .nav{left:14px;top:14px;bottom:14px;transform:none;width:76px;height:auto;flex-direction:column;justify-content:flex-start;gap:4px;padding:12px 8px;border-radius:30px}
   .nav .mark{display:grid;place-items:center;height:52px;margin-bottom:8px}
-  .nav .mark img{width:40px;height:40px}
+  .nav .mark img{width:40px;height:40px;object-fit:cover;object-position:left center;border-radius:50%}
   .nav a{flex:none;height:62px;margin:0;border-radius:18px;font-size:11px}
   .nav a.on{flex:none}
   .nav .navav{margin-top:auto;display:grid;place-items:center}
   .screen{max-width:1080px;margin:0 auto;padding:26px 36px 48px}
-  .home-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:20px;align-items:start}
-  .home-grid .hero.photo{grid-column:1 / -1;min-height:300px}
-  .bento{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+  .home-grid{display:grid;grid-template-columns:1fr;gap:20px;align-items:start}
+  .home-grid .hero.photo{min-height:280px}
+  .home-grid .bento{grid-template-columns:1fr 1fr}
   #ministry-list{display:grid;grid-template-columns:1fr 1fr;gap:16px}
   #ministry-list .mcard{margin:0}
   #ministry-list .mcard.span2{grid-column:span 2}
@@ -262,10 +278,11 @@ body.wo-playing .app{padding-bottom:0}
 }
 @media (min-width:1100px){
   .home-grid{grid-template-columns:1.55fr 1fr}
-  .home-grid .hero.photo{grid-column:auto;min-height:100%}
+  .home-grid .hero.photo{grid-column:1;grid-row:1;min-height:320px}
+  .home-grid #home-events{grid-column:2;grid-row:1}
+  .home-grid .bento{grid-column:1 / -1;grid-row:2;grid-template-columns:1fr 1fr}
   #ministry-list{grid-template-columns:1.4fr 1fr 1fr}
   #ministry-list .mcard.span2{grid-column:auto}
-  .bento{grid-template-columns:repeat(3,1fr)}
   #wo-play-body.wo-cols .wo-chart{column-count:var(--wo-cols,3)}
 }
 body.signed-out .nav{display:none}
@@ -411,10 +428,7 @@ body.signed-out .screen{padding-bottom:28px}
       <div class="eyebrow" data-i18n="sermon">Sermon notes</div>
       <div><b data-i18n="sermonBody">Read write-ups of past sermons</b><div class="mut" data-i18n="sermonOpen">Opens bethanychurchwa.org</div></div>
     </a>
-    <button class="tile" id="home-ministry" type="button" hidden>
-      <div class="eyebrow" data-i18n="myMin">My Ministry</div>
-      <div><b data-i18n="myMin">My Ministry</b><div class="mut" id="home-answer"></div></div>
-    </button>
+    <button class="tile" id="home-ministry" type="button" hidden></button>
   </div>
   </div>
   <button id="see-events" type="button" hidden>See all</button>
@@ -516,13 +530,13 @@ body.signed-out .screen{padding-bottom:28px}
     <span class="av lg" id="acct-initial"></span>
     <div class="grow">
       <b id="acct-name" style="font-family:var(--serif);font-size:18px"></b>
+      <div class="em" id="acct-email"></div>
+      <button class="lnkbtn" id="acct-edit" type="button" data-i18n="editName">Edit name</button>
       <div class="name-edit" id="name-edit" hidden>
         <input id="acct-first" autocomplete="given-name">
         <input id="acct-last" autocomplete="family-name">
         <button class="pill sm brand" id="acct-save-name" type="button" data-i18n="saveName">Save</button>
       </div>
-      <button class="lnkbtn" id="acct-edit" type="button" style="color:#fff" data-i18n="editName">Edit name</button>
-      <div class="em" id="acct-email"></div>
       <span class="meth" id="acct-provider"></span>
     </div>
   </div>
@@ -542,7 +556,7 @@ body.signed-out .screen{padding-bottom:28px}
   </div>
   <div class="grp" data-i18n="appSec">App</div>
   <div class="card">
-    <div class="lr"><span class="mic acc"><svg class="i"><use href="#i-globe"/></svg></span><div class="grow"><div class="tt" data-i18n="language">Language</div></div><div class="seg2"><button type="button" id="acct-en">English</button><button type="button" id="acct-ko">한국어</button></div></div>
+    <div class="lr lang-row"><span class="mic acc"><svg class="i"><use href="#i-globe"/></svg></span><div class="grow"><div class="tt" data-i18n="language">Language</div><div class="seg2"><button type="button" id="acct-en">English</button><button type="button" id="acct-ko">한국어</button></div></div></div>
     <a class="lr" href="#/visit"><span class="mic acc"><svg class="i"><use href="#i-pin"/></svg></span><div class="grow"><div class="tt" data-i18n="visit">Visit & contact</div><div class="ts" data-i18n="visitSub"></div></div></a>
     <button class="lr" id="feedback-link" type="button"><span class="mic acc"><svg class="i"><use href="#i-chat"/></svg></span><div class="grow"><div class="tt" data-i18n="feedback">Send feedback</div><div class="ts" data-i18n="feedbackSub"></div></div></button>
   </div>
