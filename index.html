@@ -22,7 +22,7 @@ if ("serviceWorker" in navigator) {
     woRefreshing = true;
     location.reload();
   });
-  navigator.serviceWorker.register("sw.js?v=27").catch(function () {});
+  navigator.serviceWorker.register("sw.js?v=28").catch(function () {});
 }
 </script>
 <style>
@@ -186,14 +186,24 @@ body.wo-playing .app{padding-bottom:0}
 .mcard .cv .chip{position:absolute;right:12px;top:12px}
 .mcard .bd{display:flex;align-items:center;gap:12px;padding:26px 16px 14px}
 .mic.solid-acc{background:var(--accent);color:#fff} .mic.solid-gold{background:var(--gold);color:var(--brand)} .mic.solid-plum{background:var(--plum);color:#fff}
-.mhead{margin:-12px -20px 16px;min-height:210px;position:relative;background:#efeae0 center 35%/cover no-repeat;color:#fff;padding:12px 20px 20px;display:flex;flex-direction:column;justify-content:space-between}
-.mhead::before{content:"";position:absolute;inset:0;background:var(--photo-fade)}
-.mhead>*{position:relative}
-.mhead h1{font-family:var(--serif);font-size:26px;margin:6px 0 4px}
-.mhead .mut{color:rgba(255,255,255,.86)}
-.mhead:not(.illus) .eyebrow{color:rgba(255,255,255,.88)}
-.mhead.illus{color:var(--text);min-height:180px} .mhead.illus::before{display:none}
-.mhead.illus .mut{color:var(--text-2)}
+.mhead{--m-bg:#00303F;--safe:clamp(128px,40vw,168px);margin:-12px -20px 16px;min-height:196px;position:relative;overflow:hidden;background:var(--m-bg);color:#fff;padding:12px 20px 18px;display:flex;flex-direction:column;justify-content:space-between}
+.mhead[data-tone="nursery"]{--m-bg:#F4ECF2}
+.mhead[data-tone="kitchen"]{--m-bg:#E4EFEC}
+.mhead[data-tone="worship"]{--m-bg:#00303F}
+.mhead .mart{position:absolute;z-index:0;right:0;top:0;bottom:0;width:var(--safe);overflow:hidden;pointer-events:none}
+.mhead .mart img{width:100%;height:100%;object-fit:cover;display:block}
+.mhead[data-tone="nursery"] .mart img{object-position:17% 62%}
+.mhead[data-tone="kitchen"] .mart img{width:230%;height:auto;max-width:none;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);object-fit:fill}
+.mhead.photo .mart img{object-position:50% 72%}
+.mhead.photo .mart::after{content:"";position:absolute;left:0;top:0;bottom:0;width:26px;background:linear-gradient(90deg,var(--m-bg),transparent)}
+.mhead .mtop,.mhead .mcopy{position:relative;z-index:1}
+.mhead .mtop{min-height:42px;padding-right:calc(var(--safe) + 12px)}
+.mhead .mcopy{max-width:calc(100% - var(--safe) - 12px)}
+.mhead h1{font-family:var(--serif);font-size:26px;line-height:1.15;margin:6px 0 4px}
+.mhead.photo .eyebrow,.mhead.photo .mut{color:#E4ECEF}
+.mhead.illus{color:var(--text)}
+.mhead.illus .eyebrow,.mhead.illus .mut{color:var(--text-2)}
+.mhead.illus .chip.ok{background:#fff;color:var(--brand);box-shadow:inset 0 0 0 1px rgba(0,48,63,.16)}
 .tools{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .tools .tool{background:#fff;border:1px solid var(--stroke);border-radius:24px;box-shadow:var(--shadow);padding:14px;min-height:132px;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden;text-decoration:none;color:inherit}
 .tools .tool h3{margin:10px 0 2px;font-size:16px} .tools .tool p{margin:0;color:var(--text-2);font-size:12px}
@@ -287,7 +297,8 @@ body.wo-playing .app{padding-bottom:0}
   .week-grid{display:grid;grid-template-columns:1fr;gap:16px;align-items:start}
   #special-list{display:grid;grid-template-columns:1fr 1fr;gap:16px}
   .ev-img{margin:0}
-  .mhead{margin:0 0 16px;min-height:280px;padding:20px 28px 24px;border-radius:var(--r-card);overflow:hidden}
+  .mhead{--safe:min(42%,480px);margin:0 0 16px;min-height:280px;padding:20px 28px 24px;border-radius:var(--r-card);overflow:hidden}
+  .mhead.illus .mart img{width:100%;height:100%;max-width:none;position:static;left:auto;top:auto;transform:none;object-fit:contain;object-position:right center}
   .grid td.nm{position:sticky;left:0;background:#fff;z-index:1}
   #wo-play-body.wo-cols .wo-chart{column-count:var(--wo-cols,2);column-gap:28px}
 }
@@ -441,7 +452,7 @@ body.signed-out .screen{padding-bottom:28px}
 #wo-play-body.wo-cols .wo-chart{column-count:2;column-gap:16px}
 #wo-play-body.wo-cols .wline,#wo-play-body.wo-cols .wsec{break-inside:avoid}
 .meta-chip{display:inline-block;background:#fff3c4;border-radius:999px;padding:4px 10px;font-size:14px;font-weight:800;margin:2px}
-.wo-addpick{position:fixed;z-index:35;left:50%;transform:translateX(-50%);width:min(440px,calc(100% - 24px));bottom:96px;background:#fff;border-radius:24px;padding:12px;box-shadow:var(--shadow)}
+.wo-addpick{position:fixed;z-index:50;left:12px;right:12px;width:auto;max-width:440px;margin:0 auto;bottom:max(12px,calc(14px + env(safe-area-inset-bottom) + 80px));max-height:calc(100dvh - 120px);overflow:auto;background:#fff;border-radius:24px;padding:12px;box-shadow:0 12px 32px rgba(0,40,50,.18)}
 #wo-play-body.wo-cols .wo-chart{column-count:var(--wo-cols,2);column-gap:28px}
 @media (min-width:768px){
   body.wo-split{overflow:hidden;height:100dvh}
@@ -487,7 +498,7 @@ a.pill.line.createbtn{height:48px;margin-top:8px}
 .songseg{display:inline-flex;align-items:stretch;min-height:44px;padding:3px;border-radius:999px;background:var(--surface-2)}
 .songseg .wmini{box-shadow:none;min-height:38px;border-radius:999px;padding:0 14px}
 .songmore{position:relative}
-.songmenu{position:absolute;right:0;top:48px;z-index:6;background:#fff;border:1px solid var(--stroke);border-radius:16px;box-shadow:var(--shadow);min-width:190px;padding:6px}
+.songmenu{position:fixed;z-index:50;background:#fff;border:1px solid var(--stroke);border-radius:16px;box-shadow:0 12px 32px rgba(0,40,50,.18);min-width:min(190px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto;padding:6px}
 .songmenu-item{display:flex;width:100%;min-height:44px;align-items:center;padding:0 12px;border:0;background:transparent;border-radius:16px;font-weight:700;color:var(--brand);cursor:pointer;text-decoration:none;text-align:left}
 .give-secondary{background:var(--surface)}
 .wo-empty b{display:block}
@@ -669,8 +680,7 @@ a.pill.line.createbtn{height:48px;margin-top:8px}
 </section>
 
 <section class="screen" id="s-food-kitchen" hidden>
-  <div class="hdr"><button class="back" type="button" onclick="history.back()"><svg class="i"><use href="#i-back"/></svg></button><h1 class="ptitle" data-i18n="kitchen">Food Kitchen</h1></div>
-  <p class="psub" id="kitchen-blurb"></p>
+  <div id="kitchen-head"></div>
   <div class="kitchen-grid">
   <article class="card signup-card">
     <div class="signup-head">
@@ -1004,6 +1014,6 @@ const WORSHIP_BACKEND_URL = 'https://script.google.com/macros/s/AKfycbwWtdJUNT8n
 <script src="js/config.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/app.js"></script>
-<script src="worship.js?v=27"></script>
+<script src="worship.js?v=28"></script>
 </body>
 </html>

@@ -479,6 +479,16 @@ function ministryIdFromHash() {
   var parts = raw.split("/");
   return parts[0] === "ministry" ? (parts[1] || "") : "";
 }
+function paintMinistryHead(head, m, onBack) {
+  if (!head || !m) return;
+  var name = appLang() === "ko" ? m.ko : m.name;
+  var lead = appLang() === "ko" ? (m.koLead || m.koBlurb) : (m.lead || m.blurb);
+  head.className = "mhead" + (m.illus ? " illus" : " photo");
+  head.setAttribute("data-tone", m.id);
+  var chip = hasTeam(m.id) ? '<span class="chip ok">' + escapeHtml(t("joined")) + "</span>" : "";
+  head.innerHTML = '<div class="mart" aria-hidden="true"><img alt="" src="' + escapeAttr(m.cover || "") + '"></div><div class="row-between mtop"><button class="' + (m.illus ? "back" : "back glass") + '" type="button" aria-label="' + escapeAttr(t("back")) + '"><svg class="i"><use href="#i-back"/></svg></button>' + chip + '</div><div class="mcopy"><div class="eyebrow">' + escapeHtml(t("myMin")) + "</div><h1>" + escapeHtml(name) + '</h1><div class="mut">' + escapeHtml(lead || "") + "</div></div>";
+  head.querySelector("button").onclick = onBack;
+}
 function renderMinistry() {
   var id = ministryIdFromHash();
   var m = ministryById(id);
@@ -487,13 +497,7 @@ function renderMinistry() {
   var empty = document.getElementById("ministry-empty");
   box.replaceChildren();
   if (!m) { location.replace("#/ministries"); return; }
-  var name = appLang() === "ko" ? m.ko : m.name;
-  var lead = appLang() === "ko" ? (m.koLead || m.koBlurb) : (m.lead || m.blurb);
-  var back = m.illus ? "back" : "back glass";
-  head.className = "mhead" + (m.illus ? " illus" : "");
-  head.style.backgroundImage = "url(" + (m.cover || "") + ")";
-  head.innerHTML = '<div class="row-between"><button class="' + back + '" type="button" id="ministry-back"><svg class="i"><use href="#i-back"/></svg></button>' + (hasTeam(m.id) ? '<span class="chip ok">' + t("joined") + "</span>" : "") + '</div><div><div class="eyebrow">' + t("myMin") + "</div><h1>" + escapeHtml(name) + '</h1><div class="mut">' + escapeHtml(lead || "") + "</div></div>";
-  document.getElementById("ministry-back").onclick = function () { location.hash = "#/ministries"; };
+  paintMinistryHead(head, m, function () { location.hash = "#/ministries"; });
   m.tools.forEach(function (tool, i) {
     var a = document.createElement("a");
     a.className = "tool" + (m.tools.length === 1 || i === m.tools.length - 1 && m.tools.length > 2 ? " wide" : "");
@@ -510,7 +514,7 @@ function renderMinistry() {
   }
 }
 function renderKitchen() {
-  document.getElementById("kitchen-blurb").textContent = appLang() === "ko" ? ministryById("kitchen").koBlurb : ministryById("kitchen").blurb;
+  paintMinistryHead(document.getElementById("kitchen-head"), ministryById("kitchen"), function () { history.back(); });
   paintKitchenCard("km-food", "km-hint");
   paintKitchenCard("snack", "snack-hint");
 }
