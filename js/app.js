@@ -254,7 +254,8 @@ function renderHome() {
   var part = hour < 12 ? "morning" : hour < 17 ? "afternoon" : "evening";
   var hello = document.getElementById("greet");
   var helloWord = appLang() === "ko" ? t(part) : ("Good " + t(part));
-  hello.innerHTML = helloWord + (name ? ", <em>" + escapeHtml(name) + "</em>" + (appLang() === "ko" ? "님" : "") : "");
+  var first = String(name || "").trim().split(/\s+/)[0] || "";
+  hello.innerHTML = helloWord + (first ? ", <em>" + escapeHtml(first) + "</em>" + (appLang() === "ko" ? "님" : "") : "");
   var tabGreet = document.getElementById("greet-tab");
   if (tabGreet) tabGreet.innerHTML = hello.innerHTML;
   paintAvatars();

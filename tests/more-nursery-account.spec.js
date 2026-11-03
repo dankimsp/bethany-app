@@ -130,10 +130,10 @@ test("more, account, and nursery roster", async function ({ page }) {
   await boot(page, "serving");
   await page.goto("/index.html?scene=serving#/more");
   await expect(page.locator("#acct-email")).toHaveText("daniel.kim@bethanychurch.test");
-  await expect(page.locator("#about-version")).toContainText("v30");
-  await expect(page.locator("#about-version")).not.toContainText("2.4");
+  await expect(page.locator("#about-version")).toHaveText("Version 30");
   await expect(page.getByText("Prayer request")).toHaveCount(0);
-  await expect(page.locator("#more-serving")).toContainText("With Sarah P.");
+  await expect(page.locator("#more-serving")).toContainText("Nursery · with Sarah P.");
+  await expect(page.locator("#more-serving")).toContainText("Nursery · with Grace L., Joseph K., Hannah P.");
   await expect(page.locator("#more-serving")).toContainText("Worship availability");
   await page.screenshot({ path: ART + "/more-top-390.png" });
   await page.locator("#about-row").scrollIntoViewIfNeeded();
@@ -155,6 +155,7 @@ test("more, account, and nursery roster", async function ({ page }) {
   await page.locator("#add-password").click();
   await expect(page.locator("#sheet-setpw")).toBeVisible();
   await expect(page.locator("#setpw-email")).toHaveText("daniel.kim@bethanychurch.test");
+  await expect(page.locator("#sheet-setpw")).toContainText("At least 8 characters");
   await page.screenshot({ path: ART + "/set-password-390.png" });
   await page.locator("#sheet-setpw [data-i18n='sheetCancel']").click();
   await page.evaluate(function () {
@@ -163,6 +164,7 @@ test("more, account, and nursery roster", async function ({ page }) {
     window.paintAccountPage();
   });
   await expect(page.locator("#account-extra")).toContainText("Change password");
+  await expect(page.locator("#account-methods")).toContainText("daniel.kim@bethanychurch.test");
   await page.screenshot({ path: ART + "/account-password-390.png" });
 
   await page.goto("/index.html?scene=serving#/ministry/nursery");
@@ -178,17 +180,23 @@ test("more, account, and nursery roster", async function ({ page }) {
   await page.locator("[data-cant]").first().click();
   await expect(page.locator("#cancel-title")).toContainText("Can't make");
   await page.screenshot({ path: ART + "/nursery-cancel-390.png" });
+  await page.locator("#cancel-yes").click();
+  await expect(page.locator("#app-toast")).toContainText("Undo");
+  await page.screenshot({ path: ART + "/nursery-undo-390.png" });
+  await page.evaluate(function () { document.getElementById("app-toast").hidden = true; });
 
   await page.goto("/index.html?scene=serving#/home");
   await expect(page.locator("#home-serving")).toContainText("You're serving this Sunday");
+  await expect(page.locator("#home-serving")).toContainText("10:00 AM");
   await page.screenshot({ path: ART + "/home-serving-390.png" });
 });
 
 test("home card when the next nursery Sunday is later", async function ({ page }) {
   await boot(page, "next");
   await page.goto("/index.html?scene=next#/home");
-  await expect(page.locator("#home-serving")).toContainText("You're not on nursery this Sunday");
-  await expect(page.locator("#home-serving")).toContainText("Your next Sunday: November");
+  await expect(page.locator("#home-serving")).toContainText("Your next nursery Sunday");
+  await expect(page.locator("#home-serving")).toContainText("This Sunday:");
+  await expect(page.locator("#home-serving")).not.toContainText("Pick Sundays");
   await expect(page.locator("#home-serving")).not.toContainText("Sunday, November");
   await page.screenshot({ path: ART + "/home-next-390.png" });
 });

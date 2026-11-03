@@ -173,10 +173,11 @@ function paintMoreServing() {
     data.nursery.upcoming.slice(0, 3).forEach(function (item) {
       var iso = item && item.sunday ? item.sunday : item;
       var withNames = item && item.with ? item.with.join(", ") : "";
+      var line = withNames ? tf("servingLine", { names: withNames }) : t("servingAlone");
       var row = document.createElement("a");
       row.className = "lr";
       row.href = "#/ministry/nursery";
-      row.innerHTML = '<span class="rdate on"><small>' + escapeHtml(prettySunday(iso).mon) + '</small><b>' + escapeHtml(prettySunday(iso).day) + '</b></span><div class="grow"><div class="tt">' + escapeHtml(sundayShort(iso)) + '</div><div class="ts">' + escapeHtml(withNames ? tf("servingWith", { names: withNames }) : t("nurseryRoster")) + '</div></div>';
+      row.innerHTML = '<span class="rdate on"><small>' + escapeHtml(prettySunday(iso).mon) + '</small><b>' + escapeHtml(prettySunday(iso).day) + '</b></span><div class="grow"><div class="tt">' + escapeHtml(line) + '</div></div>';
       card.appendChild(row);
     });
   } else if (nursery) {
@@ -191,7 +192,7 @@ function paintMoreServing() {
     var w = document.createElement("a");
     w.className = "lr";
     w.href = "#/availability";
-    w.innerHTML = '<span class="mic gold"><svg class="i"><use href="#i-users"/></svg></span><div class="grow"><div class="tt">' + escapeHtml(tf("worshipAvail", { n: n })) + '</div></div>';
+    w.innerHTML = '<span class="mic gold"><svg class="i"><use href="#i-users"/></svg></span><div class="grow"><div class="tt serve-plain">' + escapeHtml(tf("worshipAvail", { n: n })) + '</div></div><svg class="i" aria-hidden="true"><use href="#i-chev"/></svg>';
     card.appendChild(w);
   }
   box.appendChild(card);
@@ -206,12 +207,25 @@ function paintNotifSummary() {
   if (p.reminders !== false) bits.push(t("reminders"));
   el.textContent = tf("notifSub", { list: bits.join(", ") || "—" });
 }
+function versionNumber() {
+  return String(BETHANY.version || "").replace(/^v/i, "");
+}
+function sundayServiceLine(iso) {
+  var svc = null;
+  (BETHANY_WEEKLY || []).forEach(function (item) {
+    if (item.day !== 0) return;
+    if (!svc || item.h * 60 + item.m < svc.h * 60 + svc.m) svc = item;
+  });
+  var date = sundayShort(iso);
+  return svc ? date + " · " + fmtTime(svc.h, svc.m) : date;
+}
 function paintMoreExtras() {
   paintNotifSummary();
+  var label = tf("version", { v: versionNumber() });
   var ver = document.getElementById("about-version");
-  if (ver) ver.textContent = tf("version", { v: BETHANY.version || "" });
+  if (ver) ver.textContent = label;
   var sheetVer = document.getElementById("about-version-sheet");
-  if (sheetVer) sheetVer.textContent = tf("version", { v: BETHANY.version || "" });
+  if (sheetVer) sheetVer.textContent = label;
   var a2hs = document.getElementById("a2hs-row");
   if (a2hs) a2hs.hidden = isStandalone();
   var summary = document.getElementById("service-summary");
@@ -234,8 +248,8 @@ function paintHomeServing() {
   card.className = "card serve-card" + (onFirst ? "" : " quiet");
   if (onFirst) {
     var others = (first.people || []).filter(function (p) { return !p.isMe; });
-    var stack = others.slice(0, 4).map(function (p) { return '<i>' + escapeHtml(pairInitials(p.name)) + '</i>'; }).join("");
-    card.innerHTML = '<div class="eyebrow">' + escapeHtml(t("homeKicker")) + '</div><h2>' + escapeHtml(today ? t("homeServingToday") : t("homeServing")) + '</h2><div class="mut">' + escapeHtml(sundayLong(first.sunday)) + '</div>' +
+    var stack = others.slice(0, 4).map(function (p) { return '<span>' + escapeHtml(pairInitials(p.name)) + '</span>'; }).join("");
+    card.innerHTML = '<div class="eyebrow">' + escapeHtml(t("homeKicker")) + '</div><h2>' + escapeHtml(today ? t("homeServingToday") : t("homeServing")) + '</h2><div class="mut">' + escapeHtml(sundayServiceLine(first.sunday)) + '</div>' +
       (others.length ? '<div class="mut" style="margin-top:8px">' + escapeHtml(t("servingWithLabel")) + '</div><div class="stack">' + stack + '</div><div>' + escapeHtml(others.map(function (p) { return p.name; }).join(", ")) + '</div>' : '<p>' + escapeHtml(t("onlyYou")) + '</p>') +
       '<div class="serve-actions"><button type="button" class="pill brand" id="home-roster">' + escapeHtml(t("viewRoster")) + '</button>' +
       (others.length || true ? '<button type="button" class="pill line" id="home-cant">' + escapeHtml(t("cantMake")) + '</button>' : '') + '</div>';
@@ -246,10 +260,10 @@ function paintHomeServing() {
   } else {
     var next = mine[0];
     var names = ((first && first.people) || []).map(function (p) { return p.name; }).join(", ");
-    card.innerHTML = '<div class="eyebrow">' + escapeHtml(t("homeKicker").split("·")[0].trim()) + '</div><h2>' + escapeHtml(t("notThisSunday")) + '</h2><p>' + escapeHtml(tf("yourNext", { date: sundayMonthDay(next.sunday) })) + '</p><p class="mut">' + escapeHtml(tf("thisSundayNames", { names: names || t("noOneYet") })) + '</p><div class="serve-actions"><button type="button" class="pill brand" id="home-roster">' + escapeHtml(t("viewRoster")) + '</button><button type="button" class="pill line" id="home-pick">' + escapeHtml(t("pickSundays")) + '</button></div>';
+    card.className = "card serve-next";
+    card.innerHTML = '<div class="eyebrow">' + escapeHtml(t("nextKicker")) + '</div><h2>' + escapeHtml(sundayShort(next.sunday)) + '</h2><p class="mut">' + escapeHtml(tf("thisSundayNames", { names: names || t("noOneYet") })) + '</p><button type="button" class="lnkbtn" id="home-roster">' + escapeHtml(t("viewRoster")) + '</button>';
     box.appendChild(card);
     card.querySelector("#home-roster").onclick = function () { location.hash = "#/ministry/nursery"; };
-    card.querySelector("#home-pick").onclick = function () { openPick(); };
   }
 }
 
@@ -445,12 +459,13 @@ function paintAccount() {
   profile.innerHTML = '<div class="lr"><div class="grow"><div class="mut" data-i18n="name">' + escapeHtml(t("name")) + '</div><b>' + escapeHtml(name) + '</b><div class="mut">' + escapeHtml(tf("shownAs", { short: short })) + '</div></div><button type="button" class="lnkbtn" id="account-edit">' + escapeHtml(t("edit")) + '</button></div><div class="lr"><div class="grow"><div class="mut">' + escapeHtml(t("email")) + '</div><b id="account-email">' + escapeHtml(email) + '</b></div></div>';
   var google = hasProvider("google.com");
   var password = hasProvider("password");
-  methods.innerHTML = (google ? '<div class="lr"><span class="mic gold"><svg class="i"><use href="#i-globe"/></svg></span><div class="grow"><div class="tt">Google</div><div class="ts">' + escapeHtml(email) + '</div></div><b>' + escapeHtml(t("onState")) + '</b></div>' : "") +
-    '<div class="lr"><span class="mic acc"><svg class="i"><use href="#i-mail"/></svg></span><div class="grow"><div class="tt">' + escapeHtml(t("emailPw")) + '</div><div class="ts">' + escapeHtml(password ? t("onState") : t("notSetUp")) + '</div></div>' + (password ? '<b>' + escapeHtml(t("onState")) + '</b>' : '<button type="button" class="pill sm brand" id="add-password">' + escapeHtml(t("add")) + '</button>') + '</div>';
+  var gmark = '<svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>';
+  methods.innerHTML = (google ? '<div class="lr"><span class="mic" style="background:#fff">' + gmark + '</span><div class="grow"><div class="tt">Google</div><div class="ts">' + escapeHtml(email) + '</div></div><b>' + escapeHtml(t("onState")) + '</b></div>' : "") +
+    '<div class="lr"><span class="mic acc"><svg class="i"><use href="#i-mail"/></svg></span><div class="grow"><div class="tt">' + escapeHtml(t("emailPw")) + '</div><div class="ts">' + escapeHtml(password ? email : t("notSetUp")) + '</div></div>' + (password ? '<b>' + escapeHtml(t("onState")) + '</b>' : '<button type="button" class="pill sm brand" id="add-password">' + escapeHtml(t("add")) + '</button>') + '</div>';
   extra.replaceChildren();
   if (password) {
     var wrap = document.createElement("div");
-    wrap.innerHTML = '<div class="grp">' + escapeHtml(t("password")) + '</div><div class="card"><button type="button" class="lr" id="open-change"><div class="grow"><div class="tt">' + escapeHtml(t("changePw")) + '</div><div class="ts">' + escapeHtml(t("changePwSub")) + '</div></div></button><button type="button" class="lr" id="open-reset"><div class="grow"><div class="tt">' + escapeHtml(t("sendReset")) + '</div><div class="ts">' + escapeHtml(tf("sendResetSub", { email: email })) + '</div></div></button></div>';
+    wrap.innerHTML = '<div class="grp">' + escapeHtml(t("password")) + '</div><div class="card"><button type="button" class="lr" id="open-change"><div class="grow"><div class="tt">' + escapeHtml(t("changePw")) + '</div><div class="ts">' + escapeHtml(t("changePwSub")) + '</div></div><svg class="i" aria-hidden="true"><use href="#i-chev"/></svg></button><button type="button" class="lr" id="open-reset"><div class="grow"><div class="tt">' + escapeHtml(t("sendReset")) + '</div><div class="ts">' + escapeHtml(tf("sendResetSub", { email: email })) + '</div></div><svg class="i" aria-hidden="true"><use href="#i-chev"/></svg></button></div>';
     extra.appendChild(wrap);
     document.getElementById("open-change").onclick = function () { openSheet("sheet-changepw"); };
     document.getElementById("open-reset").onclick = function () { openReset(email); };
@@ -495,9 +510,9 @@ function livePasswordHints() {
   var confirm = document.getElementById("setpw-confirm").value;
   var len = document.getElementById("setpw-len");
   var match = document.getElementById("setpw-match");
-  len.hidden = !pw;
-  len.textContent = pw.length >= 8 ? t("min8") : t("errWeak");
-  len.className = pw.length >= 8 ? "hint-ok" : "hint-no";
+  len.hidden = !pw || pw.length >= 8;
+  len.textContent = t("errWeak");
+  len.className = "hint-no";
   match.hidden = !confirm;
   var ok = pw && pw === confirm;
   match.textContent = ok ? t("pwMatch") : t("errMismatch");

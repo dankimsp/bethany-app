@@ -275,19 +275,26 @@ body.no-nav .screen{padding-bottom:32px}
 .signout{color:var(--no);border-color:rgba(169,71,61,.55)}
 .profile{width:100%;border:0;text-align:left;cursor:pointer}
 #home-serving{margin:16px 0 16px}
-.serve-card{position:relative;overflow:hidden}
-.serve-card::before{content:"";position:absolute;top:0;left:22px;right:22px;height:4px;background:var(--plum)}
-.serve-card.quiet::before{display:none}
+.serve-card{position:relative;overflow:hidden;border-top:4px solid var(--plum)}
+.serve-card.quiet{border-top:1px solid var(--stroke)}
 .serve-card h2{font-family:var(--serif);font-size:22px;margin:4px 0}
+.tt.serve-plain{font-weight:400}
+.serve-next h2{font-family:var(--serif);font-size:20px;margin:2px 0 4px;font-weight:700}
+.serve-next .lnkbtn{min-height:44px;padding:0}
 .stack{display:flex;align-items:center}
-.stack i{width:32px;height:32px;border-radius:50%;background:var(--plum-soft);color:var(--plum);display:grid;place-items:center;font-size:12px;font-weight:800;margin-left:-8px;border:2px solid #fff}
-.stack i:first-child{margin-left:0}
+.stack span{width:32px;height:32px;border-radius:50%;background:#E4D0E2;color:#3A1C38;display:grid;place-items:center;font-size:12px;font-weight:800;font-style:normal;margin-left:-8px;border:2px solid #fff}
+.stack span:first-child{margin-left:0}
+.about-mic{background:#D5E4E8;color:#00303F}
+.setpw-label{display:block;margin:8px 0 2px;font-size:12px;font-weight:700;color:var(--text-2)}
+#setpw-email{margin:0 0 4px;font-weight:700;color:var(--text)}
+.setpw-hint{margin:2px 0 8px;color:var(--text-2);font-size:13px}
+#s-ministry{padding-bottom:calc(288px + env(safe-area-inset-bottom))}
 .serve-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 .serve-actions .pill{height:50px}
 .roster-sum{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:4px 0 12px}
-#roster-list{padding:4px 12px 8px}
-.roster-row{display:flex;gap:10px;align-items:flex-start;padding:12px 0;border-top:1px solid var(--stroke)}
-.roster-row:first-child{border-top:0;padding-top:4px}
+#roster-list{padding:8px 12px 12px}
+.roster-row{display:flex;gap:10px;align-items:flex-start;padding:16px 0;border-top:1px solid var(--stroke)}
+.roster-row:first-child{border-top:0}
 .roster-row .names{white-space:nowrap;font-size:13px;line-height:1.35}
 .roster-row .meta-ok,.roster-row .meta-need,.roster-row .mut{white-space:nowrap}
 .rdate{width:56px;border-radius:16px;background:var(--surface-2);text-align:center;padding:6px 0;flex:none}
@@ -828,9 +835,9 @@ a.pill.line.createbtn{height:48px;margin-top:8px}
   </div>
   <div class="grp" data-i18n="appSec">App</div>
   <div class="card">
-    <button class="lr" id="feedback-link" type="button"><span class="mic acc"><svg class="i"><use href="#i-chat"/></svg></span><div class="grow"><div class="tt" data-i18n="feedback">Send feedback</div><div class="ts" data-i18n="feedbackSub"></div></div></button>
+    <button class="lr" id="feedback-link" type="button"><span class="mic acc"><svg class="i"><use href="#i-chat"/></svg></span><div class="grow"><div class="tt" data-i18n="feedback">Send feedback</div><div class="ts" data-i18n="feedbackSub"></div></div><svg class="i" aria-hidden="true"><use href="#i-chev"/></svg></button>
     <button class="lr" id="a2hs-row" type="button"><span class="mic gold"><svg class="i"><use href="#i-share"/></svg></span><div class="grow"><div class="tt" data-i18n="a2hs">Add to Home Screen</div></div><svg class="i" aria-hidden="true"><use href="#i-chev"/></svg></button>
-    <button class="lr" id="about-row" type="button"><span class="mic plum"><svg class="i"><use href="#i-q"/></svg></span><div class="grow"><div class="tt" data-i18n="about">About &amp; privacy</div><div class="ts" id="about-version"></div></div><svg class="i" aria-hidden="true"><use href="#i-chev"/></svg></button>
+    <button class="lr" id="about-row" type="button"><span class="mic about-mic"><svg class="i"><use href="#i-q"/></svg></span><div class="grow"><div class="tt" data-i18n="about">About &amp; privacy</div><div class="ts" id="about-version"></div></div><svg class="i" aria-hidden="true"><use href="#i-chev"/></svg></button>
   </div>
   <button class="signout" id="sign-out" type="button"><svg class="i"><use href="#i-out"/></svg><span data-i18n="signOut">Sign out</span></button>
 </section>
@@ -1127,10 +1134,11 @@ a.pill.line.createbtn{height:48px;margin-top:8px}
     <h2 data-i18n="setPwTitle">Set a password</h2>
     <p class="psub" data-i18n="setPwBody"></p>
     <div id="setpw-banner" class="auth-banner" hidden></div>
-    <label data-i18n="email">Email</label>
-    <p id="setpw-email" class="mut"></p>
-    <label for="setpw-new" data-i18n="newPw">New password</label>
+    <label class="setpw-label" data-i18n="email">Email</label>
+    <p id="setpw-email"></p>
+    <label class="setpw-label" for="setpw-new" data-i18n="newPw">New password</label>
     <label class="fld"><input id="setpw-new" type="password" autocomplete="new-password"><button class="eye" type="button" data-eye="setpw-new" data-i18n="showPw">Show</button></label>
+    <p class="setpw-hint" data-i18n="min8">At least 8 characters</p>
     <p id="setpw-len" class="hint-no" hidden></p>
     <label for="setpw-confirm" data-i18n="confirmPw">Confirm password</label>
     <label class="fld"><input id="setpw-confirm" type="password" autocomplete="new-password"><button class="eye" type="button" data-eye="setpw-confirm" data-i18n="showPw">Show</button></label>
