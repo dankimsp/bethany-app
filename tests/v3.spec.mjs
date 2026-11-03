@@ -49,7 +49,8 @@ test("member phone screens", async ({ page }) => {
   await expect(page.locator("#home-hero")).not.toContainText("in 2 days");
   await expect(page.locator("#greet")).toContainText("Grace");
   await expect(page.locator("#home-ministry")).toContainText("Worship Team");
-  await expect(page.locator("#home-ministry")).toHaveCSS("background-image", /worship-stage/);
+  await expect(page.locator("#home-ministry")).toContainText("Chord sheets");
+  await expect(page.locator("#home-ministry .min-row")).toHaveCount(3);
   await page.screenshot({ path: "/opt/cursor/artifacts/v3/home-phone.png" });
   await page.goto("/#/ministries");
   await expect(page.locator("#ministry-list")).toContainText("Worship");

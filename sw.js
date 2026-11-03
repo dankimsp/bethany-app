@@ -1,4 +1,4 @@
-var CACHE = "bethany-worship-v22";
+var CACHE = "bethany-worship-v23";
 var FILES = [
   "./",
   "index.html",
@@ -27,6 +27,7 @@ var FILES = [
   "songs/nae-jureul-gakkai.cho",
   "songs/o-for-a-thousand-tongues.cho",
   "assets/logo-bethany-light.svg",
+  "assets/logo-bethany-ink.svg",
   "assets/icon-192.png",
   "assets/icon-512.png",
   "assets/hero.jpg"

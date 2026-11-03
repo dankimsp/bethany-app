@@ -319,7 +319,7 @@ function woLabel(ch, song) {
 }
 function woChart(song) {
   var root = document.createElement("div");
-  root.className = "wo-chart" + (woLyricsOn() ? " lyrics-only" : "");
+  root.className = "wo-chart wbody" + (woLyricsOn() ? " lyrics-only" : "");
   song.sections.forEach(function (sec) {
     if (sec.label) {
       var h = document.createElement("div");
@@ -330,7 +330,16 @@ function woChart(song) {
     sec.lines.forEach(function (line) {
       var row = document.createElement("div");
       row.className = "wline";
-      line.forEach(function (seg) {
+      var word = null;
+      line.forEach(function (seg, i) {
+        var text = seg.t == null ? "" : String(seg.t);
+        var prev = i ? String(line[i - 1].t == null ? "" : line[i - 1].t) : "";
+        var startsWord = !word || /^\s/.test(text) || /\s$/.test(prev);
+        if (startsWord) {
+          word = document.createElement("span");
+          word.className = "wword";
+          row.appendChild(word);
+        }
         var s = document.createElement("span");
         s.className = "wseg";
         var c = document.createElement("span");
@@ -342,11 +351,19 @@ function woChart(song) {
           mark.textContent = label;
           c.appendChild(mark);
         } else c.textContent = "\u00a0";
-        var t = document.createElement("span");
-        t.textContent = seg.t || "\u00a0";
+        var lyric = document.createElement("span");
+        lyric.textContent = text.length ? text : "\u00a0";
         s.appendChild(c);
-        s.appendChild(t);
-        row.appendChild(s);
+        s.appendChild(lyric);
+        var next = line[i + 1];
+        var nextText = next && next.t != null ? String(next.t) : "";
+        var continues = !!(next && text && !/\s$/.test(text) && nextText && !/^\s/.test(nextText));
+        var letters = text.replace(/\s/g, "");
+        if (label && label.length > letters.length) {
+          s.style.minWidth = (label.length + 0.6) + "ch";
+          if (continues) s.classList.add("cont");
+        }
+        word.appendChild(s);
       });
       root.appendChild(row);
     });
@@ -360,11 +377,23 @@ function woStillLocked(data) {
   return !!(data && (Number(data.status) === 401 || data.error === "unauthorized" || data.error === "pass"));
 }
 try { localStorage.removeItem("bethany-worship-team"); } catch (e) {}
-function woPrivateMsg(text) {
+function woPrivateMsg(text, retry) {
   var el = document.getElementById("wo-private-msg");
   if (!el) return;
-  el.hidden = !text;
-  el.textContent = text || "";
+  el.className = "mut";
+  el.replaceChildren();
+  if (!text) { el.hidden = true; return; }
+  el.hidden = false;
+  el.appendChild(document.createTextNode(text));
+  if (retry) {
+    el.appendChild(document.createTextNode(" · "));
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "lnkbtn";
+    b.textContent = "Retry";
+    b.onclick = function () { woFetchSongs(); };
+    el.appendChild(b);
+  }
 }
 function woSyncAdd() {
   var connected = woBackendEnabled();
@@ -499,15 +528,26 @@ function woFetchSongs() {
   var stalls = 0;
   function fail(data, err) {
     console.warn("Worship library:", woBackendError(data || err, WO_UNAVAILABLE));
-    woPrivateMsg(WO_UNAVAILABLE);
+    if (!wo.songs.length) woPrivateMsg(WO_UNAVAILABLE, true);
+    else woPrivateMsg("Showing saved songs", true);
     return woStillLocked(data) ? "locked" : "error";
+  }
+  function call(params) {
+    function send(token) {
+      var body = {};
+      Object.keys(params || {}).forEach(function (k) { body[k] = params[k]; });
+      if (token) body.idToken = token;
+      return woApi(body);
+    }
+    if (window.bethanyIdToken) return window.bethanyIdToken().then(send, function () { return send(""); });
+    return send("");
   }
   function step() {
     if (++steps > 80) return fail(null, "The song library is still indexing.");
     var params = { action: "getSongs" };
     if (cursor) params.cursor = cursor;
     else if (etag) params.etag = etag;
-    return woApi(params).then(function (data) {
+    return call(params).then(function (data) {
       if (woStillLocked(data) || !data || data.ok === false) return fail(data);
       woPrivateMsg("");
       if (data.unchanged && !cursor) return "ok";
@@ -597,13 +637,24 @@ function woShow(view) {
   woWasTablet = woTablet();
   var splitLib = woWasTablet && (view === "lib" || view === "song");
   var splitSet = woWasTablet && (view === "sets" || view === "edit");
+  var hasSet = (view === "edit" && !!woGetSet(wo.setId)) || (splitSet && wo.newOpen);
   document.body.classList.toggle("wo-split", splitLib || splitSet);
   ["lib", "sets", "edit", "song", "add"].forEach(function (name) {
     var el = document.getElementById("wo-" + name);
     if (splitLib) el.hidden = !(name === "lib" || name === "song");
-    else if (splitSet) el.hidden = !(name === "sets" || name === "edit");
+    else if (splitSet) el.hidden = !(name === "sets" || (name === "edit" && (hasSet || view === "sets")));
     else el.hidden = name !== view;
   });
+  var editBody = document.getElementById("wo-edit-body");
+  var editHint = document.getElementById("wo-edit-hint");
+  if (editBody && editHint) {
+    var showForm = view === "edit" && !!woGetSet(wo.setId);
+    editBody.hidden = !showForm;
+    editHint.hidden = showForm || !splitSet;
+    if (editHint.querySelector("b") && typeof t === "function") editHint.querySelector("b").textContent = t("pickSet");
+    if (editHint.querySelector(".mut") && typeof t === "function") editHint.querySelector(".mut").textContent = t("pickSetBody");
+    if (splitSet && !showForm) document.getElementById("wo-edit").hidden = false;
+  }
   if (view === "lib" || splitLib) woRenderLib();
   if (view === "sets" || splitSet) woRenderSets();
   if (view === "edit") woRenderSet();
@@ -611,9 +662,13 @@ function woShow(view) {
   else if (splitLib) {
     var empty = document.getElementById("wo-song");
     empty.replaceChildren();
-    var hint = document.createElement("p");
-    hint.className = "muted";
-    hint.textContent = "Select a song.";
+    var hint = document.createElement("div");
+    hint.className = "card empty wo-empty";
+    var title = typeof t === "function" ? t("pickSong") : "Pick a song";
+    var body = typeof t === "function" ? t("pickSongBody") : "Choose a title from the library.";
+    hint.innerHTML = '<img src="assets/img/illus-empty.svg" alt=""><div><b></b><div class="mut"></div></div>';
+    hint.querySelector("b").textContent = title;
+    hint.querySelector(".mut").textContent = body;
     empty.appendChild(hint);
   }
   if (view === "add") woSyncAdd();
@@ -978,22 +1033,71 @@ function woRenderSong() {
   var concert = document.createElement("p");
   concert.className = "muted"; concert.style.margin = "4px 0 0";
   concert.textContent = "Key " + woKeyNow();
-  var tools = document.createElement("div"); tools.className = "wtools";
+  var tools = document.createElement("div"); tools.className = "songbar";
   function bumped(fn) { return function () { fn(); woSavePref(s.id); woRenderSong(); }; }
-  tools.appendChild(woToolBtn("−", bumped(function () { wo.semi--; }), false));
-  var key = document.createElement("b"); key.className = "wkeyname"; key.textContent = woKeyNow();
-  tools.appendChild(key);
-  tools.appendChild(woToolBtn("+", bumped(function () { wo.semi++; }), false));
-  tools.appendChild(woToolBtn("Reset", bumped(function () { wo.semi = 0; wo.flats = false; }), false));
-  tools.appendChild(woToolBtn("Numbers", function () { woSetNumbers(!woNumbersOn()); woRenderSong(); }, woNumbersOn()));
-  tools.appendChild(woToolBtn("Lyrics only", function () { woSetLyrics(!woLyricsOn()); woRenderSong(); }, woLyricsOn()));
+  var step = document.createElement("div");
+  step.className = "keystep";
+  step.setAttribute("role", "group");
+  step.setAttribute("aria-label", "Key");
+  var minus = woToolBtn("−", bumped(function () { wo.semi--; }), false);
+  minus.setAttribute("aria-label", "Lower key");
+  var key = document.createElement("b");
+  key.className = "wkeyname";
+  key.textContent = woKeyNow();
+  var plus = woToolBtn("+", bumped(function () { wo.semi++; }), false);
+  plus.setAttribute("aria-label", "Raise key");
+  step.appendChild(minus); step.appendChild(key); step.appendChild(plus);
+  var seg = document.createElement("div");
+  seg.className = "songseg";
+  seg.setAttribute("role", "tablist");
+  seg.setAttribute("aria-label", "Chords or lyrics");
+  var chords = woToolBtn("Chords", function () { if (woLyricsOn()) { woSetLyrics(false); woRenderSong(); } }, !woLyricsOn());
+  var lyrics = woToolBtn("Lyrics", function () { if (!woLyricsOn()) { woSetLyrics(true); woRenderSong(); } }, woLyricsOn());
+  seg.appendChild(chords); seg.appendChild(lyrics);
+  var play = woToolBtn("Play", function () { woEnterPlay(false); }, false);
+  play.classList.add("is-play");
+  var wrap = document.createElement("div");
+  wrap.className = "songmore";
+  var more = document.createElement("button");
+  more.type = "button";
+  more.className = "pill line";
+  more.textContent = "⋯";
+  more.setAttribute("aria-label", "More song actions");
+  more.setAttribute("aria-expanded", "false");
+  var menu = document.createElement("div");
+  menu.className = "songmenu";
+  menu.hidden = true;
+  function menuItem(label, fn) {
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "songmenu-item";
+    b.textContent = label;
+    b.onclick = function () { menu.hidden = true; more.setAttribute("aria-expanded", "false"); fn(); };
+    menu.appendChild(b);
+  }
+  menuItem("Reset", bumped(function () { wo.semi = 0; wo.flats = false; }));
+  menuItem(woNumbersOn() ? "Numbers on" : "Numbers", function () { woSetNumbers(!woNumbersOn()); woRenderSong(); });
   if (s.youtube) {
     var listen = document.createElement("a");
-    listen.className = "wmini"; listen.href = s.youtube; listen.target = "_blank"; listen.rel = "noopener"; listen.textContent = "Listen";
-    tools.appendChild(listen);
+    listen.className = "songmenu-item";
+    listen.href = s.youtube;
+    listen.target = "_blank";
+    listen.rel = "noopener";
+    listen.textContent = "Listen";
+    menu.appendChild(listen);
   }
-  tools.appendChild(woToolBtn("Play", function () { woEnterPlay(false); }, false));
-  tools.appendChild(woToolBtn("Add to setlist", function () { woShowAddPicker(s.id); }, false));
+  menuItem("Add to setlist", function () { woShowAddPicker(s.id); });
+  more.onclick = function (e) {
+    e.stopPropagation();
+    menu.hidden = !menu.hidden;
+    more.setAttribute("aria-expanded", menu.hidden ? "false" : "true");
+  };
+  wrap.appendChild(more);
+  wrap.appendChild(menu);
+  tools.appendChild(step);
+  tools.appendChild(seg);
+  tools.appendChild(play);
+  tools.appendChild(wrap);
   var note = document.createElement("textarea");
   note.placeholder = "Personal note for this song";
   note.value = woSongNote(s.id);
