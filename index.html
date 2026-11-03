@@ -22,7 +22,7 @@ if ("serviceWorker" in navigator) {
     woRefreshing = true;
     location.reload();
   });
-  navigator.serviceWorker.register("sw.js?v=26").catch(function () {});
+  navigator.serviceWorker.register("sw.js?v=27").catch(function () {});
 }
 </script>
 <style>
@@ -319,9 +319,81 @@ body.wo-playing .app{padding-bottom:0}
 }
 body.signed-out .nav{display:none}
 body.signed-out .screen{padding-bottom:28px}
+.auth-wide,.logo-on-cream,.auth-card-logo{display:none}
+.auth-card{display:block}
 @media (min-width:768px){
-  body.signed-out .app{padding-left:0}
-  body.signed-out .screen{max-width:480px;margin-left:auto;margin-right:auto}
+  body.signed-out .app{padding-left:0;min-height:100dvh}
+  body.signed-out #s-signin,
+  body.signed-out #s-create,
+  body.signed-out #s-name{
+    max-width:none;width:100%;min-height:100dvh;margin:0;padding:40px 24px;
+    background:
+      linear-gradient(180deg,rgba(0,16,22,.72) 0%,rgba(0,24,32,.55) 42%,rgba(0,16,22,.78) 100%),
+      url(assets/img/church-exterior.webp) center 30%/cover;
+    display:flex;align-items:center;justify-content:center;
+  }
+  body.signed-out #s-create .tex,
+  body.signed-out #s-name .tex{display:none}
+  body.signed-out #s-signin .auth-card,
+  body.signed-out #s-create .auth-card,
+  body.signed-out #s-name .auth-card{
+    width:min(480px,100%);background:#fff;color:var(--text);
+    border-radius:var(--r-card);box-shadow:var(--shadow);padding:28px 28px 22px;
+  }
+  body.signed-out #s-signin .auth-photo{
+    height:auto;min-height:0;background:none;color:var(--text);padding:0 0 4px;
+  }
+  body.signed-out #s-signin .auth-photo .hdr{position:static;margin:0 0 12px}
+  body.signed-out #s-signin .logo-on-photo{display:none}
+  body.signed-out #s-signin .logo-on-cream{display:block;height:36px}
+  body.signed-out #s-signin .auth-photo h1{color:var(--text);font-size:34px}
+  body.signed-out #s-signin .auth-photo h1 em{color:var(--accent)}
+  body.signed-out #s-signin .auth-photo .lead{color:var(--text-2)}
+  body.signed-out #s-signin .sheet{background:transparent;box-shadow:none;margin:0;border-radius:0;padding:8px 0 0}
+  body.signed-out #s-create .auth-card-logo,
+  body.signed-out #s-name .auth-card-logo{display:block;height:36px;margin:0 0 16px}
+}
+@media (min-width:1100px){
+  body.signed-out #s-signin,
+  body.signed-out #s-create,
+  body.signed-out #s-name{
+    padding:0;background:var(--bg);
+    display:grid;grid-template-columns:minmax(0,55%) minmax(0,1fr);
+    align-items:stretch;
+  }
+  body.signed-out #s-signin .auth-card{display:contents;background:none;box-shadow:none;padding:0;border-radius:0;width:auto}
+  body.signed-out #s-signin .auth-photo,
+  body.signed-out .auth-wide{
+    display:flex;height:auto;min-height:100dvh;margin:0;border-radius:0;color:#fff;
+    background:
+      linear-gradient(180deg,rgba(0,16,22,.94) 0%,rgba(0,18,26,.55) 28%,rgba(0,24,32,.72) 100%),
+      url(assets/img/church-exterior.webp) center 30%/cover;
+    padding:32px 40px 48px;
+  }
+  body.signed-out #s-signin .logo-on-photo{display:block}
+  body.signed-out #s-signin .logo-on-cream{display:none}
+  body.signed-out #s-signin .auth-photo .hdr{position:absolute;top:28px;left:32px;right:auto}
+  body.signed-out #s-signin .auth-photo h1{color:#fff;font-size:34px}
+  body.signed-out #s-signin .auth-photo h1 em{color:#fff}
+  body.signed-out #s-signin .auth-photo .lead{color:rgba(255,255,255,.88)}
+  body.signed-out #s-signin .sheet,
+  body.signed-out #s-create .auth-card,
+  body.signed-out #s-name .auth-card{
+    display:flex;flex-direction:column;justify-content:center;justify-self:center;
+    width:min(420px,calc(100% - 80px));max-width:420px;margin:0 auto;
+    min-height:100dvh;padding:88px 0 40px;background:transparent;box-shadow:none;border-radius:0;
+  }
+  body.signed-out #s-signin .sheet > *{width:100%}
+  body.signed-out #s-create .auth-card-logo,
+  body.signed-out #s-name .auth-card-logo{display:none}
+  body.signed-out #s-signin .lang.glass,
+  body.signed-out #s-create .hdr .lang,
+  body.signed-out #s-name .hdr .lang{
+    position:fixed;top:24px;right:32px;z-index:5;
+    background:#fff;border:1px solid var(--stroke);
+  }
+  body.signed-out #s-signin .lang.glass button{color:var(--text)}
+  body.signed-out #s-signin .lang.glass button.on{background:var(--brand);color:#fff}
 }
 #s-worship .pad{padding:4px 0 12px}
 #s-worship h1{font-family:var(--serif);font-size:26px}
@@ -447,8 +519,9 @@ a.pill.line.createbtn{height:48px;margin-top:8px}
 <body>
 <div class="app" id="app">
 <section class="screen" id="s-signin" hidden>
+  <div class="auth-card">
   <div class="auth-photo">
-    <div class="hdr"><img class="logo" src="assets/logo-bethany-light.svg" alt="Bethany Church"><div class="lang glass"><button type="button" id="auth-en">EN</button><button type="button" id="auth-ko">한</button></div></div>
+    <div class="hdr"><img class="logo logo-on-photo" src="assets/logo-bethany-light.svg" alt="Bethany Church"><img class="logo logo-on-cream" src="assets/logo-bethany-ink.svg" alt=""><div class="lang glass"><button type="button" id="auth-en">EN</button><button type="button" id="auth-ko">한</button></div></div>
     <h1><span data-i18n="welcomeTitle">Welcome home&nbsp;to</span><br><em data-i18n="welcomeChurch">Bethany Church</em></h1>
     <p class="lead" data-i18n="welcomeLead">Sign in for services, events and your ministries.</p>
   </div>
@@ -456,7 +529,7 @@ a.pill.line.createbtn{height:48px;margin-top:8px}
     <button class="gbtn" id="signin-google" type="button"><svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg><span data-i18n="google">Continue with Google</span></button>
     <div class="or" data-i18n="orEmail">or use email</div>
     <form id="signin-form">
-      <label class="fld"><svg class="i"><use href="#i-mail"/></svg><input id="signin-email" type="email" autocomplete="username" data-i18n-ph="email" placeholder="Email"></label>
+      <label class="fld"><svg class="i"><use href="#i-mail"/></svg><input id="signin-email" type="email" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" data-i18n-ph="email" placeholder="Email"></label>
       <label class="fld"><svg class="i"><use href="#i-lock"/></svg><input id="signin-pw" type="password" autocomplete="current-password" data-i18n-ph="password" placeholder="Password"><button class="eye" type="button" data-eye="signin-pw" aria-label="Show password"><svg class="i"><use href="#i-eye"/></svg></button></label>
       <div style="text-align:right;margin:-2px 2px 12px"><button class="lnkbtn" id="forgot" type="button" data-i18n="forgot">Forgot password?</button></div>
       <p class="auth-msg" id="signin-msg"></p>
@@ -466,10 +539,17 @@ a.pill.line.createbtn{height:48px;margin-top:8px}
     <a class="pill line block createbtn" href="#/create" data-i18n="create">Create account</a>
     <p class="mut" style="text-align:center;margin-top:16px">15414 Ash Way, Lynnwood · (206) 551-7321</p>
   </div>
+  </div>
 </section>
 
 <section class="screen" id="s-create" hidden>
+  <div class="auth-photo auth-wide">
+    <h1><span data-i18n="welcomeTitle">Welcome home&nbsp;to</span><br><em data-i18n="welcomeChurch">Bethany Church</em></h1>
+    <p class="lead" data-i18n="welcomeLead">Sign in for services, events and your ministries.</p>
+  </div>
+  <div class="auth-card">
   <div class="tex"></div>
+  <img class="logo auth-card-logo" src="assets/logo-bethany-ink.svg" alt="Bethany Church">
   <div class="hdr"><button class="back" type="button" onclick="location.hash='#/signin'"><svg class="i"><use href="#i-back"/></svg></button><div class="lang"><button type="button" id="create-en">EN</button><button type="button" id="create-ko">한</button></div></div>
   <div class="steps"><i class="on"></i><i></i></div>
   <div class="eyebrow gold" data-i18n="step1">Step 1 of 2</div>
@@ -479,7 +559,7 @@ a.pill.line.createbtn{height:48px;margin-top:8px}
   <div class="or" data-i18n="orEmailUp">or with email</div>
   <form id="create-form">
     <label class="flabel" data-i18n="email">Email</label>
-    <label class="fld"><svg class="i"><use href="#i-mail"/></svg><input id="create-email" type="email" autocomplete="username"></label>
+    <label class="fld"><svg class="i"><use href="#i-mail"/></svg><input id="create-email" type="email" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false"></label>
     <label class="flabel" data-i18n="password">Password</label>
     <label class="fld"><svg class="i"><use href="#i-lock"/></svg><input id="create-pw" type="password" autocomplete="new-password"><button class="eye" type="button" data-eye="create-pw" aria-label="Show password"><svg class="i"><use href="#i-eye"/></svg></button></label>
     <p class="mut" data-i18n="pwHint">At least 8 characters</p>
@@ -487,10 +567,17 @@ a.pill.line.createbtn{height:48px;margin-top:8px}
     <button class="pill brand block" type="submit" data-i18n="continue">Continue</button>
   </form>
   <div class="authfoot"><span data-i18n="haveAccount">Already have an account?</span> <a class="lnk" href="#/signin" data-i18n="signIn">Sign in</a></div>
+  </div>
 </section>
 
 <section class="screen" id="s-name" hidden>
+  <div class="auth-photo auth-wide">
+    <h1><span data-i18n="welcomeTitle">Welcome home&nbsp;to</span><br><em data-i18n="welcomeChurch">Bethany Church</em></h1>
+    <p class="lead" data-i18n="welcomeLead">Sign in for services, events and your ministries.</p>
+  </div>
+  <div class="auth-card">
   <div class="tex"></div>
+  <img class="logo auth-card-logo" src="assets/logo-bethany-ink.svg" alt="Bethany Church">
   <div class="hdr"><button class="back" type="button" id="name-back"><svg class="i"><use href="#i-back"/></svg></button><div class="lang"><button type="button" id="name-en">EN</button><button type="button" id="name-ko">한</button></div></div>
   <div class="steps"><i class="on"></i><i class="on"></i></div>
   <div class="eyebrow gold" data-i18n="step2">Step 2 of 2</div>
@@ -506,6 +593,7 @@ a.pill.line.createbtn{height:48px;margin-top:8px}
     <button class="pill brand block" type="submit" data-i18n="finish">Finish</button>
   </form>
   <p class="mut" style="text-align:center" data-i18n="nameLater"></p>
+  </div>
 </section>
 
 <section class="screen" id="s-home" hidden>
@@ -916,6 +1004,6 @@ const WORSHIP_BACKEND_URL = 'https://script.google.com/macros/s/AKfycbwWtdJUNT8n
 <script src="js/config.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/app.js"></script>
-<script src="worship.js?v=26"></script>
+<script src="worship.js?v=27"></script>
 </body>
 </html>
