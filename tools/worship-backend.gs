@@ -230,39 +230,56 @@ function availabilitySheet_() {
   return ensureSheet_(ss, "Availability", ["updatedAt", "team", "person", "sunday", "status", "note"]);
 }
 
+function availabilityItems_(params) {
+  var items = params.items;
+  if (typeof items === "string") {
+    try { items = JSON.parse(items); } catch (err) { items = null; }
+  }
+  if (!items || !items.length) items = [{ person: params.person, sunday: params.sunday, status: params.status, note: params.note }];
+  var out = [];
+  items.forEach(function (item) {
+    if (!item) return;
+    var sunday = isoCell_(item.sunday);
+    var person = String(item.person || "");
+    if (!person || !/^\d{4}-\d{2}-\d{2}$/.test(sunday)) return;
+    out.push({ person: person, sunday: sunday, status: String(item.status || ""), note: String(item.note || "") });
+  });
+  return out;
+}
 function getAvailability_(params) {
   var team = String(params.team || "worship");
-  var rows = availabilitySheet_().getDataRange().getValues();
+  var values = availabilitySheet_().getDataRange().getValues();
   var latest = {};
-  for (var i = 1; i < rows.length; i++) {
-    if (String(rows[i][1]) !== team) continue;
-    var sunday = isoCell_(rows[i][3]);
-    latest[String(rows[i][2]) + "|" + sunday] = {
-      person: String(rows[i][2]),
+  for (var i = 1; i < values.length; i++) {
+    if (String(values[i][1]) !== team) continue;
+    var sunday = isoCell_(values[i][3]);
+    latest[String(values[i][2]) + "|" + sunday] = {
+      person: String(values[i][2]),
       sunday: sunday,
-      status: String(rows[i][4] || ""),
-      note: String(rows[i][5] || "")
+      status: String(values[i][4] || ""),
+      note: String(values[i][5] || "")
     };
   }
   var list = [];
-  Object.keys(latest).forEach(function (key) { if (latest[key].status) list.push(latest[key]); });
+  Object.keys(latest).forEach(function (id) { if (latest[id].status) list.push(latest[id]); });
   return { ok: true, status: 200, team: team, rows: list };
 }
 
 function setAvailability_(params) {
   var team = String(params.team || "worship");
-  var person = String(params.person || "");
-  var sunday = isoCell_(params.sunday);
-  var status = String(params.status || "");
-  var note = String(params.note || "");
-  if (!person || !/^\d{4}-\d{2}-\d{2}$/.test(sunday)) return { ok: false, status: 400, error: "fields" };
+  var items = availabilityItems_(params);
+  if (!items.length) return { ok: false, status: 400, error: "fields" };
   if (params._user && params._user.uid) {
     var member = memberByUid_(params._user.uid);
-    if (member && member.rosterId && String(member.rosterId) !== person) return { ok: false, status: 403, error: "roster" };
-    if (member && !member.rosterId) upsertMember_(params._user, { rosterId: person });
+    if (member && member.rosterId) {
+      var blocked = items.some(function (item) { return String(member.rosterId) !== item.person; });
+      if (blocked) return { ok: false, status: 403, error: "roster" };
+    } else if (member && !member.rosterId) upsertMember_(params._user, { rosterId: items[0].person });
   }
+  var sheet = availabilitySheet_();
   var when = Utilities.formatDate(new Date(), "America/Los_Angeles", "yyyy-MM-dd'T'HH:mm:ssXXX");
-  availabilitySheet_().appendRow([when, team, person, "'" + sunday, status, note]);
+  var rows = items.map(function (item) { return [when, team, item.person, "'" + item.sunday, item.status, item.note]; });
+  sheet.getRange(sheet.getLastRow() + 1, 1, rows.length, 6).setValues(rows);
   return { ok: true, status: 200, team: team };
 }
 

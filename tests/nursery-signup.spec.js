@@ -63,6 +63,8 @@ async function boot(page, opts) {
     else if (action === "getProfile" || action === "saveProfile") {
       payload = { ok: true, status: 200, profile: { uid: "uid-daniel", email: "daniel.kim@bethanychurch.test", name: "Daniel Kim", teams: state.teams.slice(), newsletter: true, churchComms: true, reminders: true, lang: "en" } };
     } else if (action === "setAvailability") {
+      if (!page._writes) page._writes = [];
+      page._writes.push({ action: action, items: body.items || null, person: body.person, sunday: body.sunday });
       if (delayAdd) await new Promise(function (resolve) { setTimeout(resolve, delayAdd); });
       payload = { ok: true, status: 200, team: "worship" };
     } else if (action === "getAvailability") payload = { ok: true, status: 200, team: "worship", rows: [] };
@@ -187,19 +189,38 @@ test("pick Sundays and availability update before the server answers", async fun
   await page.locator("#nursery-pick").click();
   await page.locator("#pick-grid .sun-chip").nth(0).click();
   await page.locator("#pick-grid .sun-chip").nth(1).click();
+  await page.screenshot({ path: ART + "/nursery-before-pick.png" });
   const started = Date.now();
   await page.locator("#pick-go").click();
   await expect(page.getByText("You're on 2 Sundays")).toBeVisible();
   await expect(page.locator("#sheet-pick")).toBeHidden();
-  expect(Date.now() - started).toBeLessThan(500);
+  const nurseryMs = Date.now() - started;
+  expect(nurseryMs).toBeLessThan(500);
+  await page.screenshot({ path: ART + "/nursery-after-pick.png" });
 
   await page.goto("/index.html?fast=2#/availability");
   await page.getByRole("button", { name: "Daniel" }).click();
+  await page.screenshot({ path: ART + "/worship-before-avail.png" });
   const availStarted = Date.now();
-  await page.getByRole("button", { name: "Available", exact: true }).first().click();
+  await page.locator("#avail-days .av3").nth(0).getByRole("button", { name: "Available", exact: true }).click();
+  await page.locator("#avail-days .av3").nth(1).getByRole("button", { name: "Maybe", exact: true }).click();
   await expect(page.locator("#avail-days button.available").first()).toBeVisible();
-  expect(Date.now() - availStarted).toBeLessThan(500);
+  await expect(page.locator("#avail-days button.maybe").first()).toBeVisible();
+  const worshipMs = Date.now() - availStarted;
+  expect(worshipMs).toBeLessThan(500);
   await expect(page.locator("#avail-status")).not.toHaveText("Saving…");
+  await page.screenshot({ path: ART + "/worship-after-avail.png" });
+  await page.waitForTimeout(500);
+  const writes = page._writes || [];
+  expect(writes.filter(function (row) { return row.action === "setAvailability"; }).length).toBe(1);
+  fs.writeFileSync(ART + "/timings.json", JSON.stringify({
+    serverHoldMs: 1200,
+    nurseryBeforeMs: "Confirm stayed on the sheet until addNurseryDates returned, so this hold blocked the screen for the full 1200ms. On Apps Script that wait was usually several seconds.",
+    nurseryAfterMs: nurseryMs,
+    worshipBeforeMs: "The Available button stayed unselected and the header said Saving until setAvailability returned, so this hold blocked the screen for the full 1200ms, once per tap.",
+    worshipAfterMs: worshipMs,
+    worshipWrites: writes.filter(function (row) { return row.action === "setAvailability"; }).length
+  }, null, 2));
 });
 
 test("service worker precache includes the nursery script", async function ({ page }) {

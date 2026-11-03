@@ -732,11 +732,21 @@ function flushAvailSync() {
   availSync.pending = {};
   availSync.base = null;
   if (!keys.length) return;
-  Promise.all(keys.map(function (key) {
+  var items = keys.map(function (key) {
     var item = pending[key];
-    return api({ action: "setAvailability", team: "worship", person: item.person, sunday: item.iso, status: item.status, note: item.note });
-  })).then(function (results) {
-    var bad = results.some(function (res) { return !res || res.ok === false; });
+    return { person: item.person, sunday: item.iso, status: item.status, note: item.note };
+  });
+  var last = items[items.length - 1];
+  api({
+    action: "setAvailability",
+    team: "worship",
+    person: last.person,
+    sunday: last.iso,
+    status: last.status,
+    note: last.note,
+    items: items
+  }).then(function (res) {
+    var bad = !res || res.ok === false;
     if (!bad) return;
     if (base != null && !Object.keys(availSync.pending).length) {
       try { saveAvailLocal(JSON.parse(base)); } catch (e) {}
