@@ -374,33 +374,71 @@ function syncPickButton() {
   btn.disabled = !n || rosterState.offline;
   btn.textContent = n ? (n === 1 ? t("confirmOne") : tf("confirmN", { n: n })) : t("selectSundays");
 }
+var rosterSync = { timer: 0, add: {}, remove: {}, base: null };
+function myRosterName() {
+  return shortName(displayName()) || t("you");
+}
+function rosterWithMe(day, on) {
+  var people = (day.people || []).filter(function (p) { return !p.isMe; });
+  if (on) people.unshift({ name: myRosterName(), isMe: true });
+  return { sunday: day.sunday, goal: day.goal, count: people.length, people: people };
+}
+function paintRosterNow(next) {
+  writeRosterCache(next);
+  paintNurseryRoster();
+  paintHomeServing();
+}
+function queueRoster(iso, mode) {
+  if (rosterSync.base == null) rosterSync.base = JSON.stringify(rosterState.roster || []);
+  if (mode === "add") { delete rosterSync.remove[iso]; rosterSync.add[iso] = 1; }
+  else if (mode === "remove") { delete rosterSync.add[iso]; rosterSync.remove[iso] = 1; }
+  else { delete rosterSync.add[iso]; delete rosterSync.remove[iso]; }
+  clearTimeout(rosterSync.timer);
+  rosterSync.timer = setTimeout(flushRosterSync, 280);
+}
+function flushRosterSync() {
+  var add = Object.keys(rosterSync.add);
+  var remove = Object.keys(rosterSync.remove);
+  var base = rosterSync.base;
+  rosterSync.add = {};
+  rosterSync.remove = {};
+  rosterSync.base = null;
+  if (!add.length && !remove.length) return;
+  var jobs = [];
+  if (add.length) jobs.push(api({ action: "addNurseryDates", sundays: add }));
+  remove.forEach(function (iso) { jobs.push(api({ action: "cancelNurseryDate", sunday: iso })); });
+  Promise.all(jobs).then(function (results) {
+    var team = false;
+    var failed = [];
+    results.forEach(function (res) {
+      if (res && res.ok === false && res.error === "team") team = true;
+      else if (!res || res.ok === false) failed.push(true);
+      else if (res.failed && res.failed.length) res.failed.forEach(function (day) { failed.push(day); });
+    });
+    if (team) { sendToNurseryCode(); return; }
+    if (!failed.length) return;
+    if (base != null && !Object.keys(rosterSync.add).length && !Object.keys(rosterSync.remove).length) {
+      try { paintRosterNow(JSON.parse(base)); } catch (e) {}
+    }
+    showToast(t("updateError"));
+  }).catch(function () {
+    if (base != null && !Object.keys(rosterSync.add).length && !Object.keys(rosterSync.remove).length) {
+      try { paintRosterNow(JSON.parse(base)); } catch (e) {}
+    }
+    showToast(t("updateError"));
+  });
+}
 function confirmPick() {
   var dates = Object.keys(rosterState.pick).filter(function (k) { return rosterState.pick[k]; });
   if (!dates.length || rosterState.offline) return;
-  var btn = document.getElementById("pick-go");
-  btn.disabled = true;
-  api({ action: "addNurseryDates", sundays: dates }).then(function (res) {
-    if (res && res.ok === false && res.error === "team") { sendToNurseryCode(); return; }
-    if (!res || res.ok === false) { document.getElementById("pick-err").hidden = false; document.getElementById("pick-err").textContent = t("updateError"); btn.disabled = false; return; }
-    writeRosterCache(res.roster || []);
-    var failed = res.failed || [];
-    if (failed.length) {
-      rosterState.pick = {};
-      failed.forEach(function (d) { rosterState.pick[d] = true; });
-      document.getElementById("pick-err").hidden = false;
-      document.getElementById("pick-err").textContent = t("updateError");
-      paintNurseryRoster();
-      return;
-    }
-    closeSheet("sheet-pick");
-    paintNurseryRoster();
-    paintHomeServing();
-    showToast(tf("addedToast", { n: res.added || dates.length }));
-  }).catch(function () {
-    document.getElementById("pick-err").hidden = false;
-    document.getElementById("pick-err").textContent = t("updateError");
-    btn.disabled = false;
-  });
+  if (rosterSync.base == null) rosterSync.base = JSON.stringify(rosterState.roster || []);
+  paintRosterNow((rosterState.roster || []).map(function (day) {
+    return dates.indexOf(day.sunday) >= 0 ? rosterWithMe(day, true) : day;
+  }));
+  dates.forEach(function (iso) { queueRoster(iso, "add"); });
+  rosterState.pick = {};
+  closeSheet("sheet-pick");
+  showToast(tf("addedToast", { n: dates.length }));
 }
 function openCancel(iso) {
   cancelSunday = iso;
@@ -420,33 +458,17 @@ function openCancel(iso) {
 function confirmCancel() {
   var iso = cancelSunday;
   if (!iso) return;
-  var prev = JSON.stringify(rosterState.roster || []);
-  rosterState.roster = (rosterState.roster || []).map(function (day) {
-    if (day.sunday !== iso) return day;
-    var people = (day.people || []).filter(function (p) { return !p.isMe; });
-    return { sunday: day.sunday, goal: day.goal, count: people.length, people: people };
-  });
+  if (rosterSync.base == null) rosterSync.base = JSON.stringify(rosterState.roster || []);
+  paintRosterNow((rosterState.roster || []).map(function (day) {
+    return day.sunday === iso ? rosterWithMe(day, false) : day;
+  }));
+  queueRoster(iso, "remove");
   closeSheet("sheet-cancel");
-  paintNurseryRoster();
-  paintHomeServing();
   showToast(tf("removedToast", { date: sundayShort(iso) }), function () {
-    api({ action: "addNurseryDates", sundays: [iso] }).then(function (res) {
-      if (res && res.roster) writeRosterCache(res.roster);
-      paintNurseryRoster();
-      paintHomeServing();
-    });
-  });
-  api({ action: "cancelNurseryDate", sunday: iso }).then(function (res) {
-    if (res && res.ok === false && res.error === "team") { sendToNurseryCode(); return; }
-    if (!res || res.ok === false) throw new Error("fail");
-    if (res.roster) writeRosterCache(res.roster);
-    paintNurseryRoster();
-    paintHomeServing();
-  }).catch(function () {
-    try { rosterState.roster = JSON.parse(prev); } catch (e) {}
-    paintNurseryRoster();
-    paintHomeServing();
-    showToast(t("updateError"));
+    paintRosterNow((rosterState.roster || []).map(function (day) {
+      return day.sunday === iso ? rosterWithMe(day, true) : day;
+    }));
+    queueRoster(iso, rosterSync.remove[iso] ? "keep" : "add");
   });
 }
 

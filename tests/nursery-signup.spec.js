@@ -21,6 +21,7 @@ function sundays(count) {
 async function boot(page, opts) {
   const localTeams = opts.local || [];
   const days = sundays(8);
+  const delayAdd = opts.delayAdd || 0;
   const state = { teams: (opts.server || []).slice(), rows: [] };
   if (opts.seed) state.rows.push({ sunday: days[0], status: "active" });
   await page.addInitScript(function (teams) {
@@ -61,7 +62,11 @@ async function boot(page, opts) {
     if (!open[action] && !authed) payload = { ok: false, status: 401, error: "auth" };
     else if (action === "getProfile" || action === "saveProfile") {
       payload = { ok: true, status: 200, profile: { uid: "uid-daniel", email: "daniel.kim@bethanychurch.test", name: "Daniel Kim", teams: state.teams.slice(), newsletter: true, churchComms: true, reminders: true, lang: "en" } };
-    } else if (action === "getNurseryRoster" || action === "addNurseryDates" || action === "cancelNurseryDate") {
+    } else if (action === "setAvailability") {
+      if (delayAdd) await new Promise(function (resolve) { setTimeout(resolve, delayAdd); });
+      payload = { ok: true, status: 200, team: "worship" };
+    } else if (action === "getAvailability") payload = { ok: true, status: 200, team: "worship", rows: [] };
+    else if (action === "getNurseryRoster" || action === "addNurseryDates" || action === "cancelNurseryDate") {
       if (state.teams.indexOf("nursery") < 0) payload = { ok: false, status: 403, error: "team" };
       else if (action === "addNurseryDates") {
         let raw = body.sundays;
@@ -70,6 +75,7 @@ async function boot(page, opts) {
         }
         if (!Array.isArray(raw) || !raw.length) payload = { ok: false, status: 400, error: "fields" };
         else {
+          if (delayAdd) await new Promise(function (resolve) { setTimeout(resolve, delayAdd); });
           const failed = [];
           let added = 0;
           raw.forEach(function (item) {
@@ -173,6 +179,27 @@ test("nursery paths for a member the server already knows", async function ({ pa
   await page.locator("#more-serving a").first().click();
   await expect(page).toHaveURL(/#\/ministry\/nursery/);
   expect(errors).toEqual([]);
+});
+
+test("pick Sundays and availability update before the server answers", async function ({ page }) {
+  await boot(page, { local: ["nursery", "worship"], server: ["nursery", "worship"], delayAdd: 1200 });
+  await page.goto("/index.html?fast=1#/ministry/nursery");
+  await page.locator("#nursery-pick").click();
+  await page.locator("#pick-grid .sun-chip").nth(0).click();
+  await page.locator("#pick-grid .sun-chip").nth(1).click();
+  const started = Date.now();
+  await page.locator("#pick-go").click();
+  await expect(page.getByText("You're on 2 Sundays")).toBeVisible();
+  await expect(page.locator("#sheet-pick")).toBeHidden();
+  expect(Date.now() - started).toBeLessThan(500);
+
+  await page.goto("/index.html?fast=2#/availability");
+  await page.getByRole("button", { name: "Daniel" }).click();
+  const availStarted = Date.now();
+  await page.getByRole("button", { name: "Available", exact: true }).first().click();
+  await expect(page.locator("#avail-days button.available").first()).toBeVisible();
+  expect(Date.now() - availStarted).toBeLessThan(500);
+  await expect(page.locator("#avail-status")).not.toHaveText("Saving…");
 });
 
 test("service worker precache includes the nursery script", async function ({ page }) {

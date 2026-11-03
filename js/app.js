@@ -711,15 +711,45 @@ function renderRoster() {
   });
 }
 function initials(name) { return name.split(/\s+/).map(function (w) { return w[0]; }).join("").slice(0, 2).toUpperCase(); }
+var availSync = { timer: 0, pending: {}, base: null };
 function setAvail(person, iso, status, note) {
+  if (availSync.base == null) availSync.base = JSON.stringify(availMap());
   var map = availMap();
-  map[person + "|" + iso] = { status: status, note: note || "" };
+  var key = person + "|" + iso;
+  map[key] = { status: status, note: note || "" };
   saveAvailLocal(map);
-  document.getElementById("avail-status").textContent = t("saving");
-  api({ action: "setAvailability", team: "worship", person: person, sunday: iso, status: status, note: note || "" }).then(function (res) {
-    document.getElementById("avail-status").textContent = soonError(res) ? t("soon") : t("saved");
-    renderAvailability();
-  }).catch(function () { document.getElementById("avail-status").textContent = t("soon"); renderAvailability(); });
+  var statusEl = document.getElementById("avail-status");
+  if (statusEl && statusEl.textContent === t("saving")) statusEl.textContent = "";
+  renderAvailability();
+  availSync.pending[key] = { person: person, iso: iso, status: status, note: note || "" };
+  clearTimeout(availSync.timer);
+  availSync.timer = setTimeout(flushAvailSync, 280);
+}
+function flushAvailSync() {
+  var pending = availSync.pending;
+  var base = availSync.base;
+  var keys = Object.keys(pending);
+  availSync.pending = {};
+  availSync.base = null;
+  if (!keys.length) return;
+  Promise.all(keys.map(function (key) {
+    var item = pending[key];
+    return api({ action: "setAvailability", team: "worship", person: item.person, sunday: item.iso, status: item.status, note: item.note });
+  })).then(function (results) {
+    var bad = results.some(function (res) { return !res || res.ok === false; });
+    if (!bad) return;
+    if (base != null && !Object.keys(availSync.pending).length) {
+      try { saveAvailLocal(JSON.parse(base)); } catch (e) {}
+      renderAvailability();
+    }
+    if (typeof showToast === "function") showToast(t("updateError"));
+  }).catch(function () {
+    if (base != null && !Object.keys(availSync.pending).length) {
+      try { saveAvailLocal(JSON.parse(base)); } catch (e) {}
+      renderAvailability();
+    }
+    if (typeof showToast === "function") showToast(t("updateError"));
+  });
 }
 function renderTeamGrid(days, map) {
   var g = document.getElementById("avail-grid");
@@ -777,7 +807,11 @@ function pullAvailability() {
   api({ action: "getAvailability", team: "worship" }).then(function (res) {
     if (!res || !res.rows) return;
     var map = availMap();
-    res.rows.forEach(function (row) { map[row.person + "|" + isoDay(row.sunday)] = { status: row.status, note: row.note || "" }; });
+    res.rows.forEach(function (row) {
+      var key = row.person + "|" + isoDay(row.sunday);
+      if (availSync.pending[key]) return;
+      map[key] = { status: row.status, note: row.note || "" };
+    });
     saveAvailLocal(map);
     if ((location.hash || "").indexOf("availability") >= 0) renderAvailability();
   }).catch(function () {});

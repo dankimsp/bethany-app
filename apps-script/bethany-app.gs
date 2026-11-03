@@ -773,12 +773,44 @@ function memberSheet_() {
   return ensureSheet_(book_(), "Members", MEMBER_HEADERS);
 }
 
-function memberByUid_(uid) {
+function cacheGet_(key) {
+  try {
+    var raw = CacheService.getScriptCache().get(key);
+    return raw ? JSON.parse(raw) : null;
+  } catch (err) { return null; }
+}
+function cachePut_(key, value, seconds) {
+  try { CacheService.getScriptCache().put(key, JSON.stringify(value), seconds || 120); } catch (err) {}
+}
+function cacheGen_(name, bump) {
+  var key = "gen:" + name;
+  try {
+    var cache = CacheService.getScriptCache();
+    if (bump) {
+      var next = String(new Date().getTime());
+      cache.put(key, next, 21600);
+      return next;
+    }
+    return cache.get(key) || "0";
+  } catch (err) { return "0"; }
+}
+function membersMap_() {
+  var gen = cacheGen_("members", false);
+  var hit = cacheGet_("members:" + gen);
+  if (hit) return hit;
   var values = memberSheet_().getDataRange().getValues();
+  var map = {};
   for (var i = 1; i < values.length; i++) {
-    if (String(values[i][0]) === String(uid)) return memberFromRow_(values[i]);
+    var rec = memberFromRow_(values[i]);
+    if (rec.uid) map[String(rec.uid)] = rec;
   }
-  return null;
+  cachePut_("members:" + gen, map, 180);
+  return map;
+}
+function memberByUid_(uid) {
+  if (!uid) return null;
+  var map = membersMap_();
+  return map[String(uid)] || null;
 }
 
 function memberFromRow_(row) {
@@ -836,6 +868,7 @@ function upsertMember_(user, patch) {
   var out = MEMBER_HEADERS.map(function (h) { return row[h] == null ? "" : row[h]; });
   if (at < 0) sheet.appendRow(out);
   else sheet.getRange(at, 1, 1, MEMBER_HEADERS.length).setValues([out]);
+  cacheGen_("members", true);
   return profileOut_(row);
 }
 
@@ -901,8 +934,8 @@ function shortName_(full) {
   return parts.slice(0, -1).join(" ") + " " + parts[parts.length - 1].charAt(0).toUpperCase() + ".";
 }
 
-function liveRosterName_(uid, snapshot) {
-  var member = memberByUid_(uid);
+function liveRosterName_(uid, snapshot, members) {
+  var member = members ? members[String(uid)] : memberByUid_(uid);
   var full = member && member.name ? String(member.name) : String(snapshot || "");
   return shortName_(full);
 }
@@ -926,88 +959,98 @@ function withLock_(fn) {
   try { return fn(); } finally { lock.releaseLock(); }
 }
 
-function nurserySheet_() {
-  return ensureSheet_(book_(), "NurseryRoster", ["sunday", "uid", "displayName", "createdAt", "updatedAt", "status"]);
+function goalFromCell_(cell) {
+  if (cell == null || cell === "") return 2;
+  if (typeof cell === "number" && isFinite(cell) && cell < 1000) return cell > 0 ? cell : null;
+  var n = Number(String(cell).replace(/[^\d.-]/g, ""));
+  if (!isFinite(n)) return 2;
+  return n > 0 ? n : null;
 }
-
-function nurseryMap_() {
-  var sheet = nurserySheet_();
-  var values = sheet.getDataRange().getValues();
+function nurseryBundle_() {
+  var ss = book_();
+  var rosterSheet = ensureSheet_(ss, "NurseryRoster", ["sunday", "uid", "displayName", "createdAt", "updatedAt", "status"]);
+  var needsSheet = ensureSheet_(ss, "NurseryNeeds", ["sunday", "goal", "note"]);
+  var rosterValues = rosterSheet.getDataRange().getValues();
+  var needsValues = needsSheet.getDataRange().getValues();
+  var goals = {};
+  for (var g = 1; g < needsValues.length; g++) {
+    var gday = isoCell_(needsValues[g][0]);
+    if (gday) goals[gday] = goalFromCell_(needsValues[g][1]);
+  }
   var map = {};
-  for (var i = 1; i < values.length; i++) {
-    var sunday = isoCell_(values[i][0]);
-    var uid = String(values[i][1] || "");
+  for (var i = 1; i < rosterValues.length; i++) {
+    var sunday = isoCell_(rosterValues[i][0]);
+    var uid = String(rosterValues[i][1] || "");
     if (!sunday || !uid) continue;
     map[sunday + "|" + uid] = {
       row: i + 1,
       sunday: sunday,
       uid: uid,
-      displayName: String(values[i][2] || ""),
-      createdAt: String(values[i][3] || ""),
-      updatedAt: String(values[i][4] || ""),
-      status: String(values[i][5] || "")
+      displayName: String(rosterValues[i][2] || ""),
+      createdAt: String(rosterValues[i][3] || ""),
+      updatedAt: String(rosterValues[i][4] || ""),
+      status: String(rosterValues[i][5] || "")
     };
   }
-  return { sheet: sheet, map: map };
+  return { sheet: rosterSheet, map: map, goals: goals };
 }
-
+function nurseryMap_() {
+  var bundle = nurseryBundle_();
+  return { sheet: bundle.sheet, map: bundle.map };
+}
 function nurseryGoal_(sunday) {
   try {
-    var sheet = ensureSheet_(book_(), "NurseryNeeds", ["sunday", "goal", "note"]);
-    var values = sheet.getDataRange().getValues();
-    for (var i = 1; i < values.length; i++) {
-      if (isoCell_(values[i][0]) !== sunday) continue;
-      var cell = values[i][1];
-      if (cell == null || cell === "") return 2;
-      if (typeof cell === "number" && isFinite(cell) && cell < 1000) return cell > 0 ? cell : null;
-      var n = Number(String(cell).replace(/[^\d.-]/g, ""));
-      if (!isFinite(n)) return 2;
-      return n > 0 ? n : null;
-    }
-  } catch (err) {}
-  return 2;
+    var bundle = nurseryBundle_();
+    return Object.prototype.hasOwnProperty.call(bundle.goals, sunday) ? bundle.goals[sunday] : 2;
+  } catch (err) { return 2; }
 }
 
-function nurseryPerson_(p, meUid) {
-  var name = "";
-  try { name = liveRosterName_(p.uid, p.displayName); }
-  catch (err) { try { name = shortName_(p.displayName); } catch (e2) { name = ""; } }
-  return { name: name, isMe: p.uid === meUid };
-}
-function nurseryRosterPayload_(meUid, weeks) {
+function rosterFromBundle_(bundle, members, meUid, weeks) {
   weeks = Math.max(1, Math.min(8, Number(weeks) || 8));
   var days = [];
   try { days = nextSundays_(weeks); } catch (err) { days = []; }
   var byDay = {};
-  try {
-    var data = nurseryMap_();
-    Object.keys(data.map).forEach(function (key) {
-      var row = data.map[key];
-      if (!row || row.status !== "active" || !row.sunday) return;
-      if (!byDay[row.sunday]) byDay[row.sunday] = [];
-      byDay[row.sunday].push(row);
-    });
-  } catch (err) { byDay = {}; }
+  Object.keys(bundle.map || {}).forEach(function (key) {
+    var row = bundle.map[key];
+    if (!row || row.status !== "active" || !row.sunday) return;
+    if (!byDay[row.sunday]) byDay[row.sunday] = [];
+    byDay[row.sunday].push(row);
+  });
   return days.map(function (sunday) {
     var people = (byDay[sunday] || []).slice().sort(function (a, b) {
       return String(a.createdAt).localeCompare(String(b.createdAt));
     });
-    var goal = 2;
-    try { goal = nurseryGoal_(sunday); } catch (err) { goal = 2; }
+    var goal = bundle.goals && Object.prototype.hasOwnProperty.call(bundle.goals, sunday) ? bundle.goals[sunday] : 2;
     return {
       sunday: sunday,
       goal: goal,
       count: people.length,
-      people: people.map(function (p) { return nurseryPerson_(p, meUid); })
+      people: people.map(function (p) {
+        var name = "";
+        try { name = liveRosterName_(p.uid, p.displayName, members); }
+        catch (err) { try { name = shortName_(p.displayName); } catch (e2) { name = ""; } }
+        return { name: name, isMe: p.uid === meUid };
+      })
     };
   });
+}
+function nurseryRosterPayload_(meUid, weeks) {
+  return rosterFromBundle_(nurseryBundle_(), membersMap_(), meUid, weeks);
+}
+function rememberRoster_(meUid, weeks, roster) {
+  cachePut_("nr:" + cacheGen_("nursery", false) + ":" + meUid + ":" + weeks, roster, 60);
 }
 
 function getNurseryRoster_(params) {
   var gate = requireNursery_(params);
   if (gate) return gate;
+  var weeks = Math.max(1, Math.min(8, Number(params.weeks) || 8));
+  var cached = cacheGet_("nr:" + cacheGen_("nursery", false) + ":" + params._user.uid + ":" + weeks);
+  if (cached) return { ok: true, status: 200, roster: cached };
   try {
-    return { ok: true, status: 200, roster: nurseryRosterPayload_(params._user.uid, params.weeks) };
+    var roster = nurseryRosterPayload_(params._user.uid, weeks);
+    rememberRoster_(params._user.uid, weeks, roster);
+    return { ok: true, status: 200, roster: roster };
   } catch (err) {
     return { ok: false, status: 500, error: "roster" };
   }
@@ -1022,30 +1065,40 @@ function addNurseryDates_(params) {
   }
   if (!raw || !raw.length || raw.length > 8) return { ok: false, status: 400, error: "fields" };
   var user = params._user;
-  var member = null;
-  try { member = memberByUid_(user.uid); } catch (err) { member = null; }
+  var members = {};
+  try { members = membersMap_(); } catch (err) { members = {}; }
+  var member = members[String(user.uid)] || null;
   var fullName = member && member.name ? String(member.name) : String(user.name || "");
-  try { return withLock_(function () {
-    var data = nurseryMap_();
-    var added = 0;
-    var failed = [];
-    var allowed = nextSundays_(8);
-    var now = Utilities.formatDate(new Date(), "America/Los_Angeles", "yyyy-MM-dd'T'HH:mm:ssXXX");
-    raw.forEach(function (item) {
-      var sunday = isoCell_(item);
-      if (allowed.indexOf(sunday) < 0) { failed.push(sunday); return; }
-      var existing = data.map[sunday + "|" + user.uid];
-      if (existing && existing.status === "active") return;
-      if (existing) {
-        data.sheet.getRange(existing.row, 3, 1, 4).setValues([[fullName, existing.createdAt || now, now, "active"]]);
-        existing.status = "active";
-      } else {
-        data.sheet.appendRow(["'" + sunday, user.uid, fullName, now, now, "active"]);
-      }
-      added++;
+  var allowed = [];
+  try { allowed = nextSundays_(8); } catch (err) { allowed = []; }
+  try {
+    var outcome = withLock_(function () {
+      var data = nurseryBundle_();
+      var added = 0;
+      var failed = [];
+      var now = Utilities.formatDate(new Date(), "America/Los_Angeles", "yyyy-MM-dd'T'HH:mm:ssXXX");
+      raw.forEach(function (item) {
+        var sunday = isoCell_(item);
+        if (allowed.indexOf(sunday) < 0) { failed.push(sunday); return; }
+        var existing = data.map[sunday + "|" + user.uid];
+        if (existing && existing.status === "active") return;
+        if (existing) {
+          data.sheet.getRange(existing.row, 3, 1, 4).setValues([[fullName, existing.createdAt || now, now, "active"]]);
+          existing.status = "active";
+          existing.displayName = fullName;
+        } else {
+          data.sheet.appendRow(["'" + sunday, user.uid, fullName, now, now, "active"]);
+          data.map[sunday + "|" + user.uid] = { sunday: sunday, uid: user.uid, displayName: fullName, createdAt: now, updatedAt: now, status: "active" };
+        }
+        added++;
+      });
+      cacheGen_("nursery", true);
+      return { added: added, failed: failed, bundle: data };
     });
-    return { ok: true, status: 200, added: added, failed: failed, roster: nurseryRosterPayload_(user.uid, 8) };
-  }); } catch (err) { return { ok: false, status: 500, error: "roster" }; }
+    var roster = rosterFromBundle_(outcome.bundle, members, user.uid, 8);
+    rememberRoster_(user.uid, 8, roster);
+    return { ok: true, status: 200, added: outcome.added, failed: outcome.failed, roster: roster };
+  } catch (err) { return { ok: false, status: 500, error: "roster" }; }
 }
 
 function cancelNurseryDate_(params) {
@@ -1054,15 +1107,24 @@ function cancelNurseryDate_(params) {
   var sunday = isoCell_(params.sunday);
   if (nextSundays_(8).indexOf(sunday) < 0) return { ok: false, status: 400, error: "fields" };
   var user = params._user;
-  try { return withLock_(function () {
-    var data = nurseryMap_();
-    var existing = data.map[sunday + "|" + user.uid];
-    if (existing && existing.status === "active") {
-      var now = Utilities.formatDate(new Date(), "America/Los_Angeles", "yyyy-MM-dd'T'HH:mm:ssXXX");
-      data.sheet.getRange(existing.row, 5, 1, 2).setValues([[now, "cancelled"]]);
-    }
-    return { ok: true, status: 200, roster: nurseryRosterPayload_(user.uid, 8) };
-  }); } catch (err) { return { ok: false, status: 500, error: "roster" }; }
+  var members = {};
+  try { members = membersMap_(); } catch (err) { members = {}; }
+  try {
+    var bundle = withLock_(function () {
+      var data = nurseryBundle_();
+      var existing = data.map[sunday + "|" + user.uid];
+      if (existing && existing.status === "active") {
+        var now = Utilities.formatDate(new Date(), "America/Los_Angeles", "yyyy-MM-dd'T'HH:mm:ssXXX");
+        data.sheet.getRange(existing.row, 5, 1, 2).setValues([[now, "cancelled"]]);
+        existing.status = "cancelled";
+      }
+      cacheGen_("nursery", true);
+      return data;
+    });
+    var roster = rosterFromBundle_(bundle, members, user.uid, 8);
+    rememberRoster_(user.uid, 8, roster);
+    return { ok: true, status: 200, roster: roster };
+  } catch (err) { return { ok: false, status: 500, error: "roster" }; }
 }
 
 function worshipMarkedCount_(member) {
