@@ -57,7 +57,122 @@ function handle_(params) {
   if (action === "publish") return publish_(params.payload || params);
   if (action === "get") return readSet_(params.id);
   if (action === "request") return request_(params);
+  if (action === "verifyTeamCode") return verifyTeamCode_(params);
+  if (action === "getSignups") return getSignups_(params);
+  if (action === "addSignup") return addSignup_(params);
+  if (action === "cancelSignup") return cancelSignup_(params);
+  if (action === "getAvailability") return getAvailability_(params);
+  if (action === "setAvailability") return setAvailability_(params);
   return { ok: false, status: 400, error: "action" };
+}
+
+function verifyTeamCode_(params) {
+  var team = String(params.team || "").toLowerCase();
+  var code = String(params.code || "");
+  var key = team === "worship" ? "TEAM_CODE_WORSHIP" : team === "nursery" ? "TEAM_CODE_NURSERY" : "";
+  if (!key) return { ok: false, status: 400, error: "team" };
+  var expected = PropertiesService.getScriptProperties().getProperty(key);
+  if (!expected) return { ok: false, status: 503, error: "soon" };
+  if (!codeOk_(code, expected)) return { ok: false, status: 401, error: "code" };
+  return { ok: true, status: 200, team: team };
+}
+
+function codeOk_(code, expected) {
+  expected = String(expected || "");
+  if (!code || !expected) return false;
+  if (/^[0-9a-f]{64}$/i.test(expected)) return hashPass_(code) === expected.toLowerCase();
+  return code === expected;
+}
+
+function signupSheet_() {
+  var ss = book_();
+  return ensureSheet_(ss, "Signups", ["updatedAt", "kind", "sunday", "name", "deviceId", "active"]);
+}
+
+function signupList_(kind) {
+  var rows = signupSheet_().getDataRange().getValues();
+  var latest = {};
+  for (var i = 1; i < rows.length; i++) {
+    if (String(rows[i][1]) !== String(kind)) continue;
+    latest[String(rows[i][2]) + "|" + String(rows[i][4])] = {
+      sunday: String(rows[i][2]),
+      name: String(rows[i][3]),
+      deviceId: String(rows[i][4]),
+      active: String(rows[i][5]) !== "0"
+    };
+  }
+  var list = [];
+  Object.keys(latest).forEach(function (key) { if (latest[key].active) list.push(latest[key]); });
+  return list;
+}
+
+function getSignups_(params) {
+  var kind = String(params.kind || "");
+  if (kind !== "snack" && kind !== "km-food" && kind !== "nursery") return { ok: false, status: 400, error: "kind" };
+  return { ok: true, status: 200, kind: kind, signups: signupList_(kind) };
+}
+
+function addSignup_(params) {
+  var kind = String(params.kind || "");
+  var sunday = String(params.sunday || "");
+  var name = String(params.name || "").trim();
+  var deviceId = String(params.deviceId || "");
+  if ((kind !== "snack" && kind !== "km-food" && kind !== "nursery") || !sunday || !name || !deviceId) {
+    return { ok: false, status: 400, error: "fields" };
+  }
+  var existing = signupList_(kind);
+  if (kind !== "km-food") {
+    var taken = existing.some(function (row) { return row.sunday === sunday && row.deviceId !== deviceId; });
+    if (taken) return { ok: false, status: 409, error: "taken", signups: existing };
+  }
+  var when = Utilities.formatDate(new Date(), "America/Los_Angeles", "yyyy-MM-dd'T'HH:mm:ssXXX");
+  signupSheet_().appendRow([when, kind, sunday, name, deviceId, "1"]);
+  return { ok: true, status: 200, kind: kind, signups: signupList_(kind) };
+}
+
+function cancelSignup_(params) {
+  var kind = String(params.kind || "");
+  var sunday = String(params.sunday || "");
+  var deviceId = String(params.deviceId || "");
+  if (!kind || !sunday || !deviceId) return { ok: false, status: 400, error: "fields" };
+  var when = Utilities.formatDate(new Date(), "America/Los_Angeles", "yyyy-MM-dd'T'HH:mm:ssXXX");
+  signupSheet_().appendRow([when, kind, sunday, "", deviceId, "0"]);
+  return { ok: true, status: 200, kind: kind, signups: signupList_(kind) };
+}
+
+function availabilitySheet_() {
+  var ss = book_();
+  return ensureSheet_(ss, "Availability", ["updatedAt", "team", "person", "sunday", "status", "note"]);
+}
+
+function getAvailability_(params) {
+  var team = String(params.team || "worship");
+  var rows = availabilitySheet_().getDataRange().getValues();
+  var latest = {};
+  for (var i = 1; i < rows.length; i++) {
+    if (String(rows[i][1]) !== team) continue;
+    latest[String(rows[i][2]) + "|" + String(rows[i][3])] = {
+      person: String(rows[i][2]),
+      sunday: String(rows[i][3]),
+      status: String(rows[i][4] || ""),
+      note: String(rows[i][5] || "")
+    };
+  }
+  var list = [];
+  Object.keys(latest).forEach(function (key) { if (latest[key].status) list.push(latest[key]); });
+  return { ok: true, status: 200, team: team, rows: list };
+}
+
+function setAvailability_(params) {
+  var team = String(params.team || "worship");
+  var person = String(params.person || "");
+  var sunday = String(params.sunday || "");
+  var status = String(params.status || "");
+  var note = String(params.note || "");
+  if (!person || !sunday) return { ok: false, status: 400, error: "fields" };
+  var when = Utilities.formatDate(new Date(), "America/Los_Angeles", "yyyy-MM-dd'T'HH:mm:ssXXX");
+  availabilitySheet_().appendRow([when, team, person, sunday, status, note]);
+  return { ok: true, status: 200, team: team };
 }
 
 function auth_(token) {

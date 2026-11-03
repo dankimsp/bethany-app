@@ -1853,6 +1853,12 @@ document.addEventListener("visibilitychange", function () {
 function woApplyRoute() {
   var path = (location.hash || "").replace(/^#\/?/, "");
   if (path.indexOf("worship") !== 0) return;
+  if (window.bethanyAllowWorship && !window.bethanyAllowWorship()) {
+    var next = encodeURIComponent(path);
+    if ((location.hash || "").indexOf("team-code") < 0) location.replace("#/team-code?next=" + next);
+    return;
+  }
+  document.body.classList.add("in-worship");
   wo.songsRouted = true;
   var share = woReadHash();
   if (share) {
