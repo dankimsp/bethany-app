@@ -53,6 +53,12 @@ function handle_(params) {
   var auth = auth_(params.token);
   if (auth) return auth;
   var action = String(params.action || "getSongs");
+  var open = { listSongs: true, getSongs: true, get: true, request: true };
+  if (!open[action]) {
+    var user = requireUser_(params);
+    if (!user) return { ok: false, status: 401, error: "auth" };
+    params._user = user;
+  }
   if (action === "listSongs" || action === "getSongs") return songs_(params);
   if (action === "publish") return publish_(params.payload || params);
   if (action === "get") return readSet_(params.id);
@@ -63,7 +69,38 @@ function handle_(params) {
   if (action === "cancelSignup") return cancelSignup_(params);
   if (action === "getAvailability") return getAvailability_(params);
   if (action === "setAvailability") return setAvailability_(params);
+  if (action === "getProfile") return getProfile_(params);
+  if (action === "saveProfile") return saveProfile_(params);
   return { ok: false, status: 400, error: "action" };
+}
+
+function requireUser_(params) {
+  var token = String(params.idToken || "");
+  var props = PropertiesService.getScriptProperties();
+  var grace = props.getProperty("AUTH_GRACE") === "1";
+  if (!token) return grace ? { uid: "", email: "", name: "", grace: true } : null;
+  var cache = CacheService.getScriptCache();
+  var key = "id_" + hashPass_(token).slice(0, 40);
+  var hit = cache.get(key);
+  if (hit) {
+    try { return JSON.parse(hit); } catch (err) {}
+  }
+  var apiKey = props.getProperty("FIREBASE_API_KEY");
+  if (!apiKey) return grace ? { uid: "", email: "", name: "", grace: true } : null;
+  var res = UrlFetchApp.fetch("https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=" + encodeURIComponent(apiKey), {
+    method: "post",
+    contentType: "application/json",
+    payload: JSON.stringify({ idToken: token }),
+    muteHttpExceptions: true
+  });
+  var body = {};
+  try { body = JSON.parse(res.getContentText() || "{}"); } catch (err) { body = {}; }
+  if (res.getResponseCode() !== 200 || !body.users || !body.users.length) return null;
+  var account = body.users[0];
+  var user = { uid: String(account.localId || ""), email: String(account.email || ""), name: String(account.displayName || "") };
+  if (!user.uid) return null;
+  cache.put(key, JSON.stringify(user), 600);
+  return user;
 }
 
 function verifyTeamCode_(params) {
@@ -74,6 +111,7 @@ function verifyTeamCode_(params) {
   var expected = PropertiesService.getScriptProperties().getProperty(key);
   if (!expected) return { ok: false, status: 503, error: "soon" };
   if (!codeOk_(code, expected)) return { ok: false, status: 401, error: "code" };
+  if (params._user && params._user.uid) addMemberTeam_(params._user, team);
   return { ok: true, status: 200, team: team };
 }
 
@@ -100,7 +138,13 @@ function isoCell_(v) {
 
 function signupSheet_() {
   var ss = book_();
-  return ensureSheet_(ss, "Signups", ["updatedAt", "kind", "sunday", "name", "deviceId", "active"]);
+  return ensureSheet_(ss, "Signups", ["updatedAt", "kind", "sunday", "name", "deviceId", "active", "uid"]);
+}
+
+function samePerson_(row, uid, deviceId) {
+  if (uid && row.uid && row.uid === uid) return true;
+  if (deviceId && row.deviceId === deviceId) return true;
+  return false;
 }
 
 function signupList_(kind) {
@@ -109,10 +153,11 @@ function signupList_(kind) {
   for (var i = 1; i < rows.length; i++) {
     if (String(rows[i][1]) !== String(kind)) continue;
     var sunday = isoCell_(rows[i][2]);
-    latest[sunday + "|" + String(rows[i][4])] = {
+    latest[sunday + "|" + String(rows[i][4]) + "|" + String(rows[i][6] || "")] = {
       sunday: sunday,
       name: String(rows[i][3]),
       deviceId: String(rows[i][4]),
+      uid: String(rows[i][6] || ""),
       active: String(rows[i][5]) !== "0"
     };
   }
@@ -132,16 +177,17 @@ function addSignup_(params) {
   var sunday = isoCell_(params.sunday);
   var name = String(params.name || "").trim();
   var deviceId = String(params.deviceId || "");
-  if ((kind !== "snack" && kind !== "km-food" && kind !== "nursery") || !/^\d{4}-\d{2}-\d{2}$/.test(sunday) || !name || !deviceId) {
+  var uid = params._user && params._user.uid ? params._user.uid : String(params.uid || "");
+  if ((kind !== "snack" && kind !== "km-food" && kind !== "nursery") || !/^\d{4}-\d{2}-\d{2}$/.test(sunday) || !name || (!deviceId && !uid)) {
     return { ok: false, status: 400, error: "fields" };
   }
   var existing = signupList_(kind);
   if (kind !== "km-food") {
-    var taken = existing.some(function (row) { return row.sunday === sunday && row.deviceId !== deviceId; });
+    var taken = existing.some(function (row) { return row.sunday === sunday && !samePerson_(row, uid, deviceId); });
     if (taken) return { ok: false, status: 409, error: "taken", signups: existing };
   }
   var when = Utilities.formatDate(new Date(), "America/Los_Angeles", "yyyy-MM-dd'T'HH:mm:ssXXX");
-  signupSheet_().appendRow([when, kind, "'" + sunday, name, deviceId, "1"]);
+  signupSheet_().appendRow([when, kind, "'" + sunday, name, deviceId, "1", uid]);
   return { ok: true, status: 200, kind: kind, signups: signupList_(kind) };
 }
 
@@ -149,9 +195,10 @@ function cancelSignup_(params) {
   var kind = String(params.kind || "");
   var sunday = isoCell_(params.sunday);
   var deviceId = String(params.deviceId || "");
-  if (!kind || !/^\d{4}-\d{2}-\d{2}$/.test(sunday) || !deviceId) return { ok: false, status: 400, error: "fields" };
+  var uid = params._user && params._user.uid ? params._user.uid : String(params.uid || "");
+  if (!kind || !/^\d{4}-\d{2}-\d{2}$/.test(sunday) || (!deviceId && !uid)) return { ok: false, status: 400, error: "fields" };
   var when = Utilities.formatDate(new Date(), "America/Los_Angeles", "yyyy-MM-dd'T'HH:mm:ssXXX");
-  signupSheet_().appendRow([when, kind, "'" + sunday, "", deviceId, "0"]);
+  signupSheet_().appendRow([when, kind, "'" + sunday, "", deviceId, "0", uid]);
   return { ok: true, status: 200, kind: kind, signups: signupList_(kind) };
 }
 
@@ -186,6 +233,11 @@ function setAvailability_(params) {
   var status = String(params.status || "");
   var note = String(params.note || "");
   if (!person || !/^\d{4}-\d{2}-\d{2}$/.test(sunday)) return { ok: false, status: 400, error: "fields" };
+  if (params._user && params._user.uid) {
+    var member = memberByUid_(params._user.uid);
+    if (member && member.rosterId && String(member.rosterId) !== person) return { ok: false, status: 403, error: "roster" };
+    if (member && !member.rosterId) upsertMember_(params._user, { rosterId: person });
+  }
   var when = Utilities.formatDate(new Date(), "America/Los_Angeles", "yyyy-MM-dd'T'HH:mm:ssXXX");
   availabilitySheet_().appendRow([when, team, person, "'" + sunday, status, note]);
   return { ok: true, status: 200, team: team };
@@ -618,9 +670,124 @@ function ensureSheet_(ss, name, headers) {
   var sheet = ss.getSheetByName(name);
   if (!sheet) sheet = ss.insertSheet(name);
   if (sheet.getLastRow() === 0) sheet.appendRow(headers);
+  else {
+    var width = Math.max(sheet.getLastColumn(), 1);
+    var have = sheet.getRange(1, 1, 1, width).getValues()[0].map(function (h) { return String(h || ""); });
+    headers.forEach(function (h) {
+      if (have.indexOf(h) < 0) {
+        sheet.getRange(1, have.length + 1).setValue(h);
+        have.push(h);
+      }
+    });
+  }
   var dateCol = headers.indexOf("sunday") + 1;
   if (dateCol > 0) sheet.getRange(1, dateCol, Math.max(sheet.getMaxRows(), 2), 1).setNumberFormat("@");
   return sheet;
+}
+
+var MEMBER_HEADERS = ["uid", "email", "name", "provider", "teams", "rosterId", "newsletter", "churchComms", "reminders", "lang", "createdAt", "updatedAt"];
+
+function memberSheet_() {
+  return ensureSheet_(book_(), "Members", MEMBER_HEADERS);
+}
+
+function memberByUid_(uid) {
+  var values = memberSheet_().getDataRange().getValues();
+  for (var i = 1; i < values.length; i++) {
+    if (String(values[i][0]) === String(uid)) return memberFromRow_(values[i]);
+  }
+  return null;
+}
+
+function memberFromRow_(row) {
+  var rec = {};
+  MEMBER_HEADERS.forEach(function (h, i) { rec[h] = row[i] == null ? "" : row[i]; });
+  return rec;
+}
+
+function flag_(v, fallback) {
+  if (v === true || v === "1" || v === 1 || v === "true") return "1";
+  if (v === false || v === "0" || v === 0 || v === "false") return "0";
+  return fallback;
+}
+
+function profileOut_(row) {
+  var teams = String(row.teams || "").split(",").filter(function (id) { return id; });
+  return {
+    uid: String(row.uid || ""),
+    email: String(row.email || ""),
+    name: String(row.name || ""),
+    provider: String(row.provider || ""),
+    teams: teams,
+    rosterId: String(row.rosterId || ""),
+    newsletter: String(row.newsletter) !== "0",
+    churchComms: String(row.churchComms) !== "0",
+    reminders: String(row.reminders) !== "0",
+    lang: String(row.lang || "en")
+  };
+}
+
+function upsertMember_(user, patch) {
+  var sheet = memberSheet_();
+  var values = sheet.getDataRange().getValues();
+  var now = Utilities.formatDate(new Date(), "America/Los_Angeles", "yyyy-MM-dd'T'HH:mm:ssXXX");
+  var row = null;
+  var at = -1;
+  for (var i = 1; i < values.length; i++) {
+    if (String(values[i][0]) === String(user.uid)) { row = memberFromRow_(values[i]); at = i + 1; }
+  }
+  if (!row) {
+    row = { uid: user.uid, email: user.email || "", name: user.name || "", provider: "", teams: "", rosterId: "", newsletter: "1", churchComms: "1", reminders: "1", lang: "en", createdAt: now, updatedAt: now };
+  }
+  patch = patch || {};
+  if (patch.email) row.email = patch.email;
+  if (patch.name != null && patch.name !== "") row.name = patch.name;
+  if (patch.provider) row.provider = patch.provider;
+  if (patch.teams != null) row.teams = patch.teams;
+  if (patch.rosterId != null && patch.rosterId !== "") row.rosterId = patch.rosterId;
+  if (patch.newsletter != null) row.newsletter = flag_(patch.newsletter, "1");
+  if (patch.churchComms != null) row.churchComms = flag_(patch.churchComms, "1");
+  if (patch.reminders != null) row.reminders = flag_(patch.reminders, "1");
+  if (patch.lang) row.lang = patch.lang;
+  if (user.email && !row.email) row.email = user.email;
+  row.updatedAt = now;
+  var out = MEMBER_HEADERS.map(function (h) { return row[h] == null ? "" : row[h]; });
+  if (at < 0) sheet.appendRow(out);
+  else sheet.getRange(at, 1, 1, MEMBER_HEADERS.length).setValues([out]);
+  return profileOut_(row);
+}
+
+function addMemberTeam_(user, team) {
+  var row = memberByUid_(user.uid);
+  var teams = row && row.teams ? String(row.teams).split(",").filter(function (id) { return id; }) : [];
+  if (teams.indexOf(team) < 0) teams.push(team);
+  return upsertMember_(user, { teams: teams.join(","), email: user.email || "" });
+}
+
+function getProfile_(params) {
+  var user = params._user || {};
+  if (!user.uid) return { ok: true, status: 200, profile: null, grace: true };
+  var row = memberByUid_(user.uid);
+  if (!row) {
+    return { ok: true, status: 200, profile: profileOut_({ uid: user.uid, email: user.email, name: user.name, newsletter: "1", churchComms: "1", reminders: "1", lang: "en" }) };
+  }
+  return { ok: true, status: 200, profile: profileOut_(row) };
+}
+
+function saveProfile_(params) {
+  var user = params._user || {};
+  if (!user.uid) return { ok: false, status: 401, error: "auth" };
+  var profile = upsertMember_(user, {
+    name: params.name,
+    email: params.email || user.email,
+    provider: params.provider,
+    rosterId: params.rosterId,
+    newsletter: params.newsletter,
+    churchComms: params.churchComms,
+    reminders: params.reminders,
+    lang: params.lang
+  });
+  return { ok: true, status: 200, profile: profile };
 }
 
 function hashPass_(text) {

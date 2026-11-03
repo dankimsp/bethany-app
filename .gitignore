@@ -1,1 +1,3 @@
 serve-links.plain.json
+node_modules/
+test-results/

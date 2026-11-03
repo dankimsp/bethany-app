@@ -595,17 +595,20 @@ function woShow(view) {
   woCloseAddPicker();
   wo.view = view;
   woWasTablet = woTablet();
-  var split = woWasTablet && (view === "lib" || view === "song");
-  document.body.classList.toggle("wo-split", split);
+  var splitLib = woWasTablet && (view === "lib" || view === "song");
+  var splitSet = woWasTablet && (view === "sets" || view === "edit");
+  document.body.classList.toggle("wo-split", splitLib || splitSet);
   ["lib", "sets", "edit", "song", "add"].forEach(function (name) {
     var el = document.getElementById("wo-" + name);
-    el.hidden = split ? !(name === "lib" || name === "song") : name !== view;
+    if (splitLib) el.hidden = !(name === "lib" || name === "song");
+    else if (splitSet) el.hidden = !(name === "sets" || name === "edit");
+    else el.hidden = name !== view;
   });
-  if (view === "lib" || split) woRenderLib();
-  if (view === "sets") woRenderSets();
+  if (view === "lib" || splitLib) woRenderLib();
+  if (view === "sets" || splitSet) woRenderSets();
   if (view === "edit") woRenderSet();
-  if (view === "song" || (split && wo.cur)) woRenderSong();
-  else if (split) {
+  if (view === "song" || (splitLib && wo.cur)) woRenderSong();
+  else if (splitLib) {
     var empty = document.getElementById("wo-song");
     empty.replaceChildren();
     var hint = document.createElement("p");
@@ -1715,9 +1718,11 @@ function woApplyPlaySize(px, cols) {
   var play = document.getElementById("wo-play");
   var body = document.getElementById("wo-play-body");
   if (!play || !body) return;
+  var n = cols === true ? 2 : (Number(cols) || 1);
   play.classList.add("wo-fitting");
   play.style.setProperty("--wo-fs", px + "px");
-  body.classList.toggle("wo-cols", !!cols);
+  body.classList.toggle("wo-cols", n > 1);
+  body.style.setProperty("--wo-cols", String(Math.max(1, n)));
 }
 function woPlayFits(px, cols) {
   woApplyPlaySize(px, cols);
@@ -1738,11 +1743,13 @@ function woWidePlay() {
   return w >= 768 || (w > h && w >= 700);
 }
 function woAutoFit() {
-  var one = woBestFit(false);
-  var two = woWidePlay() ? woBestFit(true) : null;
-  var cols = false;
+  var one = woBestFit(1);
+  var two = woWidePlay() ? woBestFit(2) : null;
+  var three = window.innerWidth >= 1100 ? woBestFit(3) : null;
+  var cols = 1;
   var px = one.px;
-  if (two && two.fits && (!one.fits || two.px > one.px)) { cols = true; px = two.px; }
+  if (two && two.fits && (!one.fits || two.px >= one.px)) { cols = 2; px = two.px; }
+  if (three && three.fits && three.px >= px) { cols = 3; px = three.px; }
   woApplyPlaySize(px, cols);
 }
 function woFitPlay() {

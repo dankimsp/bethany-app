@@ -22,7 +22,7 @@ if ("serviceWorker" in navigator) {
     woRefreshing = true;
     location.reload();
   });
-  navigator.serviceWorker.register("sw.js?v=21").catch(function () {});
+  navigator.serviceWorker.register("sw.js?v=22").catch(function () {});
 }
 </script>
 <style>
@@ -36,6 +36,8 @@ if ("serviceWorker" in navigator) {
   --ok:#2F7A57; --ok-soft:#E2F0E8; --maybe:#9A6A00; --maybe-soft:#FBEFC9; --no:#A9473D; --no-soft:#F6E2DE;
   --shadow:0 1px 2px rgba(0,40,50,.04),0 10px 28px rgba(0,40,50,.07);
   --hero:radial-gradient(90% 80% at 100% 0%, rgba(220,174,29,.30), transparent 60%), radial-gradient(110% 120% at 0% 100%, #1C6676, transparent 62%), linear-gradient(140deg,#00303F,#06404F 55%,#032A37);
+  --photo-fade:linear-gradient(180deg,rgba(0,32,42,0) 0%,rgba(0,32,42,.28) 38%,rgba(0,30,40,.88) 100%);
+  --rail:100px;
   --teal:var(--brand); --ink:var(--text); --mut:var(--text-2);
 }
 *{box-sizing:border-box} html,body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font)}
@@ -63,8 +65,11 @@ a{color:inherit;text-decoration:none}
 .chip{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:999px;font-size:11px;font-weight:700}
 .chip.acc{background:var(--accent-soft);color:var(--accent)} .chip.gold{background:var(--gold-soft);color:var(--gold-ink)}
 .lang{display:flex;height:34px;padding:3px;border-radius:999px;background:#fff;border:1px solid var(--stroke)}
-.lang button{border:0;background:transparent;border-radius:999px;font-weight:700;min-width:32px;cursor:pointer}
+.lang button{border:0;background:transparent;border-radius:999px;font-weight:700;min-width:32px;cursor:pointer;color:var(--text)}
 .lang button.on{background:var(--brand);color:#fff}
+.lang.glass{background:rgba(0,32,42,.72);border-color:rgba(255,255,255,.45);color:#fff}
+.lang.glass button{color:#fff}
+.lang.glass button.on{background:#fff;color:var(--brand)}
 .nav{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom));transform:translateX(-50%);width:min(440px,calc(100% - 28px));height:64px;border-radius:999px;background:rgba(255,255,255,.94);border:1px solid rgba(0,48,63,.07);box-shadow:0 12px 32px rgba(0,40,50,.16);display:flex;padding:0 6px;z-index:30}
 .nav a{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-decoration:none;color:var(--text-3);font-size:10.5px;font-weight:600;border-radius:999px}
 .nav a.on{background:var(--brand);color:#fff;flex:1.15}
@@ -80,6 +85,10 @@ svg.i{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.9;stro
 .bento{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .tile{background:#fff;border:1px solid var(--stroke);border-radius:24px;box-shadow:var(--shadow);padding:14px;text-decoration:none;color:inherit;display:flex;flex-direction:column;justify-content:space-between;min-height:104px}
 .tile.wide{grid-column:span 2}
+.tile.cover{color:#fff;background-size:cover;background-position:center;border:0;min-height:124px;text-align:left;cursor:pointer}
+.tile.cover.illus{color:var(--text);background-color:#fff}
+.home-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.home-chips span{background:var(--accent-soft);color:var(--accent);border-radius:999px;padding:4px 8px;font-size:12px;font-weight:700}
 .lr{display:flex;align-items:center;gap:12px;padding:11px 0;border-top:1px solid var(--stroke);width:100%;background:none;border-left:0;border-right:0;border-bottom:0;text-align:left;cursor:pointer}
 .lr:first-child{border-top:0}
 .grow{flex:1;min-width:0}
@@ -144,11 +153,140 @@ svg.i{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.9;stro
 .gold{color:var(--gold-ink)}
 body.wo-playing .nav{display:none}
 body.wo-playing .app{padding-bottom:0}
-@media (min-width:900px){
-  body{background:#E7E2D4}
-  .app{max-width:720px;margin:28px auto 40px;min-height:calc(100vh - 80px);border-radius:28px;box-shadow:var(--shadow);background:var(--bg);padding-bottom:120px}
-  .nav{position:sticky;bottom:16px}
+.pill.line{background:#fff;color:var(--brand);box-shadow:inset 0 0 0 1.5px rgba(0,48,63,.16)}
+.tex{position:absolute;top:-170px;right:-190px;width:460px;height:460px;background:url(assets/img/texture-rings.svg) center/contain no-repeat;opacity:.55;pointer-events:none;z-index:0}
+.screen{position:relative}
+.hact{display:flex;align-items:center;gap:8px}
+.av{width:36px;height:36px;border-radius:50%;background:var(--gold);color:var(--brand);font-weight:800;display:grid;place-items:center;font-size:15px;border:0;cursor:pointer;flex:none}
+.av.lg{width:58px;height:58px;font-size:24px;font-family:var(--serif)}
+.hero.photo{min-height:210px;display:flex;flex-direction:column;justify-content:flex-end;padding:18px 18px 18px 20px;background:var(--photo-fade),radial-gradient(90% 70% at 100% 0%,rgba(220,174,29,.22),transparent 60%),url(assets/img/sanctuary.webp) center 38%/cover;box-shadow:0 18px 36px rgba(0,40,50,.18)}
+#s-home .card{margin:8px 0}
+#s-home .greet h1{margin:4px 0 8px}
+.hero .top{position:absolute;top:14px;left:16px;right:16px;display:flex;justify-content:space-between}
+.hero .when{color:rgba(255,255,255,.88);font-size:13.5px;font-weight:600}
+.livebadge{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:999px;background:rgba(0,0,0,.32);font-size:11.5px;font-weight:700;color:#fff}
+.livebadge i{width:7px;height:7px;border-radius:50%;background:#FF5A4E}
+.spec{display:flex;gap:12px;align-items:center;width:100%;background:none;border:0;text-align:left;cursor:pointer;padding:8px 0}
+.spec img{width:84px;height:84px;border-radius:18px;object-fit:cover;object-position:center 30%}
+.ev-img{position:relative;border-radius:24px;overflow:hidden;background:#fff;border:1px solid var(--stroke);box-shadow:var(--shadow);margin:12px 0}
+.ev-img img.ph{width:100%;height:168px;object-fit:cover;object-position:center 30%;display:block}
+.ev-img .date{position:absolute;left:14px;top:14px;width:56px;padding:6px 0 7px;border-radius:16px;background:#F7F5EE;text-align:center;line-height:1.05}
+.ev-img .date small{display:block;font-size:10.5px;font-weight:800;letter-spacing:.08em;color:var(--gold-ink)}
+.ev-img .date b{display:block;font-family:var(--serif);font-size:23px;color:var(--brand)}
+.ev-img .body{padding:14px 16px 16px}
+.ev-img h3{margin:4px 0 2px;font-size:18px;font-family:var(--serif)}
+.ev-img .acts{display:flex;gap:8px;margin-top:12px}
+.mcard{display:flex;flex-direction:column;width:100%;background:#fff;border:1px solid var(--stroke);border-radius:24px;box-shadow:var(--shadow);overflow:hidden;margin:12px 0;padding:0;text-align:left;cursor:pointer;color:inherit}
+.mcard .cv{height:118px;position:relative;background:#efeae0 center/cover no-repeat}
+.mcard .cv img{width:100%;height:100%;object-fit:cover;display:block}
+.mcard .cv .mic{position:absolute;left:14px;bottom:-20px;width:44px;height:44px;border-radius:15px;box-shadow:0 0 0 3px #fff}
+.mcard .cv .chip{position:absolute;right:12px;top:12px}
+.mcard .bd{display:flex;align-items:center;gap:12px;padding:26px 16px 14px}
+.mic.solid-acc{background:var(--accent);color:#fff} .mic.solid-gold{background:var(--gold);color:var(--brand)} .mic.solid-plum{background:var(--plum);color:#fff}
+.mhead{margin:-12px -20px 16px;min-height:210px;position:relative;background:#efeae0 center 35%/cover no-repeat;color:#fff;padding:12px 20px 20px;display:flex;flex-direction:column;justify-content:space-between}
+.mhead::before{content:"";position:absolute;inset:0;background:var(--photo-fade)}
+.mhead>*{position:relative}
+.mhead h1{font-family:var(--serif);font-size:30px;margin:6px 0 4px}
+.mhead .mut{color:rgba(255,255,255,.86)}
+.mhead.illus{color:var(--text);min-height:180px} .mhead.illus::before{display:none}
+.mhead.illus .mut{color:var(--text-2)}
+.tools{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tools .tool{background:#fff;border:1px solid var(--stroke);border-radius:24px;box-shadow:var(--shadow);padding:14px;min-height:132px;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden;text-decoration:none;color:inherit}
+.tools .tool h3{margin:10px 0 2px;font-size:15.5px} .tools .tool p{margin:0;color:var(--text-2);font-size:12.5px}
+.tools .tool.wide{grid-column:span 2;min-height:0;flex-direction:row;align-items:center;gap:14px}
+.tools .tool.wide h3{margin:0 0 2px}
+.tools .tool .corner{position:absolute;right:-18px;top:-18px;width:76px;height:76px;border-radius:50%;opacity:.5}
+.empty{display:flex;gap:14px;align-items:center}
+.empty img{width:84px;height:auto}
+.back.glass{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.25);color:#fff}
+#s-signin{padding:0 0 28px}
+.auth-photo{height:340px;position:relative;background:linear-gradient(180deg,rgba(0,32,42,.55),rgba(0,32,42,.05) 30%,rgba(0,48,63,.96)),url(assets/img/church-exterior.webp) center 30%/cover;color:#fff;padding:14px 22px 0}
+.auth-photo h1{position:absolute;left:22px;right:22px;bottom:58px;font-family:var(--serif);font-size:31px;line-height:1.14;margin:0}
+.auth-photo h1 em{font-weight:400;color:#F0D57A}
+.auth-photo .lead{position:absolute;left:22px;right:22px;bottom:28px;margin:0;font-size:14px;color:rgba(255,255,255,.88)}
+.sheet{background:var(--bg);border-radius:30px 30px 0 0;margin-top:-22px;position:relative;padding:22px 22px 8px}
+.gbtn{width:100%;height:52px;border-radius:999px;background:#fff;border:1.5px solid rgba(0,48,63,.14);display:flex;align-items:center;justify-content:center;gap:10px;font-weight:700;font-size:15.5px;cursor:pointer}
+.or{display:flex;align-items:center;gap:12px;color:var(--text-3);font-size:12.5px;font-weight:600;margin:14px 0}
+.or::before,.or::after{content:"";flex:1;height:1px;background:rgba(0,48,63,.12)}
+.fld{display:flex;align-items:center;gap:10px;height:52px;border-radius:16px;border:1.5px solid rgba(0,48,63,.12);background:#fff;padding:0 14px;margin:0 0 10px}
+.fld input{flex:1;border:0;background:transparent;outline:none;min-width:0;font-size:15px}
+.fld:focus-within{border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
+.fld .eye{border:0;background:transparent;width:36px;height:36px;display:grid;place-items:center;cursor:pointer}
+.flabel{font-size:12.5px;font-weight:700;color:var(--text-2);margin:0 0 6px 2px;display:block}
+.authfoot{text-align:center;font-size:14px;color:var(--text-2);margin-top:14px}
+.steps{display:flex;gap:6px;margin:6px 0 14px} .steps i{height:5px;border-radius:9px;flex:1;background:var(--surface-3)} .steps i.on{background:var(--gold)}
+.auth-msg{color:var(--no);font-weight:700;font-size:13.5px;min-height:1.2em}
+.profile{display:flex;gap:14px;align-items:center;background:var(--hero);color:#fff;border-radius:26px;padding:16px;position:relative;overflow:hidden;margin:8px 0}
+.profile .em{color:rgba(255,255,255,.82);font-size:13px}
+.profile #acct-name{display:block}
+.profile #acct-edit{display:block;width:fit-content;margin:4px 0 0;padding:0;background:none;color:#F0D57A;font-size:13px;font-weight:700}
+#s-more .grp{margin:12px 4px 4px}
+#s-more .card{margin:8px 0;padding:8px 16px}
+#s-more .profile{padding:14px}
+#s-more .lr{padding:8px 0}
+.profile .meth{display:inline-flex;align-items:center;gap:6px;margin-top:8px;height:26px;padding:0 10px;border-radius:999px;background:#fff;color:var(--text);font-size:11.5px;font-weight:700}
+#s-more .lang-row{align-items:flex-start}
+#s-more .lang-row .seg2{margin-top:8px;width:max-content;max-width:100%}
+#s-more{padding-bottom:calc(200px + env(safe-area-inset-bottom))}
+.grp{font-size:11.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--text-2);margin:18px 4px 6px}
+.sw{width:46px;height:28px;border-radius:999px;background:#D7D2C5;position:relative;border:0;flex:none;cursor:pointer}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff}
+.sw.on{background:var(--accent)} .sw.on::after{left:21px}
+.seg2{display:flex;background:var(--surface-2);border-radius:999px;padding:3px}
+.seg2 button{height:30px;padding:0 12px;border:0;border-radius:999px;background:transparent;font-weight:700;color:var(--text-2);cursor:pointer}
+.seg2 button.on{background:var(--brand);color:#fff}
+.mchips{display:flex;flex-wrap:wrap;gap:8px;padding:12px 0}
+.mchip{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;border-radius:999px;background:var(--brand);color:#fff;font-weight:700;border:0}
+.mchip.add{background:#fff;color:var(--accent);box-shadow:inset 0 0 0 1.5px rgba(18,89,107,.35);cursor:pointer}
+.signout{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:50px;border-radius:999px;border:1.5px solid rgba(110,63,107,.35);color:var(--plum);font-weight:700;margin:16px 0;background:#fff;cursor:pointer}
+.edhead{margin:-12px -20px 0;height:240px;background:linear-gradient(180deg,rgba(0,32,42,.35),rgba(247,245,238,1)),url(assets/img/fellowship-group.webp) center 30%/cover;padding:12px 20px;display:flex;justify-content:space-between}
+.edcard{margin-top:-48px}
+.calbtn{display:flex;align-items:center;gap:12px;width:100%;min-height:56px;border-radius:18px;padding:8px 14px;font-weight:700;font-size:15px;margin-top:10px;text-align:left;cursor:pointer;text-decoration:none}
+.calbtn.g{background:var(--brand);color:#fff;border:0}
+.calbtn.a{background:#fff;color:var(--text);border:1.5px solid rgba(0,48,63,.14)}
+.calbtn small{display:block;font-weight:600;font-size:12px;opacity:.8}
+.name-edit{display:flex;gap:8px;margin-top:8px}
+.name-edit input{flex:1;border-radius:12px;border:0;padding:8px 10px}
+.tab-only{display:none}
+.nav .mark,.nav .navav{display:none}
+.kitchen-grid{display:block}
+.week-grid{display:block}
+@media (min-width:768px){
+  .app{max-width:none;margin:0;padding-left:var(--rail);background:var(--bg)}
+  .tab-only{display:revert}
+  .phone-only{display:none !important}
+  .nav{left:14px;top:14px;bottom:14px;transform:none;width:76px;height:auto;flex-direction:column;justify-content:flex-start;gap:4px;padding:12px 8px;border-radius:30px}
+  .nav .mark{display:grid;place-items:center;height:52px;margin-bottom:8px}
+  .nav .mark img{width:40px;height:40px;object-fit:cover;object-position:left center;border-radius:50%}
+  .nav a{flex:none;height:62px;margin:0;border-radius:18px;font-size:11px}
+  .nav a.on{flex:none}
+  .nav .navav{margin-top:auto;display:grid;place-items:center}
+  .screen{max-width:1080px;margin:0 auto;padding:26px 36px 48px}
+  .home-grid{display:grid;grid-template-columns:1fr;gap:20px;align-items:start}
+  .home-grid .hero.photo{min-height:280px}
+  .home-grid .bento{grid-template-columns:1fr 1fr}
+  #ministry-list{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  #ministry-list .mcard{margin:0}
+  #ministry-list .mcard.span2{grid-column:span 2}
+  .kitchen-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .week-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  #special-list{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .ev-img{margin:0}
+  .mhead{margin:-26px -36px 16px;min-height:280px;padding:20px 36px 24px}
+  .grid td.nm{position:sticky;left:0;background:#fff;z-index:1}
+  #wo-play-body.wo-cols .wo-chart{column-count:var(--wo-cols,2);column-gap:28px}
 }
+@media (min-width:1100px){
+  .home-grid{grid-template-columns:1.55fr 1fr}
+  .home-grid .hero.photo{grid-column:1;grid-row:1;min-height:320px}
+  .home-grid #home-events{grid-column:2;grid-row:1}
+  .home-grid .bento{grid-column:1 / -1;grid-row:2;grid-template-columns:1fr 1fr}
+  #ministry-list{grid-template-columns:1.4fr 1fr 1fr}
+  #ministry-list .mcard.span2{grid-column:auto}
+  #wo-play-body.wo-cols .wo-chart{column-count:var(--wo-cols,3)}
+}
+body.signed-out .nav{display:none}
+body.signed-out .screen{padding-bottom:28px}
 #s-worship .pad{padding:4px 0 12px}
 #s-worship h1{font-family:var(--serif);font-size:28px}
 #s-worship label{font-weight:700;font-size:13px;color:var(--text-2)}
@@ -196,24 +334,89 @@ body.wo-playing .app{padding-bottom:0}
 #wo-play-body.wo-cols .wline,#wo-play-body.wo-cols .wsec{break-inside:avoid}
 .meta-chip{display:inline-block;background:#fff3c4;border-radius:999px;padding:4px 10px;font-size:13px;font-weight:800;margin:2px}
 .wo-addpick{position:fixed;z-index:35;left:50%;transform:translateX(-50%);width:min(440px,calc(100% - 24px));bottom:96px;background:#fff;border-radius:20px;padding:12px;box-shadow:var(--shadow)}
+#wo-play-body.wo-cols .wo-chart{column-count:var(--wo-cols,2);column-gap:28px}
 @media (min-width:768px){
   body.wo-split{overflow:hidden;height:100dvh}
-  body.wo-split .app{height:100dvh;max-height:100dvh;display:flex;flex-direction:column;padding-bottom:88px;overflow:hidden}
-  body.wo-split #s-worship{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
-  body.wo-split #wo-app{flex:1;min-height:0;display:grid;grid-template-columns:minmax(260px,340px) minmax(0,1fr)}
-  body.wo-split #wo-lib,body.wo-split #wo-song{overflow:auto;min-height:0}
+  body.wo-split .app{height:100dvh;max-height:100dvh;display:flex;flex-direction:column;padding-bottom:0;overflow:hidden}
+  body.wo-split #s-worship{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;max-width:none;padding:0}
+  body.wo-split #wo-app{flex:1;min-height:0;display:grid;grid-template-columns:minmax(260px,360px) minmax(0,1fr)}
+  body.wo-split #wo-lib,body.wo-split #wo-song,body.wo-split #wo-sets,body.wo-split #wo-edit{overflow:auto;min-height:0;padding:16px 18px 24px}
 }
 </style>
 </head>
 <body>
 <div class="app" id="app">
-<section class="screen" id="s-home">
-  <div class="hdr"><img class="logo" src="assets/logo-bethany.svg" alt="Bethany Church"><div class="lang"><button type="button" id="lang-en">EN</button><button type="button" id="lang-ko">한</button></div></div>
-  <div class="greet"><h1 id="greet"></h1></div>
-  <div class="hero">
+<section class="screen" id="s-signin" hidden>
+  <div class="auth-photo">
+    <div class="hdr"><img class="logo" src="assets/logo-bethany-light.svg" alt="Bethany Church"><div class="lang glass"><button type="button" id="auth-en">EN</button><button type="button" id="auth-ko">한</button></div></div>
+    <h1><span data-i18n="welcomeTitle">Welcome home to</span><br><em data-i18n="welcomeChurch">Bethany Church</em></h1>
+    <p class="lead" data-i18n="welcomeLead">Sign in for services, events and your ministries.</p>
+  </div>
+  <div class="sheet">
+    <button class="gbtn" id="signin-google" type="button"><svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg><span data-i18n="google">Continue with Google</span></button>
+    <div class="or" data-i18n="orEmail">or use email</div>
+    <form id="signin-form">
+      <label class="fld"><svg class="i"><use href="#i-mail"/></svg><input id="signin-email" type="email" autocomplete="username" data-i18n-ph="email" placeholder="Email"></label>
+      <label class="fld"><svg class="i"><use href="#i-lock"/></svg><input id="signin-pw" type="password" autocomplete="current-password" data-i18n-ph="password" placeholder="Password"><button class="eye" type="button" data-eye="signin-pw" aria-label="Show password"><svg class="i"><use href="#i-eye"/></svg></button></label>
+      <div style="text-align:right;margin:-2px 2px 12px"><button class="lnkbtn" id="forgot" type="button" data-i18n="forgot">Forgot password?</button></div>
+      <p class="auth-msg" id="signin-msg"></p>
+      <button class="pill brand block" type="submit" data-i18n="signIn">Sign in</button>
+    </form>
+    <div class="authfoot"><span data-i18n="newHere">New to Bethany?</span> <a class="lnk" href="#/create" data-i18n="create">Create account</a></div>
+    <p class="mut" style="text-align:center;margin-top:16px">15414 Ash Way, Lynnwood · (206) 551-7321</p>
+  </div>
+</section>
+
+<section class="screen" id="s-create" hidden>
+  <div class="tex"></div>
+  <div class="hdr"><button class="back" type="button" onclick="location.hash='#/signin'"><svg class="i"><use href="#i-back"/></svg></button><div class="lang"><button type="button" id="create-en">EN</button><button type="button" id="create-ko">한</button></div></div>
+  <div class="steps"><i class="on"></i><i></i></div>
+  <div class="eyebrow gold" data-i18n="step1">Step 1 of 2</div>
+  <h1 class="ptitle" data-i18n="createTitle">Create your account</h1>
+  <p class="psub" data-i18n="createLead"></p>
+  <button class="gbtn" id="create-google" type="button"><span data-i18n="googleUp">Sign up with Google</span></button>
+  <div class="or" data-i18n="orEmailUp">or with email</div>
+  <form id="create-form">
+    <label class="flabel" data-i18n="email">Email</label>
+    <label class="fld"><svg class="i"><use href="#i-mail"/></svg><input id="create-email" type="email" autocomplete="username"></label>
+    <label class="flabel" data-i18n="password">Password</label>
+    <label class="fld"><svg class="i"><use href="#i-lock"/></svg><input id="create-pw" type="password" autocomplete="new-password"><button class="eye" type="button" data-eye="create-pw" aria-label="Show password"><svg class="i"><use href="#i-eye"/></svg></button></label>
+    <p class="mut" data-i18n="pwHint">At least 8 characters</p>
+    <p class="auth-msg" id="create-msg"></p>
+    <button class="pill brand block" type="submit" data-i18n="continue">Continue</button>
+  </form>
+  <div class="authfoot"><span data-i18n="haveAccount">Already have an account?</span> <a class="lnk" href="#/signin" data-i18n="signIn">Sign in</a></div>
+</section>
+
+<section class="screen" id="s-name" hidden>
+  <div class="tex"></div>
+  <div class="hdr"><button class="back" type="button" id="name-back"><svg class="i"><use href="#i-back"/></svg></button><div class="lang"><button type="button" id="name-en">EN</button><button type="button" id="name-ko">한</button></div></div>
+  <div class="steps"><i class="on"></i><i class="on"></i></div>
+  <div class="eyebrow gold" data-i18n="step2">Step 2 of 2</div>
+  <h1 class="ptitle" data-i18n="nameTitle">Tell us your name</h1>
+  <p class="psub" data-i18n="nameLead"></p>
+  <form id="name-form">
+    <label class="flabel" data-i18n="first">First name</label>
+    <label class="fld"><input id="name-first" autocomplete="given-name"></label>
+    <label class="flabel" data-i18n="last">Last name</label>
+    <label class="fld"><input id="name-last" autocomplete="family-name"></label>
+    <div class="card empty" style="margin-top:8px"><span class="av" id="name-initial"> </span><div><div class="mut" data-i18n="appear">You'll appear as</div><b id="name-preview"></b></div></div>
+    <p class="auth-msg" id="name-msg"></p>
+    <button class="pill brand block" type="submit" data-i18n="finish">Finish</button>
+  </form>
+  <p class="mut" style="text-align:center" data-i18n="nameLater"></p>
+</section>
+
+<section class="screen" id="s-home" hidden>
+  <div class="tex"></div>
+  <div class="hdr"><img class="logo phone-only" src="assets/logo-bethany.svg" alt="Bethany Church"><div class="greet tab-only"><h1 id="greet-tab" style="margin:0"></h1></div><div class="hact"><div class="lang"><button type="button" id="lang-en">EN</button><button type="button" id="lang-ko">한</button></div><button class="av phone-only" id="home-avatar" type="button"></button></div></div>
+  <div class="greet phone-only"><h1 id="greet"></h1></div>
+  <div class="home-grid">
+  <div class="hero photo" id="home-hero">
+    <div class="top"><span class="livebadge" id="hero-live" hidden><i></i><span data-i18n="liveWord">Live</span></span></div>
     <div class="eyebrow" data-i18n="next">Next service</div>
     <div class="htitle" id="hero-name"></div>
-    <div class="mut" style="color:rgba(255,255,255,.85)"><span id="hero-when"></span> · <span id="hero-time"></span></div>
+    <div class="when"><span id="hero-when"></span> · <span id="hero-time"></span></div>
     <div style="display:flex;gap:8px;margin-top:14px">
       <button class="pill white" id="watch-live" type="button" data-i18n="watch">Watch Live</button>
       <button class="pill glass" id="all-times" type="button" data-i18n="allTimes">All times</button>
@@ -225,10 +428,8 @@ body.wo-playing .app{padding-bottom:0}
       <div class="eyebrow" data-i18n="sermon">Sermon notes</div>
       <div><b data-i18n="sermonBody">Read write-ups of past sermons</b><div class="mut" data-i18n="sermonOpen">Opens bethanychurchwa.org</div></div>
     </a>
-    <button class="tile" id="home-ministry" type="button" hidden>
-      <div class="eyebrow" data-i18n="myMin">My Ministry</div>
-      <div><b data-i18n="myMin">My Ministry</b><div class="mut" id="home-answer"></div></div>
-    </button>
+    <button class="tile" id="home-ministry" type="button" hidden></button>
+  </div>
   </div>
   <button id="see-events" type="button" hidden>See all</button>
 </section>
@@ -237,20 +438,39 @@ body.wo-playing .app{padding-bottom:0}
   <div class="hdr"><h1 class="ptitle" data-i18n="events">Events</h1></div>
   <p class="psub"><span data-i18n="where">All at 15414 Ash Way</span> · <b style="color:var(--accent)" data-i18n="liveWord">Live</b> = <span data-i18n="alsoLive">also livestreamed</span></p>
   <div class="row-between"><h2 class="ptitle" style="font-size:20px" data-i18n="specials">Special events</h2><span class="mut" data-i18n="once">One-time</span></div>
-  <div id="special-list"></div>
+  <div id="special-list" class="ev-grid"></div>
   <div class="row-between"><h2 class="ptitle" style="font-size:20px" data-i18n="weekly">Weekly schedule</h2><span class="mut" data-i18n="every">Every week</span></div>
-  <div class="card" id="weekly-list"></div>
+  <div class="week-grid" id="weekly-list"></div>
+</section>
+
+<section class="screen" id="s-event" hidden>
+  <div class="edhead">
+    <button class="back glass" type="button" onclick="location.hash='#/events'"><svg class="i"><use href="#i-back"/></svg></button>
+    <button class="back glass" id="event-share" type="button" aria-label="Share"><svg class="i"><use href="#i-share"/></svg></button>
+  </div>
+  <div class="card edcard">
+    <div class="row-between"><span class="eyebrow gold" data-i18n="eventDetail">Special event</span><span class="chip acc" data-i18n="everyone">Everyone welcome</span></div>
+    <h1 class="ptitle" id="event-title" style="font-size:26px;margin-top:8px"></h1>
+    <p class="mut" id="event-note"></p>
+    <div class="lr"><span class="mic gold"><svg class="i"><use href="#i-cal"/></svg></span><div><b id="event-when"></b><div class="mut" id="event-time"></div></div></div>
+    <div class="lr"><span class="mic acc"><svg class="i"><use href="#i-pin"/></svg></span><div><b>Bethany Church</b><div class="mut">15414 Ash Way, Lynnwood</div></div></div>
+  </div>
+  <div class="grp" data-i18n="addCal">Add to calendar</div>
+  <a class="calbtn g" id="event-google" target="_blank" rel="noopener"><div class="grow"><span data-i18n="addGoogle">Add to Google Calendar</span><small data-i18n="addGoogleSub"></small></div></a>
+  <button class="calbtn a" id="event-ics" type="button"><div class="grow"><span data-i18n="addIcs">Add to Apple or Outlook calendar</span><small data-i18n="addIcsSub"></small></div></button>
+  <p class="mut" style="margin-top:14px"><span data-i18n="remindLine"></span> <a class="lnk" href="#/more" data-i18n="changePrefs">Change</a></p>
 </section>
 
 <section class="screen" id="s-ministries" hidden>
   <div class="hdr"><h1 class="ptitle" data-i18n="ministries">Ministries</h1></div>
   <p class="psub" data-i18n="find">Find your people at Bethany.</p>
-  <div id="ministry-list"></div>
+  <div id="ministry-list" class="g3"></div>
 </section>
 
 <section class="screen" id="s-food-kitchen" hidden>
   <div class="hdr"><button class="back" type="button" onclick="history.back()"><svg class="i"><use href="#i-back"/></svg></button><h1 class="ptitle" style="font-size:22px" data-i18n="kitchen">Food Kitchen</h1></div>
   <p class="psub" id="kitchen-blurb"></p>
+  <div class="kitchen-grid">
   <article class="card signup-card">
     <div class="signup-head">
       <span class="mic acc"><svg class="i"><use href="#i-bowl"/></svg></span>
@@ -273,6 +493,7 @@ body.wo-playing .app{padding-bottom:0}
     </div>
     <a class="pill brand" href="#/signup/snack" data-i18n="signUp">Sign up</a>
   </article>
+  </div>
   <p class="card mut" data-i18n="donation">Want to make a snack donation instead? Contact Jennifer.</p>
 </section>
 
@@ -303,16 +524,43 @@ body.wo-playing .app{padding-bottom:0}
 </section>
 
 <section class="screen" id="s-more" hidden>
+  <div class="tex"></div>
   <div class="hdr"><h1 class="ptitle" data-i18n="more">More</h1></div>
-  <h2 data-i18n="church">Church</h2>
-  <div class="card">
-    <a class="lr" href="#/ministries"><div><div class="tt" data-i18n="ministries">Ministries</div><div class="ts mut">Worship, Nursery, Food Kitchen</div></div></a>
-    <a class="lr" href="#/visit"><div><div class="tt" data-i18n="visit">Visit & contact</div><div class="ts mut" data-i18n="visitSub"></div></div></a>
-    <button class="lr" type="button" id="more-lang"><div><div class="tt" data-i18n="language">Language</div><div class="ts mut" data-i18n="langSub"></div></div></button>
+  <div class="profile">
+    <span class="av lg" id="acct-initial"></span>
+    <div class="grow">
+      <b id="acct-name" style="font-family:var(--serif);font-size:18px"></b>
+      <div class="em" id="acct-email"></div>
+      <button class="lnkbtn" id="acct-edit" type="button" data-i18n="editName">Edit name</button>
+      <div class="name-edit" id="name-edit" hidden>
+        <input id="acct-first" autocomplete="given-name">
+        <input id="acct-last" autocomplete="family-name">
+        <button class="pill sm brand" id="acct-save-name" type="button" data-i18n="saveName">Save</button>
+      </div>
+      <span class="meth" id="acct-provider"></span>
+    </div>
   </div>
-  <button class="card lr" id="feedback-link" type="button"><div><div class="tt" data-i18n="feedback">Send feedback</div><div class="ts mut" data-i18n="feedbackSub"></div></div></button>
-  <p id="more-code"><span data-i18n="serveAsk"></span> <a href="#/team-code" data-i18n="haveCode">Have a team code?</a></p>
-  <p id="more-ministry" hidden><a id="more-ministry-link" href="#/ministries" data-i18n="myMin">My Ministry</a> · <a href="#/team-code" data-i18n="anotherLink"></a></p>
+  <div class="grp" data-i18n="myTeams">My ministries</div>
+  <div class="card"><div class="mchips" id="acct-teams"></div>
+    <div id="team-pick" hidden>
+      <div class="mut" data-i18n="whichTeam">Which team?</div>
+      <button class="pill brand" type="button" data-join="worship" style="margin:8px 8px 0 0">Worship</button>
+      <button class="pill line" type="button" data-join="nursery">Nursery</button>
+    </div>
+  </div>
+  <div class="grp" data-i18n="emailPrefs">Email preferences</div>
+  <div class="card">
+    <div class="lr"><span class="mic gold"><svg class="i"><use href="#i-news"/></svg></span><div class="grow"><div class="tt" data-i18n="newsletter">Newsletter</div><div class="ts" data-i18n="newsBody"></div></div><button class="sw on" id="pref-news" type="button" aria-pressed="true"></button></div>
+    <div class="lr"><span class="mic acc"><svg class="i"><use href="#i-mail"/></svg></span><div class="grow"><div class="tt" data-i18n="churchMail">Church communications</div><div class="ts" data-i18n="churchMailBody"></div></div><button class="sw on" id="pref-church" type="button" aria-pressed="true"></button></div>
+    <div class="lr"><span class="mic plum"><svg class="i"><use href="#i-bell"/></svg></span><div class="grow"><div class="tt" data-i18n="reminders">Email me event reminders</div><div class="ts" data-i18n="remindersBody"></div></div><button class="sw on" id="pref-remind" type="button" aria-pressed="true"></button></div>
+  </div>
+  <div class="grp" data-i18n="appSec">App</div>
+  <div class="card">
+    <div class="lr lang-row"><span class="mic acc"><svg class="i"><use href="#i-globe"/></svg></span><div class="grow"><div class="tt" data-i18n="language">Language</div><div class="seg2"><button type="button" id="acct-en">English</button><button type="button" id="acct-ko">한국어</button></div></div></div>
+    <a class="lr" href="#/visit"><span class="mic acc"><svg class="i"><use href="#i-pin"/></svg></span><div class="grow"><div class="tt" data-i18n="visit">Visit & contact</div><div class="ts" data-i18n="visitSub"></div></div></a>
+    <button class="lr" id="feedback-link" type="button"><span class="mic acc"><svg class="i"><use href="#i-chat"/></svg></span><div class="grow"><div class="tt" data-i18n="feedback">Send feedback</div><div class="ts" data-i18n="feedbackSub"></div></div></button>
+  </div>
+  <button class="signout" id="sign-out" type="button"><svg class="i"><use href="#i-out"/></svg><span data-i18n="signOut">Sign out</span></button>
 </section>
 
 <section class="screen" id="s-team-code" hidden>
@@ -333,10 +581,10 @@ body.wo-playing .app{padding-bottom:0}
 </section>
 
 <section class="screen" id="s-ministry" hidden>
-  <div class="hdr start"><button class="back" type="button" onclick="location.hash='#/ministries'"><svg class="i"><use href="#i-back"/></svg></button><h1 class="ptitle" id="ministry-title" style="font-size:22px" data-i18n="myMin">My Ministry</h1></div>
-  <p class="psub" id="ministry-sub" data-i18n="toolsFor"></p>
-  <p id="ministry-empty" class="mut" data-i18n="noMinistry"></p>
-  <div id="my-tools"></div>
+  <div id="ministry-head"></div>
+  <div class="grp" data-i18n="yourTools">Your tools</div>
+  <div id="my-tools" class="tools"></div>
+  <div id="ministry-empty" class="card empty" hidden></div>
 </section>
 
 <section class="screen" id="s-availability" hidden>
@@ -491,11 +739,13 @@ body.wo-playing .app{padding-bottom:0}
  </div>
 </section>
 <nav class="nav" aria-label="Main">
+ <div class="mark"><img src="assets/logo-bethany.svg" alt=""></div>
  <a href="#/home" data-nav="home"><svg class="i"><use href="#i-home"/></svg><span data-i18n="home">Home</span></a>
  <a href="#/events" data-nav="events"><svg class="i"><use href="#i-cal"/></svg><span data-i18n="events">Events</span></a>
  <a href="#/ministries" data-nav="ministries"><svg class="i"><use href="#i-users"/></svg><span data-i18n="ministries">Ministries</span></a>
  <a href="#/give" data-nav="give"><svg class="i"><use href="#i-heart"/></svg><span data-i18n="give">Give</span></a>
  <a href="#/more" data-nav="more"><svg class="i"><use href="#i-grid"/></svg><span data-i18n="more">More</span></a>
+ <div class="navav"><button class="av" id="nav-avatar" type="button"></button></div>
 </nav>
 </div>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
@@ -514,6 +764,17 @@ body.wo-playing .app{padding-bottom:0}
  <symbol id="i-music" viewBox="0 0 24 24"><path d="M9 18V5.5l11-2V16"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/></symbol>
  <symbol id="i-smile" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5a4.5 4.5 0 0 0 7 0"/></symbol>
  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></symbol>
+ <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 7 8 6 8-6"/></symbol>
+ <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4.5" y="10.5" width="15" height="10" rx="3"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></symbol>
+ <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15Z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></symbol>
+ <symbol id="i-news" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="13" height="15" rx="2"/><path d="M16.5 8.5h3v9a2 2 0 0 1-4 0M7 8.5h6M7 12h6M7 15.5h4"/></symbol>
+ <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9S14.5 18.4 12 21c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3Z"/></symbol>
+ <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.5"/></symbol>
+ <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5.5h16v10H9l-5 4Z"/></symbol>
+ <symbol id="i-out" viewBox="0 0 24 24"><path d="M14 4.5H6.5a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2H14M10 12h10.5M17 8.5l3.5 3.5-3.5 3.5"/></symbol>
+ <symbol id="i-key" viewBox="0 0 24 24"><circle cx="8" cy="14" r="4"/><path d="m11 11 8-8M16 6l2.5 2.5"/></symbol>
+ <symbol id="i-share" viewBox="0 0 24 24"><path d="M12 3.5v12M7.5 8 12 3.5 16.5 8M5 13v5.5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V13"/></symbol>
+ <symbol id="i-chev" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
 </defs></svg>
 <script>
 const RSVP_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzlNMiNYPc-5jImVg_vvOwQnECRvJ18WKSmQ7bzSCz84LQhlTy68WICnmkXeXqkN0Fi/exec';
@@ -521,7 +782,8 @@ const LIVE_SETLIST_ENDPOINT = '';
 const WORSHIP_BACKEND_URL = 'https://script.google.com/macros/s/AKfycbwWtdJUNT8nh1T4uhFwlDCYdukRE5eAUBq-In-lRSkqZlksSh1Jp7RbdsjR4A5ZRBKCtA/exec';
 </script>
 <script src="js/config.js"></script>
+<script src="js/auth.js"></script>
 <script src="js/app.js"></script>
-<script src="worship.js?v=21"></script>
+<script src="worship.js?v=22"></script>
 </body>
 </html>

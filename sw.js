@@ -1,10 +1,19 @@
-var CACHE = "bethany-worship-v21";
+var CACHE = "bethany-worship-v22";
 var FILES = [
   "./",
   "index.html",
   "worship.js",
   "js/config.js",
+  "js/auth.js",
   "js/app.js",
+  "assets/img/sanctuary.webp",
+  "assets/img/worship-stage.webp",
+  "assets/img/fellowship-group.webp",
+  "assets/img/church-exterior.webp",
+  "assets/img/texture-rings.svg",
+  "assets/img/illus-nursery.svg",
+  "assets/img/illus-kitchen.svg",
+  "assets/img/illus-empty.svg",
   "songs.json",
   "manifest.webmanifest",
   "robots.txt",

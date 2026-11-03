@@ -18,6 +18,16 @@ var BETHANY = {
   mapsUrl: "https://maps.google.com/?q=15414+Ash+Way,+Lynnwood,+WA+98087"
 };
 
+/* Public Firebase web config. The API key is not a secret. */
+var BETHANY_FIREBASE = {
+  apiKey: "AIzaSyCI1pW3IhioOqtTpfvmUP3tI3mp6Xt-ovU",
+  authDomain: "bethany-church-app-eb336.firebaseapp.com",
+  projectId: "bethany-church-app-eb336",
+  storageBucket: "bethany-church-app-eb336.firebasestorage.app",
+  messagingSenderId: "798264586735",
+  appId: "1:798264586735:web:0de28936d229849ad5c61a"
+};
+
 var BETHANY_WEEKLY = [
   { day: 0, name: "English (EM) Service", ko: "영어 예배 (EM)", h: 10, m: 0, live: true, worship: true },
   { day: 0, name: "Korean Service", ko: "한국어 예배", h: 11, m: 30, live: true, worship: true },
@@ -31,7 +41,7 @@ var BETHANY_WEEKLY = [
 
 /* Add one-time events here. rsvp: true shows the existing RSVP form. */
 var BETHANY_EVENTS = [
-  { id: "thanks-2026", title: "Thanksgiving Fellowship Lunch", ko: "추수감사절 친교 점심", date: "2026-11-22", time: "12:45", note: "after services", koNote: "예배 후", rsvp: false }
+  { id: "thanks-2026", title: "Thanksgiving Fellowship Lunch", ko: "추수감사절 친교 점심", date: "2026-11-22", time: "12:45", note: "Stay after the services for a Thanksgiving lunch together.", koNote: "예배 후에 함께 추수감사절 점심을 나눕니다.", image: "assets/img/fellowship-group.webp", rsvp: false }
 ];
 
 /* New ministries are added here, in code, not by a button in the app. */
@@ -42,6 +52,9 @@ var BETHANY_MINISTRIES = [
     ko: "찬양팀",
     blurb: "Chord sheets, setlists, and who can serve",
     koBlurb: "악보, 셋리스트, 섬김 가능 여부",
+    lead: "Led by Pastor Woori Cheh, Daniel Kim and Palmy Silarat",
+    koLead: "우리 목사, Daniel Kim, Palmy Silarat",
+    cover: "assets/img/worship-stage.webp",
     code: true,
     icon: "music",
     tools: [
@@ -56,6 +69,10 @@ var BETHANY_MINISTRIES = [
     ko: "유아부",
     blurb: "Sunday nursery sign-up",
     koBlurb: "주일 유아부 신청",
+    lead: "Led by Sophy Kim · Sundays",
+    koLead: "Sophy Kim · 주일",
+    cover: "assets/img/illus-nursery.svg",
+    illus: true,
     code: true,
     icon: "smile",
     tools: [
@@ -68,6 +85,8 @@ var BETHANY_MINISTRIES = [
     ko: "음식 사역",
     blurb: "Sign up to help with food on Sundays.",
     koBlurb: "주일 음식을 돕기 위해 신청하세요.",
+    cover: "assets/img/illus-kitchen.svg",
+    illus: true,
     code: false,
     icon: "bowl",
     tools: [
@@ -107,7 +126,7 @@ var BETHANY_I18N = {
     askDaniel: "Don't have a code? Ask Daniel for your team's code.",
     toolsFor: "Tools for the teams you serve on.", unlocked: "Unlocked on this phone", joined: "Joined",
     another: "On another team too?", anotherLink: "Join another team with a code",
-    who: "Who are you?", whoBody: "Pick your name once. This phone remembers it for availability.",
+    who: "Which one are you?", whoBody: "Link your name once. This account remembers it for availability.",
     continueAs: "Continue", availability: "Team availability", answering: "Answering as", change: "Change",
     saved: "Saved", saving: "Saving…", soon: "Sign-ups open soon",
     anytime: "You can change your answers anytime.", available: "Available", maybe: "Maybe", unavailable: "Unavailable",
@@ -131,7 +150,29 @@ var BETHANY_I18N = {
     noMinistry: "No team tools on this phone yet.",
     takenOf: "of 6 Sundays taken",
     signedThis: "signed up this Sunday",
-    emptyAvail: "No answers yet. Ask the team to mark their Sundays."
+    emptyAvail: "No answers yet. Ask the team to mark their Sundays.",
+    welcomeTitle: "Welcome home to", welcomeChurch: "Bethany Church", welcomeLead: "Sign in for services, events and your ministries.",
+    google: "Continue with Google", googleUp: "Sign up with Google", orEmail: "or use email", orEmailUp: "or with email",
+    email: "Email", password: "Password", forgot: "Forgot password?", signIn: "Sign in",
+    newHere: "New to Bethany?", create: "Create account", haveAccount: "Already have an account?",
+    step1: "Step 1 of 2", step2: "Step 2 of 2", createTitle: "Create your account",
+    createLead: "One account for services, events, sign-ups and your ministry tools.",
+    continue: "Continue", pwHint: "At least 8 characters",
+    nameTitle: "Tell us your name", nameLead: "So your sign-ups and team lists show who you are.",
+    first: "First name", last: "Last name", appear: "You'll appear as", finish: "Finish",
+    nameLater: "You can change this later in More › Account.",
+    signedGoogle: "Signed in with Google", signedEmail: "Signed in with Email",
+    myTeams: "My ministries", joinCode: "Join with a code", whichTeam: "Which team?",
+    emailPrefs: "Email preferences", newsletter: "Newsletter", newsBody: "News and stories from Bethany",
+    churchMail: "Church communications", churchMailBody: "Service changes and important updates",
+    reminders: "Email me event reminders", remindersBody: "The day before events you add",
+    appSec: "App", signOut: "Sign out", editName: "Edit name", saveName: "Save",
+    eventDetail: "Special event", everyone: "Everyone welcome", addGoogle: "Add to Google Calendar",
+    addGoogleSub: "Opens Google Calendar", addIcs: "Add to Apple or Outlook calendar", addIcsSub: "Downloads a calendar file (.ics)",
+    remindLine: "We'll email you a reminder the day before.", changePrefs: "Change",
+    yourTools: "Your tools", noSundays: "No Sundays yet", noSundaysBody: "When you sign up, your Sundays show here.",
+    authAgain: "Please sign in again.",
+    resetSent: "Password reset email sent."
   },
   ko: {
     home: "홈", events: "행사", ministries: "사역", give: "헌금", more: "더보기",
@@ -151,7 +192,7 @@ var BETHANY_I18N = {
     askDaniel: "코드가 없나요? Daniel에게 팀 코드를 물어보세요.",
     toolsFor: "섬기는 팀의 도구입니다.", unlocked: "이 기기에서 열림", joined: "참여함",
     another: "다른 팀도 있나요?", anotherLink: "코드로 다른 팀 참여",
-    who: "누구신가요?", whoBody: "이름을 한 번 고르면 이 기기가 기억합니다.",
+    who: "누구신가요?", whoBody: "이름을 한 번 연결하면 이 계정이 기억합니다.",
     continueAs: "계속", availability: "섬김 가능", answering: "답하는 사람", change: "변경",
     saved: "저장됨", saving: "저장 중…", soon: "신청이 곧 열립니다",
     anytime: "답은 언제든 바꿀 수 있습니다.", available: "가능", maybe: "아마도", unavailable: "불가",
@@ -175,6 +216,28 @@ var BETHANY_I18N = {
     noMinistry: "이 기기에는 아직 팀 도구가 없습니다.",
     takenOf: "6주일 중 신청됨",
     signedThis: "이번 주일 신청",
-    emptyAvail: "아직 답이 없습니다. 팀에게 주일을 표시해 달라고 하세요."
+    emptyAvail: "아직 답이 없습니다. 팀에게 주일을 표시해 달라고 하세요.",
+    welcomeTitle: "베다니 교회에", welcomeChurch: "오신 것을 환영합니다", welcomeLead: "예배, 행사, 사역을 위해 로그인하세요.",
+    google: "Google로 계속", googleUp: "Google로 가입", orEmail: "또는 이메일", orEmailUp: "또는 이메일로",
+    email: "이메일", password: "비밀번호", forgot: "비밀번호를 잊으셨나요?", signIn: "로그인",
+    newHere: "베다니가 처음이신가요?", create: "계정 만들기", haveAccount: "이미 계정이 있나요?",
+    step1: "1 / 2 단계", step2: "2 / 2 단계", createTitle: "계정을 만드세요",
+    createLead: "예배, 행사, 신청, 사역 도구를 위한 계정 하나입니다.",
+    continue: "계속", pwHint: "8자 이상",
+    nameTitle: "이름을 알려 주세요", nameLead: "신청과 팀 목록에 이름이 표시됩니다.",
+    first: "이름", last: "성", appear: "이렇게 표시됩니다", finish: "완료",
+    nameLater: "나중에 더보기 › 계정에서 바꿀 수 있습니다.",
+    signedGoogle: "Google로 로그인함", signedEmail: "이메일로 로그인함",
+    myTeams: "내 사역", joinCode: "코드로 참여", whichTeam: "어느 팀인가요?",
+    emailPrefs: "이메일 설정", newsletter: "소식지", newsBody: "베다니의 소식과 이야기",
+    churchMail: "교회 안내", churchMailBody: "예배 변경과 중요한 안내",
+    reminders: "행사 알림 이메일", remindersBody: "추가한 행사 전날",
+    appSec: "앱", signOut: "로그아웃", editName: "이름 수정", saveName: "저장",
+    eventDetail: "특별 행사", everyone: "모두 환영", addGoogle: "Google 캘린더에 추가",
+    addGoogleSub: "Google 캘린더를 엽니다", addIcs: "Apple 또는 Outlook 캘린더에 추가", addIcsSub: "캘린더 파일(.ics)을 받습니다",
+    remindLine: "전날 알림 이메일을 보냅니다.", changePrefs: "변경",
+    yourTools: "내 도구", noSundays: "아직 신청한 주일이 없습니다", noSundaysBody: "신청하면 여기에 주일이 표시됩니다.",
+    authAgain: "다시 로그인해 주세요.",
+    resetSent: "비밀번호 재설정 메일을 보냈습니다."
   }
 };
