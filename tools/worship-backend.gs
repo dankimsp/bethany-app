@@ -404,6 +404,7 @@ function listStep_(index, en, ko, start, budgetMs) {
       var fid = file.getId();
       if (index.listSeen[fid]) continue;
       index.listSeen[fid] = 1;
+      if (file.isTrashed()) continue;
       if (!/\.cho$/i.test(file.getName())) continue;
       index.listed.push({
         id: fid,

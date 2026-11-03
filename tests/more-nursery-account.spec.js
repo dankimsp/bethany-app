@@ -130,7 +130,7 @@ test("more, account, and nursery roster", async function ({ page }) {
   await boot(page, "serving");
   await page.goto("/index.html?scene=serving#/more");
   await expect(page.locator("#acct-email")).toHaveText("daniel.kim@bethanychurch.test");
-  await expect(page.locator("#about-version")).toHaveText("Version 31");
+  await expect(page.locator("#about-version")).toHaveText("Version 32");
   await expect(page.getByText("Prayer request")).toHaveCount(0);
   await expect(page.locator("#more-serving")).toContainText("Nursery · with Sarah P.");
   await expect(page.locator("#more-serving")).toContainText("Nursery · with Grace L., Joseph K., Hannah P.");
