@@ -29,6 +29,15 @@ function rosterFor(scene) {
         { name: "Hannah P.", isMe: false }
       ] };
     }
+    if (scene === "serving" && i === 1) {
+      return { sunday: sunday, goal: 2, count: 1, people: [{ name: "Peter Y.", isMe: false }] };
+    }
+    if (scene === "serving" && i === 2) {
+      return { sunday: sunday, goal: 2, count: 2, people: [
+        { name: "Daniel K.", isMe: true },
+        { name: "Sarah P.", isMe: false }
+      ] };
+    }
     if (scene === "next" && i === 0) {
       return { sunday: sunday, goal: 2, count: 2, people: [
         { name: "Grace L.", isMe: false },
@@ -83,7 +92,7 @@ async function boot(page, scene) {
       var mine = days.filter(function (d) { return d.people.some(function (p) { return p.isMe; }); });
       payload.nursery = {
         next: mine[0] ? { sunday: mine[0].sunday, with: mine[0].people.filter(function (p) { return !p.isMe; }).map(function (p) { return p.name; }) } : null,
-        upcoming: mine.map(function (d) { return d.sunday; })
+        upcoming: mine.map(function (d) { return { sunday: d.sunday, with: d.people.filter(function (p) { return !p.isMe; }).map(function (p) { return p.name; }) }; })
       };
       payload.worship = { markedCount: 3 };
     } else if (action === "getNurseryRoster") {
@@ -124,6 +133,7 @@ test("more, account, and nursery roster", async function ({ page }) {
   await expect(page.locator("#about-version")).toContainText("v30");
   await expect(page.locator("#about-version")).not.toContainText("2.4");
   await expect(page.getByText("Prayer request")).toHaveCount(0);
+  await expect(page.locator("#more-serving")).toContainText("With Sarah P.");
   await expect(page.locator("#more-serving")).toContainText("Worship availability");
   await page.screenshot({ path: ART + "/more-top-390.png" });
   await page.locator("#about-row").scrollIntoViewIfNeeded();
@@ -156,13 +166,13 @@ test("more, account, and nursery roster", async function ({ page }) {
   await page.screenshot({ path: ART + "/account-password-390.png" });
 
   await page.goto("/index.html?scene=serving#/ministry/nursery");
-  await expect(page.getByText("You're on 1 Sundays")).toBeVisible();
+  await expect(page.getByText("You're on 2 Sundays")).toBeVisible();
   await expect(page.locator("#roster-list")).toContainText("Grace L.");
   await page.screenshot({ path: ART + "/nursery-roster-390.png" });
   await page.locator("#nursery-pick").click();
   await expect(page.locator("#sheet-pick")).toBeVisible();
   await page.locator("#pick-grid .sun-chip:not(.mine)").first().click();
-  await expect(page.locator("#pick-go")).toContainText("Confirm 1");
+  await expect(page.locator("#pick-go")).toHaveText("Confirm 1 Sunday");
   await page.screenshot({ path: ART + "/nursery-pick-390.png" });
   await page.locator("#sheet-pick .fb-scrim").dispatchEvent("click");
   await page.locator("[data-cant]").first().click();
@@ -178,5 +188,7 @@ test("home card when the next nursery Sunday is later", async function ({ page }
   await boot(page, "next");
   await page.goto("/index.html?scene=next#/home");
   await expect(page.locator("#home-serving")).toContainText("You're not on nursery this Sunday");
+  await expect(page.locator("#home-serving")).toContainText("Your next Sunday: November");
+  await expect(page.locator("#home-serving")).not.toContainText("Sunday, November");
   await page.screenshot({ path: ART + "/home-next-390.png" });
 });

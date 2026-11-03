@@ -34,6 +34,12 @@ function sundayShort(iso) {
   var mon = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][dt.getUTCMonth()];
   return "Sun, " + mon + " " + dt.getUTCDate();
 }
+function sundayMonthDay(iso) {
+  var dt = sundayParts(iso);
+  if (appLang() === "ko") return (dt.getUTCMonth() + 1) + "월 " + dt.getUTCDate() + "일";
+  var mon = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"][dt.getUTCMonth()];
+  return mon + " " + dt.getUTCDate();
+}
 function isStandalone() {
   return (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone === true;
 }
@@ -121,6 +127,14 @@ function countClass(day) {
   if (day.goal == null || day.goal === "") return "mut";
   return n >= day.goal ? "meta-ok" : "meta-need";
 }
+function chipSub(day, mine) {
+  if (mine) return t("youreOnChip");
+  var n = day.count || (day.people || []).length;
+  if (!n) return t("noOneYet");
+  var g = day.goal;
+  if (g != null && g !== "" && n < g) return tf("chipNeeds", { k: g - n });
+  return tf("countOnly", { n: n });
+}
 
 function loadServing() {
   return api({ action: "getMyServing" }).then(function (res) {
@@ -156,11 +170,12 @@ function paintMoreServing() {
   card.className = "card";
   var data = servingState || {};
   if (nursery && data.nursery && data.nursery.upcoming && data.nursery.upcoming.length) {
-    data.nursery.upcoming.slice(0, 3).forEach(function (iso) {
+    data.nursery.upcoming.slice(0, 3).forEach(function (item) {
+      var iso = item && item.sunday ? item.sunday : item;
+      var withNames = item && item.with ? item.with.join(", ") : "";
       var row = document.createElement("a");
       row.className = "lr";
       row.href = "#/ministry/nursery";
-      var withNames = data.nursery.next && data.nursery.next.sunday === iso ? (data.nursery.next.with || []).join(", ") : "";
       row.innerHTML = '<span class="rdate on"><small>' + escapeHtml(prettySunday(iso).mon) + '</small><b>' + escapeHtml(prettySunday(iso).day) + '</b></span><div class="grow"><div class="tt">' + escapeHtml(sundayShort(iso)) + '</div><div class="ts">' + escapeHtml(withNames ? tf("servingWith", { names: withNames }) : t("nurseryRoster")) + '</div></div>';
       card.appendChild(row);
     });
@@ -231,7 +246,7 @@ function paintHomeServing() {
   } else {
     var next = mine[0];
     var names = ((first && first.people) || []).map(function (p) { return p.name; }).join(", ");
-    card.innerHTML = '<h2>' + escapeHtml(t("notThisSunday")) + '</h2><p>' + escapeHtml(tf("yourNext", { date: sundayLong(next.sunday) })) + '</p><p class="mut">' + escapeHtml(tf("thisSundayNames", { names: names || t("noOneYet") })) + '</p><div class="serve-actions"><button type="button" class="pill brand" id="home-roster">' + escapeHtml(t("viewRoster")) + '</button><button type="button" class="pill line" id="home-pick">' + escapeHtml(t("pickSundays")) + '</button></div>';
+    card.innerHTML = '<div class="eyebrow">' + escapeHtml(t("homeKicker").split("·")[0].trim()) + '</div><h2>' + escapeHtml(t("notThisSunday")) + '</h2><p>' + escapeHtml(tf("yourNext", { date: sundayMonthDay(next.sunday) })) + '</p><p class="mut">' + escapeHtml(tf("thisSundayNames", { names: names || t("noOneYet") })) + '</p><div class="serve-actions"><button type="button" class="pill brand" id="home-roster">' + escapeHtml(t("viewRoster")) + '</button><button type="button" class="pill line" id="home-pick">' + escapeHtml(t("pickSundays")) + '</button></div>';
     box.appendChild(card);
     card.querySelector("#home-roster").onclick = function () { location.hash = "#/ministry/nursery"; };
     card.querySelector("#home-pick").onclick = function () { openPick(); };
@@ -294,7 +309,7 @@ function paintNurseryRoster() {
     row.className = "roster-row";
     var tag = day.sunday === first ? '<div class="eyebrow">' + escapeHtml(today && day.sunday === first ? t("today") : t("thisSunday")) + '</div>' : "";
     var tile = prettySunday(day.sunday);
-    row.innerHTML = '<div class="rdate' + (on ? " on" : "") + '"><small>' + escapeHtml(tile.mon) + '</small><b>' + escapeHtml(tile.day) + '</b></div><div class="grow">' + tag + '<div class="names">' + namesLine(day) + '</div><div class="' + countClass(day) + '">' + escapeHtml(countLine(day)) + '</div></div>' + (on ? '<button type="button" class="pill line cant" data-cant="' + escapeAttr(day.sunday) + '">' + escapeHtml(t("cantMake")) + '</button>' : "");
+    row.innerHTML = '<div class="rdate' + (on ? " on" : "") + '"><small>' + escapeHtml(tile.mon) + '</small><b>' + escapeHtml(tile.day) + '</b></div><div class="grow">' + tag + '<div class="names">' + namesLine(day) + '</div><div class="' + countClass(day) + '">' + escapeHtml(countLine(day)) + '</div>' + (on ? '<button type="button" class="pill line cant" data-cant="' + escapeAttr(day.sunday) + '">' + escapeHtml(t("cantMake")) + '</button>' : "") + '</div>';
     list.appendChild(row);
   });
   list.querySelectorAll("[data-more]").forEach(function (btn) {
@@ -315,7 +330,7 @@ function openPick() {
     btn.type = "button";
     btn.className = "sun-chip" + (mine ? " mine" : "");
     btn.disabled = !!mine || rosterState.offline;
-    var sub = mine ? t("youreOnChip") : ((day.people || []).length ? countLine(day) : t("noOneYet"));
+    var sub = chipSub(day, mine);
     btn.innerHTML = '<b>' + escapeHtml(sundayShort(day.sunday)) + '</b><small>' + escapeHtml(sub) + '</small>';
     btn.onclick = function () {
       if (mine) return;
@@ -342,7 +357,7 @@ function syncPickButton() {
   var n = Object.keys(rosterState.pick).filter(function (k) { return rosterState.pick[k]; }).length;
   var btn = document.getElementById("pick-go");
   btn.disabled = !n || rosterState.offline;
-  btn.textContent = n ? tf("confirmN", { n: n }) : t("selectSundays");
+  btn.textContent = n ? (n === 1 ? t("confirmOne") : tf("confirmN", { n: n })) : t("selectSundays");
 }
 function confirmPick() {
   var dates = Object.keys(rosterState.pick).filter(function (k) { return rosterState.pick[k]; });

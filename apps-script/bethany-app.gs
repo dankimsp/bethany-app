@@ -1043,11 +1043,13 @@ function getMyServing_(params) {
   if (teams.indexOf("nursery") >= 0) {
     var roster = nurseryRosterPayload_(user.uid, 8);
     var mine = roster.filter(function (day) { return day.people.some(function (p) { return p.isMe; }); });
-    var first = mine[0];
-    out.nursery = {
-      next: first ? { sunday: first.sunday, with: first.people.filter(function (p) { return !p.isMe; }).map(function (p) { return p.name; }) } : null,
-      upcoming: mine.map(function (day) { return day.sunday; })
-    };
+    var upcoming = mine.map(function (day) {
+      return {
+        sunday: day.sunday,
+        with: day.people.filter(function (p) { return !p.isMe; }).map(function (p) { return p.name; })
+      };
+    });
+    out.nursery = { next: upcoming[0] || null, upcoming: upcoming };
   }
   if (teams.indexOf("worship") >= 0) out.worship = { markedCount: worshipMarkedCount_(member) };
   return out;

@@ -274,17 +274,22 @@ body.no-nav .nav{display:none}
 body.no-nav .screen{padding-bottom:32px}
 .signout{color:var(--no);border-color:rgba(169,71,61,.55)}
 .profile{width:100%;border:0;text-align:left;cursor:pointer}
-#home-serving{margin:0 0 12px}
-.serve-card{border-top:4px solid var(--plum);margin-top:0}
-.serve-card.quiet{border-top-color:var(--stroke)}
+#home-serving{margin:16px 0 16px}
+.serve-card{position:relative;overflow:hidden}
+.serve-card::before{content:"";position:absolute;top:0;left:22px;right:22px;height:4px;background:var(--plum)}
+.serve-card.quiet::before{display:none}
 .serve-card h2{font-family:var(--serif);font-size:22px;margin:4px 0}
 .stack{display:flex;align-items:center}
-.stack i{width:28px;height:28px;border-radius:50%;background:var(--plum-soft);color:var(--plum);display:grid;place-items:center;font-size:11px;font-weight:800;margin-left:-6px;border:2px solid #fff}
+.stack i{width:32px;height:32px;border-radius:50%;background:var(--plum-soft);color:var(--plum);display:grid;place-items:center;font-size:12px;font-weight:800;margin-left:-8px;border:2px solid #fff}
 .stack i:first-child{margin-left:0}
 .serve-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 .serve-actions .pill{height:50px}
 .roster-sum{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:4px 0 12px}
-.roster-row{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-top:1px solid var(--stroke)}
+#roster-list{padding:4px 12px 8px}
+.roster-row{display:flex;gap:10px;align-items:flex-start;padding:12px 0;border-top:1px solid var(--stroke)}
+.roster-row:first-child{border-top:0;padding-top:4px}
+.roster-row .names{white-space:nowrap;font-size:13px;line-height:1.35}
+.roster-row .meta-ok,.roster-row .meta-need,.roster-row .mut{white-space:nowrap}
 .rdate{width:56px;border-radius:16px;background:var(--surface-2);text-align:center;padding:6px 0;flex:none}
 .rdate.on{background:var(--plum-soft);color:var(--plum)}
 .rdate small{display:block;font-size:11px;font-weight:800;letter-spacing:.06em}
@@ -292,11 +297,11 @@ body.no-nav .screen{padding-bottom:32px}
 .chip.you{background:var(--plum);color:#fff}
 .meta-ok{color:var(--ok);font-weight:700;font-size:13px}
 .meta-need{color:var(--gold-ink);font-weight:700;font-size:13px}
-.cant{min-height:44px;height:44px;padding:0 12px;font-size:14px}
+.cant{display:inline-flex;margin-top:8px;height:36px;min-height:36px;padding:0 12px;font-size:13px}
 .sun-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0 12px}
 .sun-chip{min-height:64px;border-radius:16px;border:1.5px solid rgba(0,48,63,.14);background:#fff;text-align:left;padding:8px 10px;cursor:pointer;color:var(--text)}
 .sun-chip b{display:block;font-size:15px}
-.sun-chip small{display:block;color:var(--text-2);font-weight:600}
+.sun-chip small{display:block;color:var(--text-2);font-weight:600;font-size:12px;white-space:nowrap}
 .sun-chip.on{background:var(--brand);color:#fff;border-color:var(--brand)}
 .sun-chip.on small{color:rgba(255,255,255,.86)}
 .sun-chip.mine{border-style:dashed;border-color:var(--plum);background:var(--plum-soft);cursor:default}
@@ -831,7 +836,8 @@ a.pill.line.createbtn{height:48px;margin-top:8px}
 </section>
 
 <section class="screen" id="s-account" hidden>
-  <div class="hdr"><button class="back" id="account-back" type="button" aria-label="Back"><svg class="i"><use href="#i-back"/></svg></button><h1 class="ptitle" data-i18n="accountTitle">Account &amp; sign-in</h1></div>
+  <div class="hdr"><button class="back" id="account-back" type="button" aria-label="Back"><svg class="i"><use href="#i-back"/></svg></button></div>
+  <h1 class="ptitle" data-i18n="accountTitle">Account &amp; sign-in</h1>
   <div class="grp" data-i18n="profile">Profile</div>
   <div class="card" id="account-profile"></div>
   <div class="grp" data-i18n="methods">Sign-in methods</div>
