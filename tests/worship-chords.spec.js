@@ -144,4 +144,30 @@ test("chord spelling, keys, and artist names", async function ({ page }) {
   await expect(setKey).toHaveText("Fm");
   await setKey.evaluate(function (el) { el.scrollIntoView({ block: "center" }); });
   await page.screenshot({ path: ART + "/setlist-em-to-fm.png" });
+
+  await page.goto("/index.html?audit=5#/worship/song/amazing-grace");
+  await expect(page.locator("#wo-song h1")).toContainText("Amazing Grace");
+  await page.locator("#wo-song").getByRole("button", { name: "More song actions" }).click();
+  await page.getByRole("menuitem", { name: "Reset" }).click();
+  await expect(page.locator("#wo-song .wkeyname")).toHaveText("G");
+  const verse3 = page.locator("#wo-song .wsec", { hasText: "Verse 3" });
+  const verse4 = page.locator("#wo-song .wsec", { hasText: "Verse 4" });
+  await expect(verse3).toBeVisible();
+  await expect(verse4).toBeVisible();
+  await expect(page.locator("#wo-song")).toContainText("dangers");
+  await expect(page.locator("#wo-song")).toContainText("thousand");
+  await verse3.evaluate(function (el) { el.scrollIntoView({ block: "start" }); });
+  await page.screenshot({ path: "/opt/cursor/artifacts/hymn-dedupe/amazing-grace-verse-3.png" });
+  await verse4.evaluate(function (el) { el.scrollIntoView({ block: "start" }); });
+  await page.screenshot({ path: "/opt/cursor/artifacts/hymn-dedupe/amazing-grace-verse-4.png" });
+
+  await page.goto("/index.html?audit=6#/worship/song/i-surrender-all");
+  await expect(page.locator("#wo-song h1")).toContainText("I Surrender All");
+  const surrender = await page.evaluate(function () {
+    var song = wo.byId["i-surrender-all"];
+    return { themes: song.themes, youtube: song.youtube };
+  });
+  expect(surrender.themes).toEqual(["Surrender", "Salvation", "Love"]);
+  expect(surrender.youtube).toBe("https://www.youtube.com/watch?v=UMYCJt4xo1Q");
+  await page.screenshot({ path: "/opt/cursor/artifacts/hymn-dedupe/i-surrender-all.png" });
 });
