@@ -17,8 +17,25 @@ function woPc(note) {
   if (m[2] === "b") n--;
   return (n + 12) % 12;
 }
-function woSpell(n) { return SHARP[(n + 12) % 12]; }
-function woSharpKey(name) { return woSpell(woPc(name)); }
+var FLAT = ["C","Db","D","Eb","E","F","Gb","G","Ab","A","Bb","B"];
+function woSpell(n, flats) { return (flats ? FLAT : SHARP)[((n % 12) + 12) % 12]; }
+function woIsMinor(name) { return /^[A-G][#b]?m(?!aj)/.test(String(name || "").trim()); }
+// Spell accidentals the way a chart in the sounding key is written: flat keys (F, Bb, Eb, Ab, Db and
+// their relative minors) use flats; Gb/F# follows how the song's own key is written.
+function woFlatsFor(song, semi) {
+  if (!song || !song.key) return false;
+  var minor = woIsMinor(song.key);
+  var pc = (((woPc(song.key) + (semi || 0)) % 12) + 12) % 12;
+  var maj = minor ? (pc + 3) % 12 : pc;
+  if ([5, 10, 3, 8, 1].indexOf(maj) >= 0) return true;
+  if (maj === 6) return !(semi % 12) && /^[A-G]b/.test(String(song.key).trim());
+  return false;
+}
+// Display name of a key as written in the song file (keeps flats and minor: "Ab", "Em", "F#m").
+function woSharpKey(name) {
+  var m = String(name || "").trim().match(/^([A-G][#b]?)(m(?!aj))?/);
+  return m ? m[1] + (m[2] || "") : String(name || "");
+}
 function woParseChord(ch) {
   var m = String(ch || "").trim().match(/^([A-G](?:#|b)?)([^/]*)(?:\/([A-G](?:#|b)?))?$/);
   if (!m) return null;
@@ -39,10 +56,19 @@ function woQuality(q) {
 function woDegree(interval) {
   return ["1","b2","2","b3","3","4","b5","5","b6","6","b7","7"][(interval + 12) % 12];
 }
+// Number-chart quality: keep everything the letter chord says, but write added tones in
+// parentheses so they can't be misread as a degree (C2 in G -> 4(2), Dsus4 -> 5sus4, Bm7b5 -> 3m7b5).
+function woNumQuality(q) {
+  var r = String(q || "");
+  r = r.replace(/^min(?!or)/, "m").replace(/^-/, "m").replace(/^(M7|ma7)/, "maj7");
+  if (!/^m(?!aj)/.test(r)) r = r.replace(/^(add)?(2|4|6|7|9|11|13)/, function (_, add, d) { return "(" + d + ")"; });
+  else r = r.replace(/^m(add)?(2|4|9|11)(?=$|\/)/, function (_, add, d) { return "m(" + d + ")"; });
+  return r;
+}
 function woNashville(ch, keyPc) {
   var p = woParseChord(ch);
   if (!p) return ch;
-  var name = woDegree(p.root - keyPc) + woQuality(p.q);
+  var name = woDegree(p.root - keyPc) + woNumQuality(p.q);
   if (p.bass != null) name += "/" + woDegree(p.bass - keyPc);
   return name;
 }
@@ -141,7 +167,7 @@ function woSplitArtists(raw) {
       return "(" + tokenToName(parens[Number(n)]) + ")";
     })).replace(/\s+/g, " ").trim();
   }
-  var re = /\s+(?:&|and|featuring|feat\.?|ft\.?|x|with)\s+|\s*\/\s*|,\s*(?:&\s*)?/gi;
+  var re = /,\s*(?:(?:featuring|feat\.?|ft\.?)\s+)?|\s+(?:featuring|feat\.?|ft\.?)\s+/gi;
   var parts = [], seps = [], last = 0, match;
   while ((match = re.exec(text))) {
     parts.push(text.slice(last, match.index));
@@ -278,7 +304,7 @@ function woParseNum(ch) {
   var rest = m[3], bass = null;
   var slash = rest.match(/^(.*)\/([#b]?[1-7])$/);
   if (slash) { rest = slash[1]; bass = slash[2]; }
-  if (/[^majsu\d()#]/.test(rest)) return null;
+  if (!/^(?:m(?!aj)|min|maj|dim|aug|sus|add|[0-9()#b+°ø])*$/.test(rest)) return null;
   var semi = woDegSemi(m[1] + m[2]);
   if (semi == null) return null;
   return { semi: semi, rest: rest, bass: bass ? woDegSemi(bass) : null };
@@ -292,11 +318,16 @@ function woNumSuffix(rest) {
   else if (/sus2/.test(r)) out += "sus2";
   else if (/sus/.test(r)) out += "sus";
   if (/\(2\)/.test(r) || (/2/.test(r) && !/sus2/.test(r))) out += "2";
+  if (/\+/.test(r) && !/aug/.test(r)) out += "aug";
+  if (/add9|\(9\)/.test(r)) out += "add9";
+  if (/add4/.test(r)) out += "add4";
+  if (/^m?6/.test(r)) out += "6";
   if (/11/.test(r)) out += "11";
   if (/maj7/i.test(r)) out += "maj7";
   else if (/#7/.test(r)) out += "#7";
   else if (/7/.test(r)) out += "7";
   else if (/#$/.test(r)) out += "#";
+  if (/b5/.test(r)) out += "b5";
   return out;
 }
 function woNumToLetter(ch, keyPc, flats) {
@@ -306,16 +337,17 @@ function woNumToLetter(ch, keyPc, flats) {
   var bass = p.bass == null ? "" : "/" + woSpell(p.bass + keyPc, flats);
   return root + woNumSuffix(p.rest) + bass;
 }
-function woKeyFor(song) { return woSpell(woPc(song.key) + wo.semi, wo.flats); }
+function woKeyFor(song) { return woSpell(woPc(song.key) + wo.semi, woFlatsFor(song, wo.semi)) + (woIsMinor(song.key) ? "m" : ""); }
 function woKeyNow() { return wo.cur ? woKeyFor(wo.cur) : "C"; }
 function woLabel(ch, song) {
   if (!ch || woLyricsOn()) return "";
   if (woParseNum(ch)) {
     if (woNumbersOn()) return ch;
-    return woNumToLetter(ch, woPc(woKeyNow()), wo.flats);
+    return woNumToLetter(ch, woPc(woKeyNow()), woFlatsFor(song || wo.cur, wo.semi));
   }
-  if (woNumbersOn()) return woNashville(woTranspose(ch, wo.semi, wo.flats), woPc(woKeyFor(song)));
-  return woTranspose(ch, wo.semi, wo.flats);
+  if (woNumbersOn()) return woNashville(ch, woPc(song.key));
+  if (!wo.semi) return ch; // untransposed: show the chart's own spelling (Bb stays Bb, G# stays G#)
+  return woTranspose(ch, wo.semi, woFlatsFor(song, wo.semi));
 }
 function woChart(song) {
   var root = document.createElement("div");
@@ -1691,7 +1723,7 @@ function woNudgeSet(i, dir) {
   var set = woLoadSet();
   var song = wo.byId[set.songs[i].id];
   if (!song) return;
-  var next = woSpell(woPc(set.songs[i].key) + dir);
+  var cur = set.songs[i].key, next = woSpell(woPc(cur) + dir, woFlatsFor({ key: cur }, dir)) + (woIsMinor(cur) ? "m" : "");
   set.songs[i].key = next;
   woSaveSet(set);
   woRenderSet();
