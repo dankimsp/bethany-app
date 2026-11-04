@@ -167,9 +167,16 @@ function paintMoreServing() {
   label.className = "grp";
   label.textContent = t("myServing");
   box.appendChild(label);
+  if (!servingState) {
+    var wait = document.createElement("div");
+    wait.className = "card";
+    wait.innerHTML = '<div class="skel"></div><div class="skel"></div>';
+    box.appendChild(wait);
+    return;
+  }
   var card = document.createElement("div");
   card.className = "card";
-  var data = servingState || {};
+  var data = servingState;
   if (nursery && data.nursery && data.nursery.upcoming && data.nursery.upcoming.length) {
     data.nursery.upcoming.slice(0, 3).forEach(function (item) {
       var iso = item && item.sunday ? item.sunday : item;
@@ -300,7 +307,8 @@ function paintNurseryRoster() {
   }
   var mineCount = days.filter(function (d) { return (d.people || []).some(function (p) { return p.isMe; }); }).length;
   var any = days.some(function (d) { return (d.people || []).length; });
-  var html = '<div class="roster-sum"><div><b>' + escapeHtml(tf("youreOnN", { n: mineCount })) + '</b><div class="mut">' + escapeHtml(t("teamOnly")) + '</div></div><button type="button" class="pill brand sm" id="nursery-pick">' + escapeHtml(t("pickSundays")) + '</button></div>';
+  var onLine = mineCount === 1 ? t("youreOnOne") : tf("youreOnN", { n: mineCount });
+  var html = '<div class="roster-sum"><div><b>' + escapeHtml(onLine) + '</b><div class="mut">' + escapeHtml(t("teamOnly")) + '</div></div><button type="button" class="pill brand sm" id="nursery-pick">' + escapeHtml(t("pickSundays")) + '</button></div>';
   if (rosterState.error && !any) {
     html += '<div class="banner-err">' + escapeHtml(t("loadError")) + '</div><button type="button" class="pill line" id="nursery-retry">' + escapeHtml(t("tryAgain")) + '</button>';
   } else if (!any) {
@@ -438,7 +446,7 @@ function confirmPick() {
   dates.forEach(function (iso) { queueRoster(iso, "add"); });
   rosterState.pick = {};
   closeSheet("sheet-pick");
-  showToast(tf("addedToast", { n: dates.length }));
+  showToast(dates.length === 1 ? t("addedOne") : tf("addedToast", { n: dates.length }));
 }
 function openCancel(iso) {
   cancelSunday = iso;
@@ -709,18 +717,29 @@ window.paintNurseryPage = function () {
   paintNurseryRoster();
   loadRoster().then(function () { paintNurseryRoster(); paintHomeServing(); });
 };
+function hashPath() {
+  return (location.hash || "").replace(/^#\/?/, "").split(/[/?]/)[0];
+}
 window.paintHomeServingCard = function () {
-  if (!hasTeam("nursery")) { var box = document.getElementById("home-serving"); if (box) box.hidden = true; return; }
+  var box = document.getElementById("home-serving");
+  if (!hasTeam("nursery")) { if (box) box.hidden = true; return; }
   var cached = readRosterCache();
-  if (cached && cached.roster) { rosterState.roster = cached.roster; rosterState.at = cached.at || 0; paintHomeServing(); }
+  if (cached && cached.roster) {
+    rosterState.roster = cached.roster;
+    rosterState.at = cached.at || 0;
+    paintHomeServing();
+  } else if (box) {
+    box.hidden = false;
+    box.innerHTML = '<div class="skel"></div>';
+  }
   loadRoster().then(function () { paintHomeServing(); });
   loadServing();
 };
 bootMore();
 setTimeout(function () {
-  var path = (location.hash || "").replace(/^#\/?/, "").split(/[/?]/)[0];
-  if (path === "more" && window.paintMorePage) window.paintMorePage();
+  var path = hashPath();
+  if ((path === "more" || path === "account") && window.paintMorePage && path === "more") window.paintMorePage();
   if (path === "account" && window.paintAccountPage) window.paintAccountPage();
-  if (path === "home" && window.paintHomeServingCard) window.paintHomeServingCard();
+  if (!path || path === "home") window.paintHomeServingCard();
   if (path === "ministry" && (location.hash || "").indexOf("nursery") >= 0 && window.paintNurseryPage) window.paintNurseryPage();
 }, 0);
