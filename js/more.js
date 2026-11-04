@@ -167,9 +167,16 @@ function paintMoreServing() {
   label.className = "grp";
   label.textContent = t("myServing");
   box.appendChild(label);
+  if (!servingState) {
+    var wait = document.createElement("div");
+    wait.className = "card";
+    wait.innerHTML = '<div class="skel"></div><div class="skel"></div>';
+    box.appendChild(wait);
+    return;
+  }
   var card = document.createElement("div");
   card.className = "card";
-  var data = servingState || {};
+  var data = servingState;
   if (nursery && data.nursery && data.nursery.upcoming && data.nursery.upcoming.length) {
     data.nursery.upcoming.slice(0, 3).forEach(function (item) {
       var iso = item && item.sunday ? item.sunday : item;
@@ -730,7 +737,7 @@ window.paintHomeServingCard = function () {
 bootMore();
 setTimeout(function () {
   var path = hashPath();
-  if (path === "more" && window.paintMorePage) window.paintMorePage();
+  if ((path === "more" || path === "account") && window.paintMorePage && path === "more") window.paintMorePage();
   if (path === "account" && window.paintAccountPage) window.paintAccountPage();
   if (!path || path === "home") window.paintHomeServingCard();
   if (path === "ministry" && (location.hash || "").indexOf("nursery") >= 0 && window.paintNurseryPage) window.paintNurseryPage();
