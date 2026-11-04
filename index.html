@@ -270,8 +270,10 @@ body.fb-open{overflow:hidden}
 #fb-send:disabled{opacity:.45;cursor:default}
 .fb-thanks{padding:28px 8px 36px;text-align:center}
 .fb-thanks h2{text-wrap:balance;max-width:14em;margin:0 auto}
-body.no-nav .nav{display:none}
-body.no-nav .screen{padding-bottom:32px}
+@media (max-width:767px){
+  body.no-nav .nav{display:none}
+  body.no-nav .screen{padding-bottom:32px}
+}
 .signout{color:var(--no);border-color:rgba(169,71,61,.55)}
 .profile{width:100%;border:0;text-align:left;cursor:pointer}
 #home-serving{margin:16px 0 16px}
