@@ -709,18 +709,29 @@ window.paintNurseryPage = function () {
   paintNurseryRoster();
   loadRoster().then(function () { paintNurseryRoster(); paintHomeServing(); });
 };
+function hashPath() {
+  return (location.hash || "").replace(/^#\/?/, "").split(/[/?]/)[0];
+}
 window.paintHomeServingCard = function () {
-  if (!hasTeam("nursery")) { var box = document.getElementById("home-serving"); if (box) box.hidden = true; return; }
+  var box = document.getElementById("home-serving");
+  if (!hasTeam("nursery")) { if (box) box.hidden = true; return; }
   var cached = readRosterCache();
-  if (cached && cached.roster) { rosterState.roster = cached.roster; rosterState.at = cached.at || 0; paintHomeServing(); }
+  if (cached && cached.roster) {
+    rosterState.roster = cached.roster;
+    rosterState.at = cached.at || 0;
+    paintHomeServing();
+  } else if (box) {
+    box.hidden = false;
+    box.innerHTML = '<div class="skel"></div>';
+  }
   loadRoster().then(function () { paintHomeServing(); });
   loadServing();
 };
 bootMore();
 setTimeout(function () {
-  var path = (location.hash || "").replace(/^#\/?/, "").split(/[/?]/)[0];
+  var path = hashPath();
   if (path === "more" && window.paintMorePage) window.paintMorePage();
   if (path === "account" && window.paintAccountPage) window.paintAccountPage();
-  if (path === "home" && window.paintHomeServingCard) window.paintHomeServingCard();
+  if (!path || path === "home") window.paintHomeServingCard();
   if (path === "ministry" && (location.hash || "").indexOf("nursery") >= 0 && window.paintNurseryPage) window.paintNurseryPage();
 }, 0);

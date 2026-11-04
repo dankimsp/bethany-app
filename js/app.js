@@ -944,8 +944,9 @@ function pullProfile() {
     saveProfileLocal(res.profile);
     var serverHas = Array.isArray(res.profile.teams) && res.profile.teams.indexOf("nursery") >= 0;
     if ((location.hash || "").indexOf("more") >= 0) renderAccount();
+    var here = (location.hash || "").replace(/^#\/?/, "").split(/[/?]/)[0];
     if (hadNursery && !serverHas) sendToNurseryCode();
-    else if ((location.hash || "").indexOf("home") >= 0 && window.paintHomeServingCard) window.paintHomeServingCard();
+    else if ((!here || here === "home") && window.paintHomeServingCard) window.paintHomeServingCard();
   }).catch(function () {});
 }
 function eventIdFromHash() {
