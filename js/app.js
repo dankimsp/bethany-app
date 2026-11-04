@@ -488,7 +488,7 @@ function paintMinistryHead(head, m, onBack) {
   head.className = "mhead" + (m.illus ? " illus" : " photo");
   head.setAttribute("data-tone", m.id);
   var chip = hasTeam(m.id) ? '<span class="chip ok">' + escapeHtml(t("joined")) + "</span>" : "";
-  head.innerHTML = '<div class="mart" aria-hidden="true"><img alt="" src="' + escapeAttr(m.cover || "") + '"></div><div class="row-between mtop"><button class="' + (m.illus ? "back" : "back glass") + '" type="button" aria-label="' + escapeAttr(t("back")) + '"><svg class="i"><use href="#i-back"/></svg></button>' + chip + '</div><div class="mcopy"><div class="eyebrow">' + escapeHtml(t("myMin")) + "</div><h1>" + escapeHtml(name) + '</h1><div class="mut">' + escapeHtml(lead || "") + "</div></div>";
+  head.innerHTML = '<div class="mart" aria-hidden="true"><img alt="" src="' + escapeAttr(m.cover || "") + '"></div><div class="row-between mtop"><button class="' + (m.illus ? "back" : "back glass") + '" type="button" aria-label="' + escapeAttr(t("back")) + '"><svg class="i"><use href="#i-back"/></svg></button></div><div class="mcopy"><div class="eyebrow">' + escapeHtml(t("myMin")) + '</div><div class="mtitle"><h1>' + escapeHtml(name) + "</h1>" + chip + '</div><div class="mut">' + escapeHtml(lead || "") + "</div></div>";
   head.querySelector("button").onclick = onBack;
 }
 function renderMinistry() {
@@ -1187,7 +1187,7 @@ function renderVisit() {
 document.getElementById("watch-live").onclick = function () { window.open(BETHANY.watchUrl, "_blank", "noopener"); };
 document.getElementById("all-times").onclick = function () { location.hash = "#/events"; };
 document.getElementById("see-events").onclick = function () { location.hash = "#/events"; };
-var APP_VERSION = (window.BETHANY && BETHANY.version) || "v34";
+var APP_VERSION = (window.BETHANY && BETHANY.version) || "v35";
 var fbCat = "idea";
 var fbGen = 0;
 function feedbackWho() {

@@ -149,7 +149,8 @@ test("no horizontal overflow and nursery header at every width", async function 
     await expect(page.locator("#more-serving")).toContainText("Grace L.");
     await noOverflow(page);
     await page.goto("/index.html?w=" + size[0] + "n#/ministry/nursery");
-    await expect(page.locator("#nursery-root")).toContainText("You're on");
+    await expect(page.locator("#nursery-root")).toContainText("You're on 1 Sunday");
+    await expect(page.locator("#nursery-root")).not.toContainText("1 Sundays");
     const back = await page.locator("#ministry-head .back").boundingBox();
     expect(back.width).toBeGreaterThanOrEqual(44);
     expect(back.height).toBeGreaterThanOrEqual(44);

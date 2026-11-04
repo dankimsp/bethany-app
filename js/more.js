@@ -307,7 +307,8 @@ function paintNurseryRoster() {
   }
   var mineCount = days.filter(function (d) { return (d.people || []).some(function (p) { return p.isMe; }); }).length;
   var any = days.some(function (d) { return (d.people || []).length; });
-  var html = '<div class="roster-sum"><div><b>' + escapeHtml(tf("youreOnN", { n: mineCount })) + '</b><div class="mut">' + escapeHtml(t("teamOnly")) + '</div></div><button type="button" class="pill brand sm" id="nursery-pick">' + escapeHtml(t("pickSundays")) + '</button></div>';
+  var onLine = mineCount === 1 ? t("youreOnOne") : tf("youreOnN", { n: mineCount });
+  var html = '<div class="roster-sum"><div><b>' + escapeHtml(onLine) + '</b><div class="mut">' + escapeHtml(t("teamOnly")) + '</div></div><button type="button" class="pill brand sm" id="nursery-pick">' + escapeHtml(t("pickSundays")) + '</button></div>';
   if (rosterState.error && !any) {
     html += '<div class="banner-err">' + escapeHtml(t("loadError")) + '</div><button type="button" class="pill line" id="nursery-retry">' + escapeHtml(t("tryAgain")) + '</button>';
   } else if (!any) {
@@ -445,7 +446,7 @@ function confirmPick() {
   dates.forEach(function (iso) { queueRoster(iso, "add"); });
   rosterState.pick = {};
   closeSheet("sheet-pick");
-  showToast(tf("addedToast", { n: dates.length }));
+  showToast(dates.length === 1 ? t("addedOne") : tf("addedToast", { n: dates.length }));
 }
 function openCancel(iso) {
   cancelSunday = iso;

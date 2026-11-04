@@ -22,7 +22,7 @@ if ("serviceWorker" in navigator) {
     woRefreshing = true;
     location.reload();
   });
-  navigator.serviceWorker.register("sw.js?v=34").catch(function () {});
+  navigator.serviceWorker.register("sw.js?v=35").catch(function () {});
 }
 </script>
 <style>
@@ -200,6 +200,8 @@ body.wo-playing .app{padding-bottom:0}
 .mhead .mtop{min-height:42px;padding-right:calc(var(--safe) + 12px)}
 .mhead .mcopy{max-width:calc(100% - var(--safe) - 12px)}
 .mhead h1{font-family:var(--serif);font-size:26px;line-height:1.15;margin:6px 0 4px}
+.mtitle{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.mtitle h1{margin:6px 0 4px}
 .mhead.photo .eyebrow,.mhead.photo .mut{color:#E4ECEF}
 .mhead.illus{color:var(--text)}
 .mhead.illus .eyebrow,.mhead.illus .mut{color:var(--text-2)}
@@ -368,8 +370,8 @@ body.fb-open{overflow:hidden}
   .ev-img{margin:0}
   .mhead{--safe:min(42%,480px);margin:0 0 16px;min-height:280px;padding:20px 28px 24px;border-radius:var(--r-card);overflow:hidden}
   .mhead.illus .mart img{width:100%;height:100%;max-width:none;position:static;left:auto;top:auto;transform:none;object-fit:contain;object-position:right center}
-  .mhead.illus .chip.ok{position:absolute;top:24px;right:28px;z-index:2}
   .mhead.illus .mtop{padding-right:0}
+  .mhead.illus .mtitle{max-width:100%}
   #s-give,#s-visit,#s-more,#s-account{max-width:720px;margin-left:auto;margin-right:auto}
   #s-ministry #nursery-root{max-width:880px}
   #a2hs-row{display:none !important}
@@ -1269,7 +1271,7 @@ const WORSHIP_BACKEND_URL = 'https://script.google.com/macros/s/AKfycbwWtdJUNT8n
 <script src="js/config.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/app.js"></script>
-<script src="js/more.js?v=34"></script>
-<script src="worship.js?v=34"></script>
+<script src="js/more.js?v=35"></script>
+<script src="worship.js?v=35"></script>
 </body>
 </html>
