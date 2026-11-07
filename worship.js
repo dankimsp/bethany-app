@@ -1963,7 +1963,8 @@ function woRenderPlay() {
   wo.semi = (woPc(item.key) - woPc(item.song.key) + 12) % 12;
   wo.flats = false;
   document.getElementById("wo-play-title").textContent = item.song.title;
-  document.getElementById("wo-play-key").textContent = woKeyNow();
+  document.getElementById("wo-play-key").textContent = "Key: " + woKeyNow();
+  woPlayNav();
   document.getElementById("wo-play-num").classList.toggle("on", woNumbersOn());
   document.getElementById("wo-play-num").setAttribute("aria-pressed", woNumbersOn() ? "true" : "false");
   var body = document.getElementById("wo-play-body");
@@ -2008,10 +2009,51 @@ function woApplyPlaySize(px, cols) {
   body.classList.toggle("wo-cols", n > 1);
   body.style.setProperty("--wo-cols", String(Math.max(1, n)));
 }
+function woLinesFit() {
+  var chart = document.querySelector("#wo-play-body .wo-chart");
+  if (!chart) return true;
+  var count = parseInt(getComputedStyle(chart).columnCount, 10);
+  if (!count || count < 2) return true;
+  var lines = chart.querySelectorAll(".wline");
+  for (var i = 0; i < lines.length; i++) {
+    var words = lines[i].querySelectorAll(".wword");
+    if (!words.length) continue;
+    var box = lines[i].getBoundingClientRect();
+    var top = words[0].getBoundingClientRect().top;
+    for (var j = 0; j < words.length; j++) {
+      var word = words[j].getBoundingClientRect();
+      if (word.width > box.width + 1) return false;
+      if (Math.abs(word.top - top) > 3) return false;
+    }
+  }
+  return true;
+}
+function woChooseCols(px) {
+  var cols = 1;
+  if (woWidePlay()) {
+    woApplyPlaySize(px, 2);
+    if (woLinesFit()) cols = 2;
+  }
+  if (window.innerWidth >= 1100) {
+    woApplyPlaySize(px, 3);
+    if (woLinesFit()) cols = 3;
+  }
+  woApplyPlaySize(px, cols);
+}
 function woPlayFits(px, cols) {
   woApplyPlaySize(px, cols);
   var body = document.getElementById("wo-play-body");
-  return !!body && body.scrollHeight <= body.clientHeight + 2;
+  if (!body || body.scrollHeight > body.clientHeight + 2) return false;
+  if ((cols === true || Number(cols) > 1) && !woLinesFit()) return false;
+  return true;
+}
+function woPlayNav() {
+  var multi = !!(wo.playList && wo.playList.length > 1);
+  ["wo-play-prev", "wo-play-next", "wo-play-pos"].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) el.hidden = !multi;
+  });
+  document.querySelectorAll("#wo-play .wo-edge").forEach(function (el) { el.hidden = !multi; });
 }
 function woBestFit(cols) {
   var lo = 8, hi = 48, best = 8, fits = false;
@@ -2043,7 +2085,7 @@ function woFitPlay() {
     var item = wo.playList && wo.playList[wo.playIndex];
     if (!item || !item.song) return;
     var saved = woPlaySize(item.song.id);
-    if (saved) woApplyPlaySize(saved, false);
+    if (saved) woChooseCols(saved);
     else woAutoFit();
   });
 }
@@ -2057,7 +2099,7 @@ function woNudgePlaySize(delta) {
   }
   var next = Math.max(8, Math.min(48, Math.round(cur + delta)));
   woSetPlaySize(item.song.id, next);
-  woApplyPlaySize(next, false);
+  woChooseCols(next);
 }
 function woResetPlaySize() {
   var item = wo.playList && wo.playList[wo.playIndex];

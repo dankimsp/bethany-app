@@ -43,41 +43,18 @@ async function playControls(page) {
         top: r.top,
         bottom: r.bottom,
         w: r.width,
-        h: r.height
+        h: r.height,
+        skip: !!el.hidden
       };
     });
     return {
       scroll: tools ? tools.scrollWidth - tools.clientWidth : 0,
       vw: window.innerWidth,
       vh: window.innerHeight,
-      buttons: buttons
+      buttons: buttons.filter(function (b) { return !b.skip; })
     };
   });
 }
-
-test("play controls stay on screen at phone and tablet", async function ({ page }) {
-  await boot(page, ["worship"]);
-  for (const size of [{ w: 390, h: 844 }, { w: 768, h: 1024 }, { w: 1024, h: 768 }]) {
-    await page.setViewportSize({ width: size.w, height: size.h });
-    await page.goto("/index.html?meet=play-" + size.w + "x" + size.h + "#/worship/song/amazing-grace");
-    await expect(page.locator("#wo-song h1")).toContainText("Amazing Grace");
-    await page.locator("#wo-song").getByRole("button", { name: "Play", exact: true }).click();
-    await expect(page.locator("#wo-play")).toBeVisible();
-    const box = await playControls(page);
-    const hidden = box.buttons.filter(function (b) {
-      return b.w < 8 || b.left < -1 || b.right > box.vw + 1 || b.top < -1 || b.bottom > box.vh + 1;
-    });
-    expect(box.scroll, size.w + "x" + size.h + " " + JSON.stringify(hidden)).toBeLessThanOrEqual(1);
-    expect(hidden, size.w + "x" + size.h).toEqual([]);
-    const names = box.buttons.map(function (b) { return b.t; });
-    ["Prev", "Next", "Numbers", "Lyrics only", "Smaller text", "Larger text", "Fit", "Songs", "Exit"].forEach(function (name) {
-      expect(names, size.w + "x" + size.h).toContain(name);
-    });
-    await page.screenshot({ path: ART + "/play-controls-" + size.w + "x" + size.h + ".png" });
-    await page.getByRole("button", { name: "Exit" }).click();
-    await expect(page.locator("#wo-play")).toBeHidden();
-  }
-});
 
 test("scripture chip keeps the verse and drops scraped site text", async function ({ page }) {
   await boot(page, ["worship"]);
@@ -129,6 +106,125 @@ test("worship tools show for members and stay gated for everyone else", async fu
   await expect(guest).toHaveURL(/#\/team-code\?team=worship/);
   await expect(guest.getByRole("link", { name: /Chord sheets/ })).toHaveCount(0);
   await guest.close();
+});
+
+test("play controls stay on screen at phone and tablet", async function ({ page }) {
+  await boot(page, ["worship"]);
+  for (const size of [{ w: 390, h: 844 }, { w: 768, h: 1024 }, { w: 1024, h: 768 }]) {
+    await page.setViewportSize({ width: size.w, height: size.h });
+    await page.goto("/index.html?meet=play-" + size.w + "x" + size.h + "#/worship/song/amazing-grace");
+    await expect(page.locator("#wo-song h1")).toContainText("Amazing Grace");
+    await page.locator("#wo-song").getByRole("button", { name: "Play", exact: true }).click();
+    await expect(page.locator("#wo-play")).toBeVisible();
+    const box = await playControls(page);
+    const off = box.buttons.filter(function (b) {
+      return b.w < 8 || b.h < 44 || b.left < -1 || b.right > box.vw + 1 || b.top < -1 || b.bottom > box.vh + 1;
+    });
+    expect(box.scroll, size.w + "x" + size.h + " " + JSON.stringify(off)).toBeLessThanOrEqual(1);
+    expect(off, size.w + "x" + size.h).toEqual([]);
+    const names = box.buttons.map(function (b) { return b.t; });
+    ["Exit", "Numbers", "Lyrics only", "Smaller text", "Larger text", "Fit", "Songs"].forEach(function (name) {
+      expect(names, size.w + "x" + size.h).toContain(name);
+    });
+    expect(names).not.toContain("Prev");
+    expect(names).not.toContain("Next");
+    const rows = new Set(box.buttons.map(function (b) { return Math.round(b.top); }));
+    if (size.w === 390) expect(rows.size).toBeLessThanOrEqual(2);
+    await expect(page.locator("#wo-play-key")).toHaveText("Key: G");
+    const keyPlace = await page.evaluate(function () {
+      var key = document.getElementById("wo-play-key").getBoundingClientRect();
+      var title = document.getElementById("wo-play-title").getBoundingClientRect();
+      var bar = document.getElementById("wo-play-bar").getBoundingClientRect();
+      return { keyTop: key.top, titleBottom: title.bottom, barBottom: bar.bottom };
+    });
+    expect(keyPlace.keyTop).toBeGreaterThanOrEqual(keyPlace.barBottom - 1);
+    expect(keyPlace.keyTop).toBeLessThan(keyPlace.titleBottom + 8);
+    await page.screenshot({ path: ART + "/play-controls-" + size.w + "x" + size.h + ".png" });
+    if (size.w === 390) await page.screenshot({ path: "/opt/cursor/artifacts/bethany-meeting-review/phone-toolbar-390x844.png" });
+    await page.getByRole("button", { name: "Exit" }).click();
+    await expect(page.locator("#wo-play")).toBeHidden();
+  }
+});
+
+async function columnReport(page) {
+  return page.evaluate(function () {
+    var chart = document.querySelector("#wo-play-body .wo-chart");
+    var orphans = [];
+    var wrapped = [];
+    document.querySelectorAll("#wo-play-body .wblock").forEach(function (block) {
+      var head = block.querySelector(".wsec");
+      var line = block.querySelector(".wline");
+      if (!head || !line) return;
+      var hr = head.getBoundingClientRect();
+      var lr = line.getBoundingClientRect();
+      if (Math.abs(hr.left - lr.left) > 24) orphans.push(head.textContent.trim());
+    });
+    document.querySelectorAll("#wo-play-body .wline").forEach(function (line) {
+      var words = line.querySelectorAll(".wword");
+      if (words.length < 2) return;
+      var top = words[0].getBoundingClientRect().top;
+      var box = line.getBoundingClientRect();
+      for (var i = 0; i < words.length; i++) {
+        var word = words[i].getBoundingClientRect();
+        if (word.width > box.width + 1 || Math.abs(word.top - top) > 3) {
+          wrapped.push(line.textContent.replace(/\s+/g, " ").trim().slice(0, 48));
+          break;
+        }
+      }
+    });
+    var misaligned = [];
+    Array.from(document.querySelectorAll("#wo-play-body .wseg")).slice(0, 8).forEach(function (seg) {
+      var chord = seg.querySelector(".chord");
+      var lyric = seg.querySelector(".wch + span");
+      if (!chord || !lyric) return;
+      var cr = chord.getBoundingClientRect();
+      var lr = lyric.getBoundingClientRect();
+      if (cr.width < 2 || lr.width < 2) return;
+      var overlap = Math.min(cr.right, lr.right) - Math.max(cr.left, lr.left);
+      if (overlap < Math.min(cr.width, lr.width) * 0.4) misaligned.push(chord.textContent);
+    });
+    return {
+      cols: chart ? getComputedStyle(chart).columnCount : "0",
+      orphans: orphans,
+      wrapped: wrapped,
+      misaligned: misaligned
+    };
+  });
+}
+
+test("play columns keep a verse heading with its first line", async function ({ page }) {
+  await boot(page, ["worship"]);
+  const shots = "/opt/cursor/artifacts/bethany-meeting-review";
+  const sizes = [
+    { w: 768, h: 1024, name: "768x1024" },
+    { w: 1024, h: 768, name: "1024x768" },
+    { w: 1024, h: 1366, name: "1024x1366" },
+    { w: 1366, h: 1024, name: "1366x1024" },
+    { w: 1440, h: 900, name: "1440x900" },
+    { w: 390, h: 844, name: "390x844" }
+  ];
+  for (const size of sizes) {
+    await page.setViewportSize({ width: size.w, height: size.h });
+    await page.goto("/index.html?meet=playcols-" + size.name + "#/worship/song/amazing-grace");
+    await page.locator("#wo-song").getByRole("button", { name: "Play", exact: true }).click();
+    await expect(page.locator("#wo-play")).toBeVisible();
+    await page.waitForTimeout(250);
+    const fit = await columnReport(page);
+    expect(fit.orphans, size.name + " fit " + JSON.stringify(fit)).toEqual([]);
+    expect(fit.misaligned, size.name + " fit").toEqual([]);
+    if (size.w === 768) expect(["1", "auto"], size.name + " " + JSON.stringify(fit)).toContain(fit.cols);
+    if (fit.cols !== "1" && fit.cols !== "auto") expect(fit.wrapped, size.name + " fit").toEqual([]);
+    await page.screenshot({ path: shots + "/play-" + size.name + "-fit.png" });
+    await page.getByRole("button", { name: "Larger text" }).click();
+    await page.getByRole("button", { name: "Larger text" }).click();
+    await page.waitForTimeout(150);
+    const bigger = await columnReport(page);
+    expect(bigger.orphans, size.name + " A+ " + JSON.stringify(bigger)).toEqual([]);
+    expect(bigger.misaligned, size.name + " A+").toEqual([]);
+    if (bigger.cols !== "1" && bigger.cols !== "auto") expect(bigger.wrapped, size.name + " A+").toEqual([]);
+    await page.screenshot({ path: shots + "/play-" + size.name + "-larger.png" });
+    await page.getByRole("button", { name: "Exit" }).click();
+  }
 });
 
 test("tablet chart lines stay inside the song column", async function ({ page }) {
@@ -188,4 +284,69 @@ test("setlist create, add, reorder, and remove stay on this device", async funct
   await expect(page.locator("#wo-sets-list")).toContainText("1 song");
   expect(posts).toEqual([]);
   await page.screenshot({ path: ART + "/setlist-1024x768.png" });
+});
+
+test("two-song play controls change the chart", async function ({ browser }) {
+  const dir = "/opt/cursor/artifacts/bethany-meeting-review";
+  const context = await browser.newContext({
+    viewport: { width: 1024, height: 768 },
+    recordVideo: { dir: "/tmp/wo-video", size: { width: 1024, height: 768 } }
+  });
+  const page = await context.newPage();
+  await boot(page, ["worship"]);
+  await page.addInitScript(function () {
+    localStorage.setItem("bethany-worship-sets", JSON.stringify([{
+      id: "preview-demo",
+      date: "2026-11-08",
+      title: "Example Sunday set",
+      titleEdited: true,
+      service: "English Service",
+      language: "en",
+      leader: "Pastor Woori",
+      leaderNote: "",
+      songs: [
+        { id: "amazing-grace", key: "G", note: "" },
+        { id: "holy-holy-holy", key: "D", note: "" }
+      ]
+    }]));
+  });
+  await page.goto("/index.html?meet=twosong#/worship/setlists/preview-demo");
+  await page.getByRole("button", { name: "Play set" }).click();
+  await expect(page.locator("#wo-play-title")).toHaveText("Amazing Grace");
+  await expect(page.locator("#wo-play-prev")).toBeVisible();
+  await expect(page.locator("#wo-play-next")).toBeVisible();
+  await page.waitForTimeout(500);
+  await page.getByRole("button", { name: "Next", exact: true }).click();
+  await expect(page.locator("#wo-play-title")).toHaveText("Holy, Holy, Holy");
+  await expect(page.locator("#wo-play-key")).toHaveText("Key: D");
+  await page.waitForTimeout(500);
+  await page.getByRole("button", { name: "Prev", exact: true }).click();
+  await expect(page.locator("#wo-play-title")).toHaveText("Amazing Grace");
+  await page.waitForTimeout(400);
+  await page.getByRole("button", { name: "Numbers" }).click();
+  await expect(page.locator("#wo-play .chord").first()).toHaveText(/^[1-7]/);
+  await page.waitForTimeout(400);
+  await page.getByRole("button", { name: "Lyrics only" }).click();
+  await expect.poll(async function () {
+    return page.locator("#wo-play .wch").first().evaluate(function (el) { return getComputedStyle(el).display; });
+  }).toBe("none");
+  await page.waitForTimeout(400);
+  await page.getByRole("button", { name: "Lyrics only" }).click();
+  const before = await page.evaluate(function () { return parseFloat(getComputedStyle(document.getElementById("wo-play")).getPropertyValue("--wo-fs")); });
+  await page.getByRole("button", { name: "Larger text" }).click();
+  await page.getByRole("button", { name: "Larger text" }).click();
+  await page.getByRole("button", { name: "Larger text" }).click();
+  const after = await page.evaluate(function () { return parseFloat(getComputedStyle(document.getElementById("wo-play")).getPropertyValue("--wo-fs")); });
+  expect(after).toBeGreaterThan(before);
+  await page.waitForTimeout(300);
+  await page.locator("#wo-play-body").evaluate(function (el) { el.scrollTop = Math.max(80, el.scrollHeight / 3); });
+  await page.waitForTimeout(500);
+  await page.getByRole("button", { name: "Fit", exact: true }).click();
+  await page.waitForTimeout(600);
+  const fit = await columnReport(page);
+  expect(fit.orphans).toEqual([]);
+  if (fit.cols !== "1") expect(fit.wrapped).toEqual([]);
+  const video = page.video();
+  await context.close();
+  await video.saveAs(dir + "/play-controls-demo.webm");
 });

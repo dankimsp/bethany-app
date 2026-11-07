@@ -22,7 +22,7 @@ if ("serviceWorker" in navigator) {
     woRefreshing = true;
     location.reload();
   });
-  navigator.serviceWorker.register("sw.js?v=36").catch(function () {});
+  navigator.serviceWorker.register("sw.js?v=37").catch(function () {});
 }
 </script>
 <style>
@@ -522,8 +522,11 @@ body.signed-out .screen{padding-bottom:28px}
 #wo-play{--wo-bar:52px}
 #wo-play-bar{display:flex;flex-wrap:nowrap;gap:6px;align-items:flex-start;padding:8px;background:#00303f}
 #wo-play-tools{display:flex;flex:1;min-width:0;gap:6px;align-items:center;flex-wrap:wrap}
+#wo-play-bar .wmini{min-width:44px;min-height:44px;padding:0 12px}
 #wo-play-tools .wmini,#wo-play-tools .wkeyname,#wo-play-pos{flex:none}
-#wo-play-exit{flex:none}
+#wo-play-heading{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 16px;padding:8px 16px 0}
+#wo-play-heading #wo-play-title{margin:0;padding:0}
+#wo-play-key{margin:0;color:#f7f5ee;font-weight:800}
 #wo-play-body{flex:1;overflow:auto;padding:8px 10px 24px}
 #wo-play .wsec{color:var(--gold)}
 .wo-edge{position:absolute;top:var(--wo-bar);bottom:0;width:18%;border:0;background:transparent;z-index:2}
@@ -535,6 +538,8 @@ body.signed-out .screen{padding-bottom:28px}
 #wo-play.wo-fitting .wline,#wo-play.wo-fitting .lyrics-only .wline{font-size:var(--wo-fs, 16px);line-height:1.12;margin:1px 0}
 #wo-play.wo-fitting .wch{font-size:calc(var(--wo-fs, 16px) * .62)}
 #wo-play-body.wo-cols .wo-chart{column-count:2;column-gap:16px}
+#wo-play-body.wo-cols .wblock{-webkit-column-break-inside:avoid;page-break-inside:avoid;break-inside:avoid}
+#wo-play-body.wo-cols .wsec{-webkit-column-break-after:avoid;page-break-after:avoid;break-after:avoid}
 #wo-play-body.wo-cols .wline,#wo-play-body.wo-cols .wsec{break-inside:avoid}
 .meta-chip{display:inline-block;background:#fff3c4;border-radius:999px;padding:4px 10px;font-size:14px;font-weight:800;margin:2px}
 .wo-addpick{position:fixed;z-index:50;left:12px;right:12px;width:auto;max-width:440px;margin:0 auto;bottom:max(12px,calc(14px + env(safe-area-inset-bottom) + 80px));max-height:calc(100dvh - 120px);overflow:auto;background:#fff;border-radius:24px;padding:12px;box-shadow:0 12px 32px rgba(0,40,50,.18)}
@@ -1053,24 +1058,26 @@ a.pill.line.createbtn{height:48px;margin-top:8px}
  <div id="wo-play" hidden>
   <div id="wo-play-bar">
    <div id="wo-play-tools">
-    <button type="button" class="wmini" onclick="woPlayStep(-1)">Prev</button>
-    <button type="button" class="wmini" onclick="woPlayStep(1)">Next</button>
-    <b id="wo-play-key" class="wkeyname" style="color:#fff"></b>
+    <button type="button" class="wmini" id="wo-play-exit" onclick="woExitPlay()">Exit</button>
+    <button type="button" class="wmini" id="wo-play-prev" onclick="woPlayStep(-1)">Prev</button>
+    <button type="button" class="wmini" id="wo-play-next" onclick="woPlayStep(1)">Next</button>
     <button type="button" class="wmini" id="wo-play-num" onclick="woTogglePlayNumbers()">Numbers</button>
     <button type="button" class="wmini" id="wo-play-lyrics" onclick="woTogglePlayLyrics()">Lyrics only</button>
     <button type="button" class="wmini" id="wo-fit-down" onclick="woNudgePlaySize(-2)" aria-label="Smaller text">A−</button>
     <button type="button" class="wmini" id="wo-fit-up" onclick="woNudgePlaySize(2)" aria-label="Larger text">A+</button>
     <button type="button" class="wmini" id="wo-fit" onclick="woResetPlaySize()">Fit</button>
-    <button type="button" class="wmini" onclick="woToggleJump()">Songs</button>
+    <button type="button" class="wmini" id="wo-play-songs" onclick="woToggleJump()">Songs</button>
     <span id="wo-play-pos" style="font-weight:800"></span>
    </div>
-   <button type="button" class="wmini" id="wo-play-exit" onclick="woExitPlay()">Exit</button>
   </div>
   <div id="wo-jump" hidden></div>
   <button type="button" class="wo-edge left" aria-label="Previous song" onclick="woPlayStep(-1)"></button>
   <button type="button" class="wo-edge right" aria-label="Next song" onclick="woPlayStep(1)"></button>
   <p id="wo-play-banner" hidden style="margin:0;padding:8px 16px;background:#dcae1d;color:#00303f;font-weight:800"></p>
-  <h1 id="wo-play-title" style="margin:0;padding:8px 16px 0"></h1>
+  <div id="wo-play-heading">
+   <h1 id="wo-play-title"></h1>
+   <p id="wo-play-key"></p>
+  </div>
   <div id="wo-play-body"></div>
  </div>
 </section>
@@ -1271,7 +1278,7 @@ const WORSHIP_BACKEND_URL = 'https://script.google.com/macros/s/AKfycbwWtdJUNT8n
 <script src="js/config.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/app.js"></script>
-<script src="js/more.js?v=36"></script>
-<script src="worship.js?v=36"></script>
+<script src="js/more.js?v=37"></script>
+<script src="worship.js?v=37"></script>
 </body>
 </html>

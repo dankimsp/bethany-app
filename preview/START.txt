@@ -1,0 +1,23 @@
+Bethany meeting preview — this computer only
+
+This is a fixture. It is not a sign-in, and it does not talk to the live church.
+
+1. Unzip or untar this folder.
+2. In the folder that contains index.html and preview/, run:
+
+   python3 preview/serve.py
+
+3. Open the address it prints (http://127.0.0.1:4173/) in a fresh browser window.
+
+The bar at the bottom switches two example states:
+
+- Example worship member — chord sheets, setlists, and team availability
+- Not on the worship team — those tools stay behind the existing team gate
+
+There is no password and no team code. Typing a code on the team page does not join anything.
+
+Setlist saves finish inside this browser. They are not written to Apps Script or Drive.
+
+The song library is the songs bundled in this build (9). It does not read Drive.
+
+Stop the preview with Ctrl+C. Do not deploy this folder.
