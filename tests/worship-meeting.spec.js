@@ -183,46 +183,101 @@ async function columnReport(page) {
       var overlap = Math.min(cr.right, lr.right) - Math.max(cr.left, lr.left);
       if (overlap < Math.min(cr.width, lr.width) * 0.4) misaligned.push(chord.textContent);
     });
+    var body = document.querySelector("#wo-play-body");
+    var view = body.getBoundingClientRect();
+    var xs = [];
+    var outside = [];
+    document.querySelectorAll("#wo-play-body .wblock").forEach(function (block) {
+      var r = block.getBoundingClientRect();
+      if (!xs.some(function (x) { return Math.abs(x - r.left) < 40; })) xs.push(r.left);
+      if (r.top < view.top - 1 || r.bottom > view.bottom + 2 || r.right > view.right + 2) {
+        outside.push((block.querySelector(".wsec") || block).textContent.trim());
+      }
+    });
     return {
       cols: chart ? getComputedStyle(chart).columnCount : "0",
+      occupied: xs.length,
+      font: parseFloat(getComputedStyle(document.getElementById("wo-play")).getPropertyValue("--wo-fs")) || 0,
+      bodyHeight: Math.round(view.height),
+      scrollGap: body.scrollHeight - body.clientHeight,
       orphans: orphans,
       wrapped: wrapped,
-      misaligned: misaligned
+      misaligned: misaligned,
+      outside: outside
     };
   });
 }
 
-test("play columns keep a verse heading with its first line", async function ({ page }) {
+test("Fit shows the whole song in real columns", async function ({ page }) {
   await boot(page, ["worship"]);
   const shots = "/opt/cursor/artifacts/bethany-meeting-review";
   const sizes = [
-    { w: 768, h: 1024, name: "768x1024" },
-    { w: 1024, h: 768, name: "1024x768" },
-    { w: 1024, h: 1366, name: "1024x1366" },
-    { w: 1366, h: 1024, name: "1366x1024" },
-    { w: 1440, h: 900, name: "1440x900" },
-    { w: 390, h: 844, name: "390x844" }
+    { w: 768, h: 1024, name: "768x1024", minCols: 1 },
+    { w: 1024, h: 768, name: "1024x768", minCols: 2 },
+    { w: 1024, h: 1366, name: "1024x1366", minCols: 1 },
+    { w: 1366, h: 1024, name: "1366x1024", minCols: 2 },
+    { w: 1440, h: 900, name: "1440x900", minCols: 2 },
+    { w: 390, h: 844, name: "390x844", minCols: 1 }
   ];
+  const measured = [];
   for (const size of sizes) {
     await page.setViewportSize({ width: size.w, height: size.h });
-    await page.goto("/index.html?meet=playcols-" + size.name + "#/worship/song/amazing-grace");
+    await page.addInitScript(function () { localStorage.removeItem("bethany-worship-play-size"); });
+    await page.goto("/index.html?meet=fit-" + size.name + "#/worship/song/amazing-grace");
+    await page.evaluate(function () { localStorage.removeItem("bethany-worship-play-size"); });
     await page.locator("#wo-song").getByRole("button", { name: "Play", exact: true }).click();
-    await expect(page.locator("#wo-play")).toBeVisible();
-    await page.waitForTimeout(250);
+    await page.getByRole("button", { name: "Fit", exact: true }).click();
+    await page.waitForTimeout(300);
     const fit = await columnReport(page);
-    expect(fit.orphans, size.name + " fit " + JSON.stringify(fit)).toEqual([]);
-    expect(fit.misaligned, size.name + " fit").toEqual([]);
-    if (size.w === 768) expect(["1", "auto"], size.name + " " + JSON.stringify(fit)).toContain(fit.cols);
-    if (fit.cols !== "1" && fit.cols !== "auto") expect(fit.wrapped, size.name + " fit").toEqual([]);
+    measured.push(Object.assign({ size: size.name }, fit));
+    expect(fit.orphans, size.name + " " + JSON.stringify(fit)).toEqual([]);
+    expect(fit.misaligned, size.name).toEqual([]);
+    expect(fit.outside, size.name + " " + JSON.stringify(fit)).toEqual([]);
+    expect(fit.occupied, size.name + " " + JSON.stringify(fit)).toBeGreaterThanOrEqual(size.minCols);
+    expect(fit.font, size.name).toBeGreaterThanOrEqual(14);
+    if (fit.occupied > 1) expect(fit.wrapped, size.name).toEqual([]);
     await page.screenshot({ path: shots + "/play-" + size.name + "-fit.png" });
     await page.getByRole("button", { name: "Larger text" }).click();
     await page.getByRole("button", { name: "Larger text" }).click();
     await page.waitForTimeout(150);
     const bigger = await columnReport(page);
-    expect(bigger.orphans, size.name + " A+ " + JSON.stringify(bigger)).toEqual([]);
+    expect(bigger.orphans, size.name + " A+").toEqual([]);
     expect(bigger.misaligned, size.name + " A+").toEqual([]);
-    if (bigger.cols !== "1" && bigger.cols !== "auto") expect(bigger.wrapped, size.name + " A+").toEqual([]);
+    if (bigger.occupied > 1) expect(bigger.wrapped, size.name + " A+").toEqual([]);
+    const reached = await page.evaluate(function () {
+      var body = document.querySelector("#wo-play-body");
+      var blocks = document.querySelectorAll("#wo-play-body .wblock");
+      body.scrollTop = body.scrollHeight;
+      var view = body.getBoundingClientRect();
+      var last = blocks[blocks.length - 1].getBoundingClientRect();
+      return last.bottom <= view.bottom + 2 && last.top < view.bottom - 4;
+    });
+    expect(reached, size.name + " scroll " + JSON.stringify(bigger)).toBe(true);
     await page.screenshot({ path: shots + "/play-" + size.name + "-larger.png" });
+    await page.getByRole("button", { name: "Exit" }).click();
+  }
+  require("fs").writeFileSync(shots + "/fit-geometry.json", JSON.stringify(measured, null, 2));
+});
+
+test("a saved larger size does not reopen as a clipped one-column chart", async function ({ page }) {
+  await boot(page, ["worship"]);
+  await page.addInitScript(function () {
+    localStorage.setItem("bethany-worship-play-size", JSON.stringify({ "amazing-grace": 26 }));
+  });
+  for (const size of [{ w: 1024, h: 768 }, { w: 1440, h: 900 }]) {
+    await page.setViewportSize({ width: size.w, height: size.h });
+    await page.goto("/index.html?meet=saved-" + size.w + "x" + size.h + "#/worship/song/amazing-grace");
+    await page.locator("#wo-song").getByRole("button", { name: "Play", exact: true }).click();
+    await page.waitForTimeout(350);
+    const opened = await columnReport(page);
+    expect(opened.outside, size.w + " open " + JSON.stringify(opened)).toEqual([]);
+    expect(opened.occupied, size.w + " open " + JSON.stringify(opened)).toBeGreaterThanOrEqual(2);
+    expect(opened.wrapped, size.w + " open").toEqual([]);
+    await page.getByRole("button", { name: "Fit", exact: true }).click();
+    await page.waitForTimeout(250);
+    const fit = await columnReport(page);
+    expect(fit.outside, size.w + " fit " + JSON.stringify(fit)).toEqual([]);
+    expect(fit.occupied, size.w + " fit " + JSON.stringify(fit)).toBeGreaterThanOrEqual(2);
     await page.getByRole("button", { name: "Exit" }).click();
   }
 });

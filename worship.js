@@ -2009,15 +2009,22 @@ function woApplyPlaySize(px, cols) {
   body.classList.toggle("wo-cols", n > 1);
   body.style.setProperty("--wo-cols", String(Math.max(1, n)));
 }
+function woPlayBlocks() {
+  return Array.from(document.querySelectorAll("#wo-play-body .wblock"));
+}
+function woOccupiedCols() {
+  var seen = [];
+  woPlayBlocks().forEach(function (block) {
+    var x = block.getBoundingClientRect().left;
+    if (!seen.some(function (v) { return Math.abs(v - x) < 40; })) seen.push(x);
+  });
+  return seen.length;
+}
 function woLinesFit() {
-  var chart = document.querySelector("#wo-play-body .wo-chart");
-  if (!chart) return true;
-  var count = parseInt(getComputedStyle(chart).columnCount, 10);
-  if (!count || count < 2) return true;
-  var lines = chart.querySelectorAll(".wline");
+  var lines = document.querySelectorAll("#wo-play-body .wline");
   for (var i = 0; i < lines.length; i++) {
     var words = lines[i].querySelectorAll(".wword");
-    if (!words.length) continue;
+    if (words.length < 2) continue;
     var box = lines[i].getBoundingClientRect();
     var top = words[0].getBoundingClientRect().top;
     for (var j = 0; j < words.length; j++) {
@@ -2028,24 +2035,58 @@ function woLinesFit() {
   }
   return true;
 }
+function woSongFullyVisible() {
+  var body = document.getElementById("wo-play-body");
+  var blocks = woPlayBlocks();
+  if (!body || !blocks.length) return false;
+  var kept = body.scrollTop;
+  body.scrollTop = 0;
+  var view = body.getBoundingClientRect();
+  var ok = blocks.every(function (block) {
+    var rect = block.getBoundingClientRect();
+    return rect.top >= view.top - 1 && rect.bottom <= view.bottom + 2 && rect.left >= view.left - 2 && rect.right <= view.right + 2;
+  });
+  body.scrollTop = kept;
+  return ok;
+}
+function woScrollReachesEnd() {
+  var body = document.getElementById("wo-play-body");
+  var blocks = woPlayBlocks();
+  if (!body || !blocks.length) return false;
+  var kept = body.scrollTop;
+  body.scrollTop = body.scrollHeight;
+  var view = body.getBoundingClientRect();
+  var last = blocks[blocks.length - 1].getBoundingClientRect();
+  var ok = last.bottom <= view.bottom + 2 && last.top < view.bottom - 4;
+  body.scrollTop = kept;
+  return ok;
+}
+function woLayoutOk(cols) {
+  var n = cols === true ? 2 : (Number(cols) || 1);
+  if (n > 1 && !woLinesFit()) return false;
+  if (woOccupiedCols() < Math.min(n, woPlayBlocks().length)) return false;
+  return true;
+}
 function woChooseCols(px) {
-  var cols = 1;
-  if (woWidePlay()) {
-    woApplyPlaySize(px, 2);
-    if (woLinesFit()) cols = 2;
-  }
-  if (window.innerWidth >= 1100) {
-    woApplyPlaySize(px, 3);
-    if (woLinesFit()) cols = 3;
-  }
-  woApplyPlaySize(px, cols);
+  var options = [1];
+  if (woWidePlay()) options.push(2);
+  if (window.innerWidth >= 1100) options.push(3);
+  var fitted = 0;
+  var scrollable = 0;
+  options.forEach(function (n) {
+    woApplyPlaySize(px, n);
+    if (!woLayoutOk(n)) return;
+    if (woSongFullyVisible()) fitted = n;
+    else if (woScrollReachesEnd()) scrollable = n;
+  });
+  var choice = fitted || scrollable || 1;
+  woApplyPlaySize(px, choice);
+  if (!woLayoutOk(choice) || (!woSongFullyVisible() && !woScrollReachesEnd())) woApplyPlaySize(px, 1);
 }
 function woPlayFits(px, cols) {
   woApplyPlaySize(px, cols);
-  var body = document.getElementById("wo-play-body");
-  if (!body || body.scrollHeight > body.clientHeight + 2) return false;
-  if ((cols === true || Number(cols) > 1) && !woLinesFit()) return false;
-  return true;
+  var n = cols === true ? 2 : (Number(cols) || 1);
+  return woLayoutOk(n) && woSongFullyVisible();
 }
 function woPlayNav() {
   var multi = !!(wo.playList && wo.playList.length > 1);
@@ -2086,7 +2127,7 @@ function woFitPlay() {
     if (!item || !item.song) return;
     var saved = woPlaySize(item.song.id);
     if (saved) woChooseCols(saved);
-    else woAutoFit();
+    if (!saved || !woSongFullyVisible()) woAutoFit();
   });
 }
 function woNudgePlaySize(delta) {
