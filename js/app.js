@@ -1187,7 +1187,7 @@ function renderVisit() {
 document.getElementById("watch-live").onclick = function () { window.open(BETHANY.watchUrl, "_blank", "noopener"); };
 document.getElementById("all-times").onclick = function () { location.hash = "#/events"; };
 document.getElementById("see-events").onclick = function () { location.hash = "#/events"; };
-var APP_VERSION = (window.BETHANY && BETHANY.version) || "v35";
+var APP_VERSION = (window.BETHANY && BETHANY.version) || "v36";
 var fbCat = "idea";
 var fbGen = 0;
 function feedbackWho() {

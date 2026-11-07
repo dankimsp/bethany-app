@@ -15,7 +15,7 @@ var BETHANY = {
   checkPayable: "Bethany Church",
   checkMemo: "For general offering, the memo line can be left blank. To give to a specific missionary or missional purpose, write where the gift should go in the memo line.",
   feedbackUrl: "",
-  version: "v35",
+  version: "v36",
   mapsUrl: "https://maps.google.com/?q=15414+Ash+Way,+Lynnwood,+WA+98087"
 };
 

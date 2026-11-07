@@ -22,7 +22,7 @@ if ("serviceWorker" in navigator) {
     woRefreshing = true;
     location.reload();
   });
-  navigator.serviceWorker.register("sw.js?v=35").catch(function () {});
+  navigator.serviceWorker.register("sw.js?v=36").catch(function () {});
 }
 </script>
 <style>
@@ -520,8 +520,8 @@ body.signed-out .screen{padding-bottom:28px}
 #wo-play{position:fixed;inset:0;z-index:40;background:#041820;color:#f7f5ee;display:flex;flex-direction:column}
 #wo-play .chord{color:#041820;background:#dcae1d}
 #wo-play{--wo-bar:52px}
-#wo-play-bar{display:flex;flex-wrap:nowrap;gap:6px;align-items:center;padding:8px;background:#00303f}
-#wo-play-tools{display:flex;flex:1;min-width:0;gap:6px;align-items:center;overflow-x:auto}
+#wo-play-bar{display:flex;flex-wrap:nowrap;gap:6px;align-items:flex-start;padding:8px;background:#00303f}
+#wo-play-tools{display:flex;flex:1;min-width:0;gap:6px;align-items:center;flex-wrap:wrap}
 #wo-play-tools .wmini,#wo-play-tools .wkeyname,#wo-play-pos{flex:none}
 #wo-play-exit{flex:none}
 #wo-play-body{flex:1;overflow:auto;padding:8px 10px 24px}
@@ -1271,7 +1271,7 @@ const WORSHIP_BACKEND_URL = 'https://script.google.com/macros/s/AKfycbwWtdJUNT8n
 <script src="js/config.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/app.js"></script>
-<script src="js/more.js?v=35"></script>
-<script src="worship.js?v=35"></script>
+<script src="js/more.js?v=36"></script>
+<script src="worship.js?v=36"></script>
 </body>
 </html>

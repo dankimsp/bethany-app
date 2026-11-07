@@ -908,6 +908,18 @@ function woPruneField(field) {
   woLangSongs().forEach(function (s) { (s[field] || []).forEach(function (v) { known[v] = 1; }); });
   woF[field] = (woF[field] || []).filter(function (v) { return known[v]; });
 }
+function woScriptureLabel(raw) {
+  var text = String(raw || "").replace(/\s+/g, " ").trim();
+  if (!text) return "";
+  var marker = text.search(/song finder|worshiptogether|worship together|all rights reserved|create a free account|privacy policy|cookie policy/i);
+  if (marker > 0) text = text.slice(0, marker).replace(/[\s|·•,;:\-–—]+$/, "").trim();
+  if (text.length > 120) {
+    var refs = text.match(/^((?:\d\s*)?[A-Za-z][A-Za-z.'’\- ]{0,28}?\d{1,3}:\d{1,3}(?:\s*[-–]\s*\d{1,3})?(?:\s*,\s*(?:\d\s*)?[A-Za-z][A-Za-z.'’\- ]{0,28}?\d{1,3}:\d{1,3}(?:\s*[-–]\s*\d{1,3})?)*)/);
+    if (refs && refs[1] && refs[1].length >= 4) text = refs[1].replace(/,\s*$/, "").trim();
+    else text = text.slice(0, 120).replace(/[\s,;:|·•\-–—]+$/, "").trim();
+  }
+  return text;
+}
 function woMetaChips(song) {
   var row = document.createElement("div");
   row.className = "meta-chips";
@@ -923,7 +935,7 @@ function woMetaChips(song) {
   (song.range || []).forEach(function (v) { add("Range " + v); });
   (song.time || []).forEach(add);
   (song.difficulty || []).forEach(function (v) { add(v.charAt(0).toUpperCase() + v.slice(1)); });
-  if (song.scripture) add(song.scripture);
+  if (song.scripture) add(woScriptureLabel(song.scripture));
   return row;
 }
 function woMatchAny(values, selected) {
@@ -1429,6 +1441,8 @@ function woSaveSet(set, remote) {
   if (i < 0) list.unshift(set); else list[i] = set;
   woSaveSets(list);
   if (!remote) woScheduleSync(set.id);
+  var setsPane = document.getElementById("wo-sets");
+  if (setsPane && !setsPane.hidden) woRenderSets();
 }
 function woSongKey(songId) {
   var song = wo.byId[songId];
