@@ -2,6 +2,7 @@
    Opening this file on the live site does nothing: the server flag is required. */
 (function () {
   if (!window.__BETHANY_PREVIEW_SERVER__) return;
+  window.__BETHANY_PREVIEW_HARNESS__ = "v39";
 
   var BLOCK = /script\.google\.com|firebaseio\.com|firebaseinstallations|identitytoolkit|securetoken|gstatic\.com\/firebasejs|www\.googleapis\.com/i;
   window.__PREVIEW_BLOCKED = [];
@@ -211,38 +212,120 @@
     return origFetch.apply(this, arguments);
   };
 
+  var previewOpen = false;
+  var laying = false;
+  function playIsOpen() {
+    var play = document.getElementById("wo-play");
+    return !!(play && !play.hidden);
+  }
+  function roleButton(name) {
+    var role = roleName();
+    var button = document.createElement("button");
+    button.type = "button";
+    button.className = "preview-role";
+    button.textContent = ROLES[name].label;
+    button.setAttribute("aria-pressed", name === role ? "true" : "false");
+    button.style.cssText = "min-height:44px;padding:0 12px;border-radius:999px;border:0;font:inherit;cursor:pointer;background:" + (name === role ? "#00303F" : "#F2EFE7") + ";color:" + (name === role ? "#fff" : "#00303F");
+    button.onclick = function () {
+      if (name === roleName()) return;
+      applyRole(name);
+      location.reload();
+    };
+    return button;
+  }
+  function refitPlay() {
+    if (!playIsOpen() || typeof woAutoFit !== "function") return;
+    var item = window.wo && wo.playList && wo.playList[wo.playIndex];
+    var saved = item && typeof woPlaySize === "function" ? woPlaySize(item.song.id) : 0;
+    if (saved && typeof woChooseCols === "function") {
+      woChooseCols(saved);
+      if (typeof woSongFullyVisible === "function" && !woSongFullyVisible()) woAutoFit();
+    } else woAutoFit();
+  }
+  function reservePlay(bar) {
+    var play = document.getElementById("wo-play");
+    if (!play) return;
+    if (!playIsOpen()) {
+      play.style.paddingBottom = "";
+      return;
+    }
+    var height = Math.ceil(bar.getBoundingClientRect().height);
+    play.style.boxSizing = "border-box";
+    play.style.paddingBottom = height + "px";
+  }
   function paint() {
     if (document.getElementById("preview-bar")) return;
-    var role = roleName();
     var bar = document.createElement("div");
     bar.id = "preview-bar";
     bar.setAttribute("role", "region");
     bar.setAttribute("aria-label", "Preview fixture");
-    bar.style.cssText = "position:fixed;left:8px;right:8px;bottom:8px;z-index:80;background:#fff;color:#0F2830;border:2px solid #00303F;border-radius:16px;padding:8px 10px;box-shadow:0 8px 24px rgba(0,40,50,.18);font:600 13px/1.3 'Open Sans',sans-serif;display:flex;flex-wrap:wrap;gap:6px;align-items:center";
+    bar.dataset.harness = window.__BETHANY_PREVIEW_HARNESS__;
+    bar.style.cssText = "position:fixed;z-index:80;background:#fff;color:#0F2830;border:2px solid #00303F;border-radius:16px;padding:8px;box-shadow:0 8px 24px rgba(0,40,50,.18);font:600 13px/1.3 'Open Sans',sans-serif;display:flex;flex-wrap:wrap;gap:6px;align-items:center;max-width:calc(100% - 16px)";
+    var cue = document.createElement("button");
+    cue.type = "button";
+    cue.id = "preview-cue";
+    cue.style.cssText = "min-height:44px;padding:0 12px;border-radius:999px;border:0;background:#00303F;color:#fff;font:inherit;cursor:pointer";
+    cue.textContent = "Preview, example data";
+    cue.setAttribute("aria-expanded", "false");
+    cue.setAttribute("aria-controls", "preview-roles");
+    var roles = document.createElement("div");
+    roles.id = "preview-roles";
+    roles.style.cssText = "display:flex;flex-wrap:wrap;gap:6px;align-items:center";
     var note = document.createElement("div");
+    note.id = "preview-note";
     note.style.cssText = "flex:1 1 220px";
     note.textContent = "Preview fixture. Not a sign-in. Example people only. Nothing is sent to the church. Library is the songs bundled in this build.";
-    bar.appendChild(note);
-    Object.keys(ROLES).forEach(function (name) {
-      var button = document.createElement("button");
-      button.type = "button";
-      button.textContent = ROLES[name].label;
-      button.setAttribute("aria-pressed", name === role ? "true" : "false");
-      button.style.cssText = "min-height:44px;padding:0 12px;border-radius:999px;border:0;font:inherit;cursor:pointer;background:" + (name === role ? "#00303F" : "#F2EFE7") + ";color:" + (name === role ? "#fff" : "#00303F");
-      button.onclick = function () {
-        if (name === roleName()) return;
-        applyRole(name);
-        location.reload();
-      };
-      bar.appendChild(button);
-    });
+    roles.appendChild(note);
+    Object.keys(ROLES).forEach(function (name) { roles.appendChild(roleButton(name)); });
+    cue.onclick = function () {
+      previewOpen = !previewOpen;
+      layout();
+    };
+    bar.appendChild(cue);
+    bar.appendChild(roles);
     document.body.appendChild(bar);
-    function hideCatalogNote() {
+    var laid = "";
+    function placeBar(playing) {
+      if (playing) {
+        bar.style.top = "auto";
+        bar.style.left = "8px";
+        bar.style.right = "8px";
+        bar.style.bottom = "0";
+        bar.style.width = "auto";
+      } else {
+        bar.style.bottom = "auto";
+        bar.style.left = "auto";
+        bar.style.top = "8px";
+        bar.style.right = "8px";
+        bar.style.width = "max-content";
+      }
+    }
+    function layout() {
+      if (laying) return;
+      laying = true;
+      var playing = playIsOpen();
+      cue.hidden = false;
+      cue.setAttribute("aria-expanded", previewOpen ? "true" : "false");
+      roles.hidden = !previewOpen;
+      note.hidden = !previewOpen;
+      placeBar(playing);
+      reservePlay(bar);
+      var pad = playing ? document.getElementById("wo-play").style.paddingBottom : "";
+      var key = (playing ? "1" : "0") + (previewOpen ? "1" : "0") + ":" + pad;
+      var refit = playing && key !== laid;
+      laid = key;
+      laying = false;
+      if (refit) refitPlay();
+    }
+    layout();
+    new MutationObserver(function (records) {
+      var outside = records.some(function (record) { return !bar.contains(record.target); });
+      if (!outside) return;
       var box = document.getElementById("wo-lib-empty");
       if (box && !box.hidden) box.hidden = true;
-    }
-    hideCatalogNote();
-    new MutationObserver(hideCatalogNote).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["hidden"] });
+      layout();
+    }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["hidden"] });
+    window.addEventListener("resize", layout);
   }
 
   if (document.body) paint();

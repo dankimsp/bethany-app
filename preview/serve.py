@@ -57,8 +57,9 @@ class Handler(SimpleHTTPRequestHandler):
 
 def main():
     os.chdir(ROOT)
-    server = ThreadingHTTPServer(("127.0.0.1", PORT), Handler)
-    url = "http://127.0.0.1:%d/" % PORT
+    port = int(sys.argv[1]) if len(sys.argv) > 1 else PORT
+    server = ThreadingHTTPServer(("127.0.0.1", port), Handler)
+    url = "http://127.0.0.1:%d/" % port
     print("Preview fixture (this computer only): " + url)
     print("Not a sign-in. Not the live church app. Leave this window open.")
     try:
