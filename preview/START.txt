@@ -1,5 +1,5 @@
 Bethany meeting preview v39 — this computer only
-Harness v39. App cache stays bethany-worship-v39.
+Harness v39. App cache stays bethany-worship-v40.
 
 This is a fixture. It is not a sign-in, and it does not talk to the live church.
 

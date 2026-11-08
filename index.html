@@ -22,7 +22,7 @@ if ("serviceWorker" in navigator) {
     woRefreshing = true;
     location.reload();
   });
-  navigator.serviceWorker.register("sw.js?v=39").catch(function () {});
+  navigator.serviceWorker.register("sw.js?v=40").catch(function () {});
 }
 </script>
 <style>
@@ -507,10 +507,13 @@ body.signed-out .screen{padding-bottom:28px}
 .wmini.on,.btn.btn-teal,.wmini.is-play{background:var(--brand);color:#fff;box-shadow:none}
 .btn.btn-gold{background:var(--gold);color:var(--brand);box-shadow:none}
 .btn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;margin:6px 0}
-.wsec{margin:14px 0 4px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;font-size:12px;color:var(--accent)}
-.wline{line-height:1.35;margin:8px 0} .wseg{display:inline-block;vertical-align:bottom;margin:0;position:relative} .wword{display:inline-block;white-space:nowrap} .wseg>span:last-child{white-space:pre} .wseg.cont::after{content:"-";font-weight:700;color:var(--text-2)}
-.wch{display:block;min-height:1.05em;font-size:14px;background:none;white-space:nowrap}
+.wsec{margin:14px 0 4px;font-weight:800;letter-spacing:.04em;font-size:13px;color:var(--accent)}
+.wsec-name{font-weight:800;letter-spacing:.06em}
+.wsec-role{font-style:italic;font-weight:600;letter-spacing:0;margin-left:.15em;text-transform:none}
+.wline{line-height:1.35;margin:8px 0} .wseg{display:inline-grid;grid-template-columns:auto auto;grid-template-rows:auto auto;align-items:end;justify-items:start;vertical-align:bottom;margin:0;position:relative} .wword{display:inline-block;white-space:nowrap} .wch{grid-column:1;grid-row:1} .wseg>span:last-child{grid-column:1;grid-row:2;white-space:pre} .wseg.cont::after{content:"-";grid-column:2;grid-row:2;font-weight:700;color:var(--text-2);align-self:end}
+.wch{display:block;min-height:1.05em;font-size:1em;font-weight:800;line-height:1.05;background:none;white-space:nowrap}
 .chord{font-weight:800;background:#F6DD8A;color:#2A2000;padding:0 2px;border-radius:4px}
+.wo-ext{font-size:.65em;font-weight:800;line-height:0;vertical-align:super}
 #s-worship .chip{min-height:44px;height:auto;padding:6px 12px;border:0;box-shadow:inset 0 0 0 1.5px rgba(0,48,63,.16);background:#fff;color:var(--brand);cursor:pointer}
 #s-worship .chip.on{background:var(--brand);color:#fff}
 .lang-switch{display:flex;border-radius:999px;overflow:hidden;margin:8px 0;padding:3px;background:var(--surface-2)}
@@ -518,18 +521,33 @@ body.signed-out .screen{padding-bottom:28px}
 .lang-switch button.on{background:var(--brand);color:#fff}
 .wkeyname{font-weight:800;color:var(--brand)}
 .setcard{background:#fff;border:1px solid var(--stroke);border-radius:16px;padding:12px;margin:10px 0}
+.wtools{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.wtools .wmini{width:100%;white-space:nowrap}
+@media (min-width:900px){
+  #wo-sets-list .wtools{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
 .setline{display:flex;align-items:center;gap:6px;margin-bottom:8px}
 .settitle{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;font-weight:800;color:var(--brand);background:none;border:0;cursor:pointer}
 .lnkbtn{background:none;border:0;color:var(--accent);font-weight:700;cursor:pointer;min-height:44px;display:inline-flex;align-items:center;gap:6px;padding:0 2px}
 .wo-sync{font-size:14px;font-weight:700;color:var(--ok)}
 #wo-play{position:fixed;inset:0;z-index:40;background:#041820;color:#f7f5ee;display:flex;flex-direction:column}
-#wo-play .chord{color:#041820;background:#dcae1d}
+#wo-play .chord{background:transparent;color:#fff;padding:0;border-radius:0}
+#wo-play.wo-light{background:#F7F5EE;color:#0F2830}
+#wo-play.wo-light #wo-play-bar{background:#fff;box-shadow:inset 0 -1px 0 rgba(0,48,63,.08)}
+#wo-play.wo-light #wo-play-key{color:#4D5C61}
+#wo-play.wo-light .wsec-name{color:#12596B}
+#wo-play.wo-light .wsec-role{color:#4D5C61}
+#wo-play.wo-light .chord{color:#00303F}
+#wo-play:not(.wo-light) .chord{color:#FFE9A0}
+#wo-play.wo-hl .chord{background:#F6DD8A;color:#2A2000;padding:0 3px;border-radius:4px}
 #wo-play{--wo-bar:52px}
 #wo-play-bar{display:flex;flex-wrap:nowrap;gap:6px;align-items:flex-start;padding:8px;background:#00303f}
 #wo-play-tools{display:flex;flex:1;min-width:0;gap:6px;align-items:center;flex-wrap:wrap}
 #wo-play-bar .wmini{min-width:44px;min-height:44px;padding:0 12px}
 #wo-play-tools .wmini,#wo-play-tools .wkeyname,#wo-play-pos{flex:none}
-#wo-play-heading{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 16px;padding:8px 16px 0}
+#wo-play-heading{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 12px;padding:4px 16px 0}
+#wo-play-view{margin-left:auto;display:flex;gap:6px;align-items:center}
+#wo-play-view .wmini{min-height:32px;height:32px;padding:0 10px;font-size:13px}
 #wo-play-heading #wo-play-title{margin:0;padding:0}
 #wo-play-key{margin:0;color:#f7f5ee;font-weight:800}
 #wo-play-body{flex:1;overflow:auto;padding:8px 10px 24px}
@@ -539,9 +557,12 @@ body.signed-out .screen{padding-bottom:28px}
 #wo-jump{position:absolute;left:12px;right:12px;top:var(--wo-bar);background:#fff;color:var(--text);border-radius:16px;max-height:70%;overflow:auto;z-index:6}
 #wo-jump button{display:block;width:100%;text-align:left;min-height:44px;border:0;border-bottom:1px solid var(--stroke);background:#fff;font-weight:800;color:var(--brand)}
 .lyrics-only .wch{display:none}
-#wo-play.wo-fitting #wo-play-title{font-size:calc(var(--wo-fs, 16px) * 1.2) !important}
-#wo-play.wo-fitting .wline,#wo-play.wo-fitting .lyrics-only .wline{font-size:var(--wo-fs, 16px);line-height:1.12;margin:1px 0}
-#wo-play.wo-fitting .wch{font-size:calc(var(--wo-fs, 16px) * .62)}
+.lyrics-only .wseg>span:last-child{grid-row:1}
+#wo-play.wo-fitting #wo-play-title{font-size:calc(var(--wo-fs, 18px) * 1.15) !important}
+#wo-play.wo-fitting .wline,#wo-play.wo-fitting .lyrics-only .wline{font-size:var(--wo-fs, 18px);line-height:1.2;margin:.04em 0 .28em}
+#wo-play.wo-fitting .wch{font-size:1em;min-height:1em;margin-bottom:.02em}
+#wo-play.wo-fitting .wsec{font-size:calc(var(--wo-fs, 18px) * .7);margin:.5em 0 .12em;text-transform:none}
+#wo-play .wblock:first-child .wsec{margin-top:.15em}
 #wo-play-body.wo-cols .wo-chart{column-count:2;column-gap:16px}
 #wo-play-body.wo-cols .wblock{-webkit-column-break-inside:avoid;page-break-inside:avoid;break-inside:avoid}
 #wo-play-body.wo-cols .wsec{-webkit-column-break-after:avoid;page-break-after:avoid;break-after:avoid}
@@ -1026,10 +1047,8 @@ a.pill.line.createbtn{height:48px;margin-top:8px}
    <button type="button" class="lnkbtn" onclick="location.hash='#/worship/setlists'">← Setlists</button>
    <h1>Setlist</h1>
    <p id="wo-live-banner" hidden></p>
-   <p id="wo-leader-banner" hidden></p>
    <div class="card">
     <p id="wo-sync" class="wo-sync" hidden></p>
-    <label for="wo-leader">Leader note</label><textarea id="wo-leader" placeholder="Note for the band"></textarea>
     <label for="wo-title">Title</label><input id="wo-title" autocomplete="off">
     <label for="wo-set-leader">Leader</label>
     <select id="wo-set-leader"><option>Pastor Woori</option><option>Palmy</option><option>Daniel</option></select>
@@ -1060,7 +1079,7 @@ a.pill.line.createbtn{height:48px;margin-top:8px}
    </form>
   </div>
  </div>
- <div id="wo-play" hidden>
+ <div id="wo-play" class="wo-light" hidden>
   <div id="wo-play-bar">
    <div id="wo-play-tools">
     <button type="button" class="wmini" id="wo-play-exit" onclick="woExitPlay()">Exit</button>
@@ -1082,6 +1101,10 @@ a.pill.line.createbtn{height:48px;margin-top:8px}
   <div id="wo-play-heading">
    <h1 id="wo-play-title"></h1>
    <p id="wo-play-key"></p>
+   <div id="wo-play-view">
+    <button type="button" class="wmini" id="wo-play-hl" aria-pressed="false" onclick="woToggleHighlight()">Highlight</button>
+    <button type="button" class="wmini" id="wo-play-theme" aria-pressed="false" onclick="woTogglePlayTheme()">Light</button>
+   </div>
   </div>
   <div id="wo-play-body"></div>
  </div>
@@ -1283,7 +1306,7 @@ const WORSHIP_BACKEND_URL = 'https://script.google.com/macros/s/AKfycbwWtdJUNT8n
 <script src="js/config.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/app.js"></script>
-<script src="js/more.js?v=39"></script>
-<script src="worship.js?v=39"></script>
+<script src="js/more.js?v=40"></script>
+<script src="worship.js?v=40"></script>
 </body>
 </html>
