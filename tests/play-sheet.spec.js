@@ -4,7 +4,7 @@ import fs from "fs";
 const ART = "/opt/cursor/artifacts/play-sheets";
 fs.mkdirSync(ART, { recursive: true });
 
-const DENSE = "{title: 10,000 Reasons (Bless the Lord)}\n{key: G}\n{start_of_chorus: Chorus}\n[C]Bless the [G]Lord, O my [D/F#]soul, [Em]O my soul,\n[G]Worship His [Gsus4]holy [D]name.\n[C]Sing like [Em]never be[C]fore, [D]O my [Em]soul.\nI'll [C]worship Your [D]holy [C/G]name. [G]\n{end_of_chorus}\n{start_of_verse: Verse 1}\n[C]The sun comes [G]up, it's a new [D]day [Em]dawning;\n[G]It's time to [Gsus4]sing Your [D]song again.\n[C]Whatever may [G]pass, and what[D]ever lies be[Em]fore me,\n[C2]Let me be [G]singing when the [Dsus4]eve[D]n[G]ing [Gsus4]comes. [G]\n{end_of_verse}\n{start_of_verse: Verse 2}\n[C]You're rich in [G]love, and You're [D]slow to [Em]anger.\n[C]Your name is [G]great, and Your [D]heart is [Em]kind.\n[C]For all Your [G]goodness, I will [D]keep on [Em]singing;\n[C2]Ten thousand [G]reasons for my [Dsus4]heart [D]to [G]find. [Gsus4] [G]\n{end_of_verse}\n{start_of_verse: Verse 1 Solo}\n[Db]As I [Bbm7]follow [Gb]You\n{end_of_verse}\n";
+const DENSE = "{title: 10,000 Reasons (Bless the Lord)}\n{key: G}\n{start_of_chorus: Chorus}\n[C]Bless the [G]Lord, O my [D/F#]soul, [Em]O my soul,\n[G]Worship His [Gsus4]holy [D]name.\n[C]Sing like [Em]never before, [D]O my [Em]soul.\nI'll [C]worship Your [D]holy [C/G]name. [G]\n{end_of_chorus}\n{start_of_verse: Verse 1}\n[C]The sun comes [G]up, it's a new [D]day [Em]dawning;\n[G]It's time to [Gsus4]sing Your [D]song again.\n[C]Whatever may [G]pass, and whatever lies [Em]before me,\n[C2]Let me be [G]singing when the [Dsus4]evening [D]comes. [G][Gsus4][G]\n{end_of_verse}\n{start_of_verse: Verse 2}\n[C]You're rich in [G]love, and You're [D]slow to [Em]anger.\n[C]Your name is [G]great, and Your [D]heart is [Em]kind.\n[C]For all Your [G]goodness, I will [D]keep on [Em]singing;\n[C2]Ten thousand [G]reasons for my [Dsus4]heart [D]to [G]find. [Gsus4][G]\n{end_of_verse}\n";
 
 const SIZES = [
   [390, 844],
@@ -78,17 +78,39 @@ async function collisions(page) {
         if (hit(cr, ly.getBoundingClientRect())) bad.push(chord.textContent + " on " + ly.textContent.trim().slice(0, 18));
       });
     });
+    var play = document.getElementById("wo-play");
+    var fs = parseFloat(getComputedStyle(play).getPropertyValue("--wo-fs")) || 16;
+    var minGap = fs * 0.5;
+    var tight = [];
+    document.querySelectorAll("#wo-play-body .wline").forEach(function (line) {
+      var row = Array.from(line.querySelectorAll(".chord")).map(function (el) {
+        var r = el.getBoundingClientRect();
+        return { t: el.textContent.replace(/\uFE0E/g, ""), left: r.left, right: r.right };
+      }).sort(function (a, b) { return a.left - b.left; });
+      for (var n = 1; n < row.length; n++) {
+        var gap = row[n].left - row[n - 1].right;
+        if (gap < minGap - 1) tight.push(row[n - 1].t + " | " + row[n].t + " (" + Math.round(gap) + "px)");
+      }
+    });
     var lyric = document.querySelector("#wo-play-body .wline");
     var chord = document.querySelector("#wo-play-body .chord");
-    var play = document.getElementById("wo-play");
+    var acc = document.querySelector("#wo-play .wo-acc");
+    var kern = null;
+    if (acc && acc.previousElementSibling) {
+      var ar = acc.getBoundingClientRect();
+      var rr = acc.previousElementSibling.getBoundingClientRect();
+      kern = Math.round((ar.left - rr.right) * 10) / 10;
+    }
     return {
       bad: bad.slice(0, 8),
-      count: bad.length,
+      tight: tight.slice(0, 8),
+      count: bad.length + tight.length,
       lyricSize: lyric ? parseFloat(getComputedStyle(lyric).fontSize) : 0,
       chordSize: chord ? parseFloat(getComputedStyle(chord).fontSize) : 0,
       hl: getComputedStyle(chord).backgroundColor,
       light: play.classList.contains("wo-light"),
-      darkText: play.classList.contains("wo-light") ? "" : getComputedStyle(chord).color
+      sheet: document.getElementById("wo-play-body").textContent.replace(/\uFE0E/g, "").replace(/\s+/g, " "),
+      kern: kern
     };
   });
 }
@@ -104,14 +126,26 @@ test("play sheets keep chords off the lyrics at every viewport", async function 
     });
     await openDense(page);
     const plain = await collisions(page);
-    expect(plain.count, w + "x" + h + " " + JSON.stringify(plain.bad)).toBe(0);
+    expect(plain.count, w + "x" + h + " " + JSON.stringify(plain.bad) + " " + JSON.stringify(plain.tight)).toBe(0);
     expect(plain.light).toBe(true);
     expect(plain.chordSize).toBeGreaterThanOrEqual(plain.lyricSize * 0.9);
     expect(plain.hl).toBe("rgba(0, 0, 0, 0)");
+    expect(plain.sheet).toContain("evening");
+    expect(plain.sheet).not.toContain("As I follow");
+    expect(plain.sheet).not.toMatch(/n\s+ing/);
+    expect(plain.kern).toBeLessThan(1.5);
+    const wordGap = await page.evaluate(function () {
+      var fs = parseFloat(getComputedStyle(document.getElementById("wo-play")).getPropertyValue("--wo-fs")) || 16;
+      var lyrics = Array.from(document.querySelectorAll("#wo-play-body .wseg > span:last-child"));
+      var holy = lyrics.filter(function (el) { return el.textContent.replace(/\s/g, "") === "holy"; })[0];
+      var name = lyrics.filter(function (el) { return /^name/.test(el.textContent.trim()); })[0];
+      var gap = name.getBoundingClientRect().left - holy.getBoundingClientRect().right;
+      return { gap: gap, limit: fs * 1.4 };
+    });
+    expect(wordGap.gap).toBeGreaterThan(0);
+    expect(wordGap.gap).toBeLessThan(wordGap.limit);
     await expect(page.locator("#wo-play .wsec").filter({ hasText: "VERSE 1" }).first()).toBeVisible();
-    await expect(page.locator("#wo-play .wsec-role")).toHaveText("Solo");
-    await expect(page.locator("#wo-play")).toContainText("F\u266F");
-    await expect(page.locator("#wo-play")).toContainText("\u266D");
+    await expect(page.locator("#wo-play .wsec-role")).toHaveCount(0);
     await page.screenshot({ path: ART + "/light-off-" + w + "x" + h + ".png", fullPage: false });
     await page.getByRole("button", { name: "Highlight" }).click();
     await page.waitForTimeout(200);

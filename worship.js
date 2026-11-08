@@ -380,8 +380,11 @@ function woLabel(ch, song) {
   if (!wo.semi) return ch; // untransposed: show the chart's own spelling (Bb stays Bb, G# stays G#)
   return woTranspose(ch, wo.semi, woFlatsFor(song, wo.semi));
 }
+function woAccidentalChar(mark) {
+  return (mark === "#" ? "\u266F" : "\u266D") + "\uFE0E";
+}
 function woAccidental(text) {
-  return String(text || "").replace(/#/g, "\u266F").replace(/b/g, "\u266D");
+  return String(text || "").replace(/#/g, "\u266F\uFE0E").replace(/b/g, "\u266D\uFE0E");
 }
 function woFillChord(el, label) {
   el.replaceChildren();
@@ -389,8 +392,16 @@ function woFillChord(el, label) {
     if (index) el.appendChild(document.createTextNode("/"));
     var note = part.match(/^([A-G])([#b]?)(.*)$/);
     if (!note) { el.appendChild(document.createTextNode(woAccidental(part))); return; }
-    var acc = note[2] === "#" ? "\u266F" : note[2] === "b" ? "\u266D" : "";
-    el.appendChild(document.createTextNode(note[1] + acc));
+    var root = document.createElement("span");
+    root.className = "wo-root";
+    root.textContent = note[1];
+    el.appendChild(root);
+    if (note[2]) {
+      var acc = document.createElement("span");
+      acc.className = "wo-acc";
+      acc.textContent = woAccidentalChar(note[2]);
+      el.appendChild(acc);
+    }
     var rest = note[3];
     if (/^m(?!aj)/.test(rest)) { el.appendChild(document.createTextNode("m")); rest = rest.slice(1); }
     else if (/^min(?!or)/.test(rest)) { el.appendChild(document.createTextNode("m")); rest = rest.slice(3); }
@@ -456,11 +467,7 @@ function woChart(song) {
         var next = line[i + 1];
         var nextText = next && next.t != null ? String(next.t) : "";
         var continues = !!(next && text && !/\s$/.test(text) && nextText && !/^\s/.test(nextText));
-        var letters = text.replace(/\s/g, "");
-        if (label && label.length > letters.length) {
-          s.style.minWidth = (label.length + 0.6) + "ch";
-          if (continues) s.classList.add("cont");
-        }
+        if (continues && !/[-–—]$/.test(text)) s.dataset.join = "1";
         word.appendChild(s);
       });
       block.appendChild(row);
@@ -2068,6 +2075,7 @@ function woApplyPlaySize(px, cols) {
   play.style.setProperty("--wo-fs", px + "px");
   body.classList.toggle("wo-cols", n > 1);
   body.style.setProperty("--wo-cols", String(Math.max(1, n)));
+  woSpaceChords();
 }
 function woPlayBlocks() {
   return Array.from(document.querySelectorAll("#wo-play-body .wblock"));
@@ -2083,9 +2091,53 @@ function woOccupiedCols() {
 function woInkHits(a, b) {
   var x = Math.min(a.right, b.right) - Math.max(a.left, b.left);
   var y = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
-  return x > 3 && y > 3;
+  return x > 2 && y > 2;
+}
+function woChordGapPx() {
+  var play = document.getElementById("wo-play");
+  var fs = play ? parseFloat(getComputedStyle(play).getPropertyValue("--wo-fs")) : 16;
+  if (!fs || fs < 8) fs = 16;
+  return fs * 0.55;
+}
+function woSameChordRow(a, b) {
+  var y = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+  return y > Math.min(a.height, b.height) * 0.45;
+}
+function woSpaceChords() {
+  var gap = woChordGapPx();
+  var segs = document.querySelectorAll("#wo-play-body .wseg");
+  for (var i = 0; i < segs.length; i++) {
+    segs[i].style.marginLeft = "";
+    segs[i].classList.remove("wo-syl");
+  }
+  var items = Array.from(document.querySelectorAll("#wo-play-body .chord")).map(function (el) {
+    return { el: el, seg: el.parentElement && el.parentElement.parentElement };
+  }).filter(function (item) { return item.seg; });
+  items.sort(function (a, b) {
+    var ar = a.el.getBoundingClientRect();
+    var br = b.el.getBoundingClientRect();
+    if (Math.abs(ar.top - br.top) > 6) return ar.top - br.top;
+    return ar.left - br.left;
+  });
+  var prev = null;
+  items.forEach(function (item) {
+    var r = item.el.getBoundingClientRect();
+    if (prev) {
+      var pr = prev.el.getBoundingClientRect();
+      var same = woSameChordRow(pr, r) && r.left >= pr.left - 1 && (r.left - pr.right) < gap * 8;
+      if (same) {
+        var need = pr.right + gap - r.left;
+        if (need > 0.5) {
+          item.seg.style.marginLeft = Math.ceil(need) + "px";
+          if (item.seg.dataset.join === "1") item.seg.classList.add("wo-syl");
+        }
+      }
+    }
+    prev = item;
+  });
 }
 function woLinesFit() {
+  woSpaceChords();
   var lines = document.querySelectorAll("#wo-play-body .wline");
   for (var i = 0; i < lines.length; i++) {
     if (lines[i].scrollWidth > lines[i].clientWidth + 2) return false;
@@ -2105,8 +2157,14 @@ function woLinesFit() {
     var cr = chords[c].getBoundingClientRect();
     if (cr.width < 2 || cr.height < 2) continue;
     var seg = chords[c].parentElement && chords[c].parentElement.parentElement;
+    var line = chords[c].parentElement;
+    while (line && !line.classList.contains("wline")) line = line.parentElement;
     for (var d = c + 1; d < chords.length; d++) {
-      if (woInkHits(cr, chords[d].getBoundingClientRect())) return false;
+      var otherLine = chords[d].parentElement;
+      while (otherLine && !otherLine.classList.contains("wline")) otherLine = otherLine.parentElement;
+      var other = chords[d].getBoundingClientRect();
+      if (woInkHits(cr, other)) return false;
+      if (line && line === otherLine && other.left >= cr.left - 1 && (other.left - cr.right) < woChordGapPx() - 1) return false;
     }
     for (var k = 0; k < lyrics.length; k++) {
       if (seg && seg.contains(lyrics[k])) continue;
