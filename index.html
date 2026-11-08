@@ -22,7 +22,7 @@ if ("serviceWorker" in navigator) {
     woRefreshing = true;
     location.reload();
   });
-  navigator.serviceWorker.register("sw.js?v=33").catch(function () {});
+  navigator.serviceWorker.register("sw.js?v=39").catch(function () {});
 }
 </script>
 <style>
@@ -102,7 +102,7 @@ svg.i{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.9;stro
 .tool{min-height:118px;text-decoration:none;color:inherit;display:flex;flex-direction:column;justify-content:space-between}
 .field,input.text,select.text,textarea.text{width:100%;border-radius:16px;border:1.5px solid var(--stroke);background:#fff;padding:12px 14px;margin:6px 0 12px}
 .field:focus,input.text:focus,select.text:focus,textarea.text:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
-.back{width:42px;height:42px;border-radius:50%;border:1px solid var(--stroke);background:#fff;display:grid;place-items:center;cursor:pointer}
+.back{width:44px;height:44px;min-width:44px;min-height:44px;border-radius:50%;border:1px solid var(--stroke);background:#fff;display:grid;place-items:center;cursor:pointer;position:relative;z-index:2}
 .av3{display:flex;background:var(--surface-2);border-radius:16px;padding:3px;gap:3px}
 .av3 button{flex:1;height:36px;border:0;border-radius:16px;background:transparent;font-weight:700;color:var(--text-2);cursor:pointer}
 .av3 button.available{background:var(--ok);color:#fff}
@@ -176,6 +176,10 @@ body.wo-playing .app{padding-bottom:0}
 .ev-img .date{position:absolute;left:14px;top:14px;width:56px;padding:6px 0 7px;border-radius:16px;background:#F7F5EE;text-align:center;line-height:1.05}
 .ev-img .date small{display:block;font-size:12px;font-weight:800;letter-spacing:.08em;color:var(--gold-ink)}
 .ev-img .date b{display:block;font-family:var(--serif);font-size:26px;color:var(--brand)}
+.ev-img .date.tbd{display:flex;align-items:center;justify-content:center;min-height:54px}
+.ev-img .date.tbd b{font-size:14px;letter-spacing:.04em}
+.ev-link{color:var(--brand);font-weight:700;overflow-wrap:anywhere}
+#special-list .tbd-head{margin:18px 0 0;font-family:var(--serif);font-size:20px;font-weight:600}
 .ev-img .body{padding:14px 16px 16px}
 .ev-img h3{margin:4px 0 2px;font-size:20px;font-family:var(--serif)}
 .ev-img .acts{display:flex;gap:8px;margin-top:12px}
@@ -200,6 +204,8 @@ body.wo-playing .app{padding-bottom:0}
 .mhead .mtop{min-height:42px;padding-right:calc(var(--safe) + 12px)}
 .mhead .mcopy{max-width:calc(100% - var(--safe) - 12px)}
 .mhead h1{font-family:var(--serif);font-size:26px;line-height:1.15;margin:6px 0 4px}
+.mtitle{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.mtitle h1{margin:6px 0 4px}
 .mhead.photo .eyebrow,.mhead.photo .mut{color:#E4ECEF}
 .mhead.illus{color:var(--text)}
 .mhead.illus .eyebrow,.mhead.illus .mut{color:var(--text-2)}
@@ -270,15 +276,17 @@ body.fb-open{overflow:hidden}
 #fb-send:disabled{opacity:.45;cursor:default}
 .fb-thanks{padding:28px 8px 36px;text-align:center}
 .fb-thanks h2{text-wrap:balance;max-width:14em;margin:0 auto}
-body.no-nav .nav{display:none}
-body.no-nav .screen{padding-bottom:32px}
+@media (max-width:767px){
+  body.no-nav .nav{display:none}
+  body.no-nav .screen{padding-bottom:32px}
+}
 .signout{color:var(--no);border-color:rgba(169,71,61,.55)}
 .profile{width:100%;border:0;text-align:left;cursor:pointer}
 #home-serving{margin:16px 0 16px}
 .serve-card{position:relative;overflow:hidden;border-top:4px solid var(--plum)}
 .serve-card.quiet{border-top:1px solid var(--stroke)}
 .serve-card h2{font-family:var(--serif);font-size:22px;margin:4px 0}
-.tt.serve-plain{font-weight:400}
+.tt.serve-plain,#more-serving .serve-plain{font-weight:400}
 .serve-next h2{font-family:var(--serif);font-size:20px;margin:2px 0 4px;font-weight:700}
 .serve-next .lnkbtn{min-height:44px;padding:0}
 .stack{display:flex;align-items:center}
@@ -363,9 +371,15 @@ body.no-nav .screen{padding-bottom:32px}
   .kitchen-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
   .week-grid{display:grid;grid-template-columns:1fr;gap:16px;align-items:start}
   #special-list{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  #special-list .tbd-head{grid-column:1 / -1}
   .ev-img{margin:0}
   .mhead{--safe:min(42%,480px);margin:0 0 16px;min-height:280px;padding:20px 28px 24px;border-radius:var(--r-card);overflow:hidden}
   .mhead.illus .mart img{width:100%;height:100%;max-width:none;position:static;left:auto;top:auto;transform:none;object-fit:contain;object-position:right center}
+  .mhead.illus .mtop{padding-right:0}
+  .mhead.illus .mtitle{max-width:100%}
+  #s-give,#s-visit,#s-more,#s-account{max-width:720px;margin-left:auto;margin-right:auto}
+  #s-ministry #nursery-root{max-width:880px}
+  #a2hs-row{display:none !important}
   .grid td.nm{position:sticky;left:0;background:#fff;z-index:1}
   #wo-play-body.wo-cols .wo-chart{column-count:var(--wo-cols,2);column-gap:28px}
 }
@@ -390,10 +404,19 @@ body.no-nav .screen{padding-bottom:32px}
   #wo-song .wbody .wline,#wo-song .wbody .wsec{break-inside:avoid}
   #wo-song .wbody > .wblock:first-child > .wsec{margin-top:0}
   #wo-song .wbody .wsec{margin-top:0}
-  #s-give,#s-visit,#s-more{max-width:760px}
+  #roster-list{display:grid;grid-template-columns:1fr 1fr;column-gap:28px;max-width:1100px}
+  #roster-list .roster-row{min-width:0;border-top:0;border-bottom:1px solid var(--stroke)}
+  #roster-list .names{overflow:hidden;text-overflow:ellipsis}
+  #s-ministry #nursery-root{max-width:1100px}
   #ministry-list{grid-template-columns:1.4fr 1fr 1fr}
   #ministry-list .mcard.span2{grid-column:auto}
   #wo-play-body.wo-cols .wo-chart{column-count:var(--wo-cols,3)}
+}
+@media (min-width:1200px){
+  #s-more{max-width:1040px}
+  #s-more .more-rest{display:grid;grid-template-columns:1fr 1fr;column-gap:28px;align-items:start}
+  #s-more .more-block{min-width:0}
+  #s-more .signout{grid-column:1 / -1}
 }
 body.signed-out .nav{display:none}
 body.signed-out .screen{padding-bottom:28px}
@@ -502,10 +525,13 @@ body.signed-out .screen{padding-bottom:28px}
 #wo-play{position:fixed;inset:0;z-index:40;background:#041820;color:#f7f5ee;display:flex;flex-direction:column}
 #wo-play .chord{color:#041820;background:#dcae1d}
 #wo-play{--wo-bar:52px}
-#wo-play-bar{display:flex;flex-wrap:nowrap;gap:6px;align-items:center;padding:8px;background:#00303f}
-#wo-play-tools{display:flex;flex:1;min-width:0;gap:6px;align-items:center;overflow-x:auto}
+#wo-play-bar{display:flex;flex-wrap:nowrap;gap:6px;align-items:flex-start;padding:8px;background:#00303f}
+#wo-play-tools{display:flex;flex:1;min-width:0;gap:6px;align-items:center;flex-wrap:wrap}
+#wo-play-bar .wmini{min-width:44px;min-height:44px;padding:0 12px}
 #wo-play-tools .wmini,#wo-play-tools .wkeyname,#wo-play-pos{flex:none}
-#wo-play-exit{flex:none}
+#wo-play-heading{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 16px;padding:8px 16px 0}
+#wo-play-heading #wo-play-title{margin:0;padding:0}
+#wo-play-key{margin:0;color:#f7f5ee;font-weight:800}
 #wo-play-body{flex:1;overflow:auto;padding:8px 10px 24px}
 #wo-play .wsec{color:var(--gold)}
 .wo-edge{position:absolute;top:var(--wo-bar);bottom:0;width:18%;border:0;background:transparent;z-index:2}
@@ -517,6 +543,8 @@ body.signed-out .screen{padding-bottom:28px}
 #wo-play.wo-fitting .wline,#wo-play.wo-fitting .lyrics-only .wline{font-size:var(--wo-fs, 16px);line-height:1.12;margin:1px 0}
 #wo-play.wo-fitting .wch{font-size:calc(var(--wo-fs, 16px) * .62)}
 #wo-play-body.wo-cols .wo-chart{column-count:2;column-gap:16px}
+#wo-play-body.wo-cols .wblock{-webkit-column-break-inside:avoid;page-break-inside:avoid;break-inside:avoid}
+#wo-play-body.wo-cols .wsec{-webkit-column-break-after:avoid;page-break-after:avoid;break-after:avoid}
 #wo-play-body.wo-cols .wline,#wo-play-body.wo-cols .wsec{break-inside:avoid}
 .meta-chip{display:inline-block;background:#fff3c4;border-radius:999px;padding:4px 10px;font-size:14px;font-weight:800;margin:2px}
 .wo-addpick{position:fixed;z-index:50;left:12px;right:12px;width:auto;max-width:440px;margin:0 auto;bottom:max(12px,calc(14px + env(safe-area-inset-bottom) + 80px));max-height:calc(100dvh - 120px);overflow:auto;background:#fff;border-radius:24px;padding:12px;box-shadow:0 12px 32px rgba(0,40,50,.18)}
@@ -729,13 +757,13 @@ a.pill.line.createbtn{height:48px;margin-top:8px}
     <button class="back glass" id="event-share" type="button" aria-label="Share"><svg class="i"><use href="#i-share"/></svg></button>
   </div>
   <div class="card edcard">
-    <div class="row-between"><span class="eyebrow gold" data-i18n="eventDetail">Special event</span><span class="chip acc" data-i18n="everyone">Everyone welcome</span></div>
+    <div class="row-between"><span class="eyebrow gold" data-i18n="eventDetail">Special event</span><span class="chip acc" id="event-welcome" data-i18n="everyone">Everyone welcome</span></div>
     <h1 class="ptitle" id="event-title" style="font-size:26px;margin-top:8px"></h1>
     <p class="mut" id="event-note"></p>
     <div class="lr"><span class="mic gold"><svg class="i"><use href="#i-cal"/></svg></span><div><b id="event-when"></b><div class="mut" id="event-time"></div></div></div>
     <div class="lr"><span class="mic acc"><svg class="i"><use href="#i-pin"/></svg></span><div><b>Bethany Church</b><div class="mut">15414 Ash Way, Lynnwood</div></div></div>
   </div>
-  <div class="grp" data-i18n="addCal">Add to calendar</div>
+  <div class="grp" id="event-cal-label" data-i18n="addCal">Add to calendar</div>
   <a class="calbtn g" id="event-google" target="_blank" rel="noopener"><div class="grow"><span data-i18n="addGoogle">Add to Google Calendar</span><small data-i18n="addGoogleSub"></small></div></a>
   <button class="calbtn a" id="event-ics" type="button"><div class="grow"><span data-i18n="addIcs">Add to Apple or Outlook calendar</span><small data-i18n="addIcsSub"></small></div></button>
   <p class="mut" style="margin-top:14px"><span data-i18n="remindLine"></span> <a class="lnk" href="#/more" data-i18n="changePrefs">Change</a></p>
@@ -815,6 +843,8 @@ a.pill.line.createbtn{height:48px;margin-top:8px}
     <svg class="i" aria-hidden="true"><use href="#i-chev"/></svg>
   </button>
   <div id="more-serving" hidden></div>
+  <div class="more-rest">
+  <div class="more-block">
   <div class="grp" data-i18n="myTeams">My ministries</div>
   <div class="card"><div class="mchips" id="acct-teams"></div>
     <div id="team-pick" hidden>
@@ -823,23 +853,31 @@ a.pill.line.createbtn{height:48px;margin-top:8px}
       <button class="pill line" type="button" data-join="nursery">Nursery</button>
     </div>
   </div>
+  </div>
+  <div class="more-block">
   <div class="grp" data-i18n="settings">Settings</div>
   <div class="card">
     <button class="lr" id="account-row" type="button"><span class="mic acc"><svg class="i"><use href="#i-key"/></svg></span><div class="grow"><div class="tt" data-i18n="account">Account &amp; sign-in</div><div class="ts" data-i18n="accountSub"></div></div><svg class="i" aria-hidden="true"><use href="#i-chev"/></svg></button>
     <button class="lr" id="notif-row" type="button"><span class="mic gold"><svg class="i"><use href="#i-bell"/></svg></span><div class="grow"><div class="tt" data-i18n="notifications">Notifications</div><div class="ts" id="notif-summary"></div></div><svg class="i" aria-hidden="true"><use href="#i-chev"/></svg></button>
     <div class="lr lang-row"><span class="mic acc"><svg class="i"><use href="#i-globe"/></svg></span><div class="grow"><div class="tt" data-i18n="language">Language</div><div class="seg2"><button type="button" id="acct-en">English</button><button type="button" id="acct-ko">한국어</button></div></div></div>
   </div>
+  </div>
+  <div class="more-block">
   <div class="grp" data-i18n="church">Church</div>
   <div class="card">
     <button class="lr" id="service-row" type="button"><span class="mic acc"><svg class="i"><use href="#i-pin"/></svg></span><div class="grow"><div class="tt" data-i18n="serviceLoc">Service times &amp; location</div><div class="ts" id="service-summary"></div></div><svg class="i" aria-hidden="true"><use href="#i-chev"/></svg></button>
   </div>
+  </div>
+  <div class="more-block">
   <div class="grp" data-i18n="appSec">App</div>
   <div class="card">
     <button class="lr" id="feedback-link" type="button"><span class="mic acc"><svg class="i"><use href="#i-chat"/></svg></span><div class="grow"><div class="tt" data-i18n="feedback">Send feedback</div><div class="ts" data-i18n="feedbackSub"></div></div><svg class="i" aria-hidden="true"><use href="#i-chev"/></svg></button>
     <button class="lr" id="a2hs-row" type="button"><span class="mic gold"><svg class="i"><use href="#i-share"/></svg></span><div class="grow"><div class="tt" data-i18n="a2hs">Add to Home Screen</div></div><svg class="i" aria-hidden="true"><use href="#i-chev"/></svg></button>
     <button class="lr" id="about-row" type="button"><span class="mic about-mic"><svg class="i"><use href="#i-q"/></svg></span><div class="grow"><div class="tt" data-i18n="about">About &amp; privacy</div><div class="ts" id="about-version"></div></div><svg class="i" aria-hidden="true"><use href="#i-chev"/></svg></button>
   </div>
+  </div>
   <button class="signout" id="sign-out" type="button"><svg class="i"><use href="#i-out"/></svg><span data-i18n="signOut">Sign out</span></button>
+  </div>
 </section>
 
 <section class="screen" id="s-account" hidden>
@@ -1025,24 +1063,26 @@ a.pill.line.createbtn{height:48px;margin-top:8px}
  <div id="wo-play" hidden>
   <div id="wo-play-bar">
    <div id="wo-play-tools">
-    <button type="button" class="wmini" onclick="woPlayStep(-1)">Prev</button>
-    <button type="button" class="wmini" onclick="woPlayStep(1)">Next</button>
-    <b id="wo-play-key" class="wkeyname" style="color:#fff"></b>
+    <button type="button" class="wmini" id="wo-play-exit" onclick="woExitPlay()">Exit</button>
+    <button type="button" class="wmini" id="wo-play-prev" onclick="woPlayStep(-1)">Prev</button>
+    <button type="button" class="wmini" id="wo-play-next" onclick="woPlayStep(1)">Next</button>
     <button type="button" class="wmini" id="wo-play-num" onclick="woTogglePlayNumbers()">Numbers</button>
     <button type="button" class="wmini" id="wo-play-lyrics" onclick="woTogglePlayLyrics()">Lyrics only</button>
     <button type="button" class="wmini" id="wo-fit-down" onclick="woNudgePlaySize(-2)" aria-label="Smaller text">A−</button>
     <button type="button" class="wmini" id="wo-fit-up" onclick="woNudgePlaySize(2)" aria-label="Larger text">A+</button>
     <button type="button" class="wmini" id="wo-fit" onclick="woResetPlaySize()">Fit</button>
-    <button type="button" class="wmini" onclick="woToggleJump()">Songs</button>
+    <button type="button" class="wmini" id="wo-play-songs" onclick="woToggleJump()">Songs</button>
     <span id="wo-play-pos" style="font-weight:800"></span>
    </div>
-   <button type="button" class="wmini" id="wo-play-exit" onclick="woExitPlay()">Exit</button>
   </div>
   <div id="wo-jump" hidden></div>
   <button type="button" class="wo-edge left" aria-label="Previous song" onclick="woPlayStep(-1)"></button>
   <button type="button" class="wo-edge right" aria-label="Next song" onclick="woPlayStep(1)"></button>
   <p id="wo-play-banner" hidden style="margin:0;padding:8px 16px;background:#dcae1d;color:#00303f;font-weight:800"></p>
-  <h1 id="wo-play-title" style="margin:0;padding:8px 16px 0"></h1>
+  <div id="wo-play-heading">
+   <h1 id="wo-play-title"></h1>
+   <p id="wo-play-key"></p>
+  </div>
   <div id="wo-play-body"></div>
  </div>
 </section>
@@ -1243,7 +1283,7 @@ const WORSHIP_BACKEND_URL = 'https://script.google.com/macros/s/AKfycbwWtdJUNT8n
 <script src="js/config.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/app.js"></script>
-<script src="js/more.js?v=33"></script>
-<script src="worship.js?v=33"></script>
+<script src="js/more.js?v=39"></script>
+<script src="worship.js?v=39"></script>
 </body>
 </html>

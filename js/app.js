@@ -162,10 +162,90 @@ function weekItems() {
     return (a.h * 60 + a.m) - (b.h * 60 + b.m);
   }).slice(0, 3);
 }
+function eventDate(ev) {
+  var m = String(ev && ev.date || "").trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return "";
+  var y = +m[1], mo = +m[2], d = +m[3];
+  var dt = new Date(Date.UTC(y, mo - 1, d));
+  if (dt.getUTCFullYear() !== y || dt.getUTCMonth() !== mo - 1 || dt.getUTCDate() !== d) return "";
+  return m[1] + "-" + m[2] + "-" + m[3];
+}
+function eventTime(ev) {
+  var m = String(ev && ev.time || "").trim().match(/^(\d{1,2}):(\d{2})$/);
+  if (!m) return null;
+  var h = +m[1], mi = +m[2];
+  if (h > 23 || mi > 59) return null;
+  return { h: h, m: mi };
+}
+function eventParts(ev) {
+  var date = eventDate(ev);
+  var time = eventTime(ev);
+  var dt = null;
+  if (date) {
+    var p = date.split("-");
+    dt = new Date(Date.UTC(+p[0], +p[1] - 1, +p[2]));
+  }
+  return { date: date, dt: dt, time: time, schedulable: !!(date && time) };
+}
+function eventTimeLabel(ev) {
+  var time = eventTime(ev);
+  if (!time) return t("timeTbd");
+  return fmtTime(time.h, time.m);
+}
+function cleanUrl(raw) {
+  return String(raw || "").replace(/[),.;]+$/g, "");
+}
+function firstHttps(text) {
+  var m = String(text || "").match(/https?:\/\/[^\s<>"]+/);
+  return m ? cleanUrl(m[0]) : "";
+}
+function makeLink(href) {
+  var a = document.createElement("a");
+  a.className = "ev-link";
+  a.href = href;
+  a.target = "_blank";
+  a.rel = "noopener noreferrer";
+  a.textContent = href;
+  a.addEventListener("click", function (e) { e.stopPropagation(); });
+  return a;
+}
+function linkify(el, text) {
+  el.replaceChildren();
+  var src = String(text || "");
+  var re = /https?:\/\/[^\s<>"]+/g;
+  var last = 0;
+  var match;
+  while ((match = re.exec(src))) {
+    if (match.index > last) el.appendChild(document.createTextNode(src.slice(last, match.index)));
+    var href = cleanUrl(match[0]);
+    el.appendChild(makeLink(href));
+    if (href.length < match[0].length) el.appendChild(document.createTextNode(match[0].slice(href.length)));
+    last = match.index + match[0].length;
+  }
+  if (last < src.length) el.appendChild(document.createTextNode(src.slice(last)));
+}
+function dateBadge(bits) {
+  if (!bits.dt) return '<div class="date tbd"><b>' + escapeHtml(t("dateTbdBadge")) + "</b></div>";
+  var mon = bits.dt.toLocaleDateString("en-US", { month: "short", timeZone: "UTC" }).toUpperCase();
+  var wd = bits.dt.getUTCDay();
+  return '<div class="date"><small>' + mon + "</small><b>" + bits.dt.getUTCDate() + "</b><span>" + (appLang() === "ko" ? dayKo(wd) : dayName(wd)) + "</span></div>";
+}
 function specials() {
   var n = laParts();
   var today = n.y + "-" + pad(n.mo) + "-" + pad(n.d);
-  return BETHANY_EVENTS.filter(function (ev) { return ev.date >= today; });
+  var rows = [];
+  BETHANY_EVENTS.forEach(function (ev, i) {
+    var date = eventDate(ev);
+    if (date && date < today) return;
+    rows.push({ ev: ev, date: date, i: i });
+  });
+  rows.sort(function (a, b) {
+    if (a.date && b.date && a.date !== b.date) return a.date < b.date ? -1 : 1;
+    if (a.date && !b.date) return -1;
+    if (!a.date && b.date) return 1;
+    return a.i - b.i;
+  });
+  return rows.map(function (row) { return row.ev; });
 }
 function icsStamp(dt) {
   return dt.getUTCFullYear() + pad(dt.getUTCMonth() + 1) + pad(dt.getUTCDate()) + "T" + pad(dt.getUTCHours()) + pad(dt.getUTCMinutes()) + pad(dt.getUTCSeconds()) + "Z";
@@ -184,9 +264,10 @@ function icsEnd(date, time, end) {
   return endDate + "T" + pad(eh) + pad(em) + "00";
 }
 function icsFor(ev) {
-  var hm = String(ev.time || "12:00").split(":");
-  var start = ev.date.replace(/-/g, "") + "T" + pad(+hm[0]) + pad(+hm[1] || 0) + "00";
-  var end = icsEnd(ev.date, ev.time, ev.end);
+  var bits = eventParts(ev);
+  if (!bits.schedulable) return;
+  var start = bits.date.replace(/-/g, "") + "T" + pad(bits.time.h) + pad(bits.time.m) + "00";
+  var end = icsEnd(bits.date, pad(bits.time.h) + ":" + pad(bits.time.m), ev.end);
   var lines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
@@ -335,20 +416,20 @@ function paintHomeMinistry() {
   });
 }
 function homeSpecial(ev) {
-  var p = ev.date.split("-");
-  var dt = new Date(Date.UTC(+p[0], +p[1] - 1, +p[2]));
-  var mon = dt.toLocaleDateString("en-US", { month: "short", timeZone: "UTC" }).toUpperCase();
+  var bits = eventParts(ev);
+  var when = bits.dt ? ((appLang() === "ko" ? dayKo(bits.dt.getUTCDay()) : dayName(bits.dt.getUTCDay())) + " · " + eventTimeLabel(ev)) : (t("dateTbd") + " · " + eventTimeLabel(ev));
   var btn = document.createElement("button");
   btn.type = "button";
   btn.className = "spec";
-  btn.innerHTML = '<img alt="" loading="lazy" src="' + escapeAttr(ev.image || "assets/img/fellowship-group.webp") + '"><div class="grow"><div class="eyebrow gold">' + t("special") + '</div><div class="tt">' + escapeHtml(appLang() === "ko" ? (ev.ko || ev.title) : ev.title) + '</div><div class="mut">' + (appLang() === "ko" ? dayKo(dt.getUTCDay()) : dayName(dt.getUTCDay())) + " · " + fmtTime(+ev.time.split(":")[0], +ev.time.split(":")[1]) + "</div></div>";
+  btn.innerHTML = '<img alt="" loading="lazy" src="' + escapeAttr(ev.image || "assets/img/fellowship-group.webp") + '"><div class="grow"><div class="eyebrow gold">' + t("special") + '</div><div class="tt">' + escapeHtml(appLang() === "ko" ? (ev.ko || ev.title) : ev.title) + '</div><div class="mut">' + escapeHtml(when) + "</div></div>";
   btn.onclick = function () { location.hash = "#/events/" + ev.id; };
   return btn;
 }
 function googleCalUrl(ev) {
-  var hm = String(ev.time || "12:00").split(":");
-  var start = ev.date.replace(/-/g, "") + "T" + pad(+hm[0]) + pad(+hm[1] || 0) + "00";
-  var end = icsEnd(ev.date, ev.time, ev.end);
+  var bits = eventParts(ev);
+  if (!bits.schedulable) return "";
+  var start = bits.date.replace(/-/g, "") + "T" + pad(bits.time.h) + pad(bits.time.m) + "00";
+  var end = icsEnd(bits.date, pad(bits.time.h) + ":" + pad(bits.time.m), ev.end);
   var q = [
     "action=TEMPLATE",
     "text=" + encodeURIComponent(ev.title + " – Bethany Church"),
@@ -360,27 +441,49 @@ function googleCalUrl(ev) {
   return "https://calendar.google.com/calendar/render?" + q.join("&");
 }
 function specialCard(ev, compact) {
-  var p = ev.date.split("-");
-  var dt = new Date(Date.UTC(+p[0], +p[1] - 1, +p[2]));
-  var mon = dt.toLocaleDateString("en-US", { month: "short", timeZone: "UTC" }).toUpperCase();
+  var bits = eventParts(ev);
   var box = document.createElement("div");
   box.className = compact ? "special-home" : "card ecard";
-  var wd = dt.getUTCDay();
-  box.innerHTML = '<div class="dblk"><small>' + mon + '</small><b>' + dt.getUTCDate() + '</b><span>' + (appLang() === "ko" ? dayKo(wd) : dayName(wd)) + '</span></div><div class="grow"><div class="eyebrow gold">' + t("special") + '</div><div class="tt">' + escapeHtml(appLang() === "ko" ? (ev.ko || ev.title) : ev.title) + '</div><div class="row-between"><span class="mut">' + fmtTime(+ev.time.split(":")[0], +ev.time.split(":")[1]) + '</span><button type="button" class="pill sm white cal">' + t("addCal") + "</button></div></div>";
-  box.querySelector(".cal").onclick = function (e) { e.stopPropagation(); icsFor(ev); };
+  box.innerHTML = dateBadge(bits) + '<div class="grow"><div class="eyebrow gold">' + t("special") + '</div><div class="tt">' + escapeHtml(appLang() === "ko" ? (ev.ko || ev.title) : ev.title) + '</div><div class="row-between"><span class="mut">' + escapeHtml(eventTimeLabel(ev)) + "</span></div></div>";
+  if (bits.schedulable) {
+    var cal = document.createElement("button");
+    cal.type = "button";
+    cal.className = "pill sm white cal";
+    cal.textContent = t("addCal");
+    cal.onclick = function (e) { e.stopPropagation(); icsFor(ev); };
+    box.querySelector(".row-between").appendChild(cal);
+  }
   box.onclick = function () { location.hash = "#/events/" + ev.id; };
   return box;
 }
 function eventCard(ev) {
-  var p = ev.date.split("-");
-  var dt = new Date(Date.UTC(+p[0], +p[1] - 1, +p[2]));
-  var mon = dt.toLocaleDateString("en-US", { month: "short", timeZone: "UTC" }).toUpperCase();
-  var wd = dt.getUTCDay();
+  var bits = eventParts(ev);
   var box = document.createElement("article");
   box.className = "ev-img";
-  box.innerHTML = '<img class="ph" alt="" loading="lazy" src="' + escapeAttr(ev.image || "assets/img/fellowship-group.webp") + '"><div class="date"><small>' + mon + "</small><b>" + dt.getUTCDate() + "</b><span>" + (appLang() === "ko" ? dayKo(wd) : dayName(wd)) + '</span></div><div class="body"><div class="eyebrow gold">' + t("special") + '</div><h3>' + escapeHtml(appLang() === "ko" ? (ev.ko || ev.title) : ev.title) + '</h3><div class="mut">' + fmtTime(+ev.time.split(":")[0], +ev.time.split(":")[1]) + '</div><div class="acts"><button type="button" class="pill brand sm cal">' + t("addCal") + '</button><button type="button" class="pill line sm details">' + t("details") + "</button></div></div>";
-  box.querySelector(".cal").onclick = function () { icsFor(ev); };
-  box.querySelector(".details").onclick = function () { location.hash = "#/events/" + ev.id; };
+  box.innerHTML = '<img class="ph" alt="" loading="lazy" src="' + escapeAttr(ev.image || "assets/img/fellowship-group.webp") + '">' + dateBadge(bits) + '<div class="body"><div class="eyebrow gold">' + t("special") + "</div><h3>" + escapeHtml(appLang() === "ko" ? (ev.ko || ev.title) : ev.title) + '</h3><div class="mut">' + escapeHtml(eventTimeLabel(ev)) + '</div><div class="acts"></div></div>';
+  var note = appLang() === "ko" ? (ev.koNote || ev.note || "") : (ev.note || "");
+  var url = firstHttps(note) || firstHttps(ev.note);
+  if (url) {
+    var line = document.createElement("p");
+    line.className = "mut";
+    line.appendChild(makeLink(url));
+    box.querySelector(".body").insertBefore(line, box.querySelector(".acts"));
+  }
+  var acts = box.querySelector(".acts");
+  if (bits.schedulable) {
+    var cal = document.createElement("button");
+    cal.type = "button";
+    cal.className = "pill brand sm cal";
+    cal.textContent = t("addCal");
+    cal.onclick = function () { icsFor(ev); };
+    acts.appendChild(cal);
+  }
+  var details = document.createElement("button");
+  details.type = "button";
+  details.className = "pill line sm details";
+  details.textContent = t("details");
+  details.onclick = function () { location.hash = "#/events/" + ev.id; };
+  acts.appendChild(details);
   return box;
 }
 function renderEvents() {
@@ -416,7 +519,17 @@ function renderEvents() {
     box.appendChild(p);
     return;
   }
-  list.forEach(function (ev) { box.appendChild(eventCard(ev)); });
+  var openedTbd = false;
+  list.forEach(function (ev) {
+    if (!eventDate(ev) && !openedTbd) {
+      openedTbd = true;
+      var head = document.createElement("h3");
+      head.className = "tbd-head";
+      head.textContent = t("dateTbd");
+      box.appendChild(head);
+    }
+    box.appendChild(eventCard(ev));
+  });
 }
 function eventById(id) {
   var found = null;
@@ -426,21 +539,34 @@ function eventById(id) {
 function renderEvent(id) {
   var ev = eventById(id);
   if (!ev) { location.replace("#/events"); return; }
-  var p = ev.date.split("-");
-  var dt = new Date(Date.UTC(+p[0], +p[1] - 1, +p[2]));
+  var bits = eventParts(ev);
   document.getElementById("event-title").textContent = appLang() === "ko" ? (ev.ko || ev.title) : ev.title;
-  document.getElementById("event-note").textContent = appLang() === "ko" ? (ev.koNote || ev.note || "") : (ev.note || "");
-  document.getElementById("event-when").textContent = dt.toLocaleDateString(appLang() === "ko" ? "ko-KR" : "en-US", { weekday: "long", month: "long", day: "numeric", timeZone: "UTC" });
-  document.getElementById("event-time").textContent = fmtTime(+ev.time.split(":")[0], +ev.time.split(":")[1]);
+  linkify(document.getElementById("event-note"), appLang() === "ko" ? (ev.koNote || ev.note || "") : (ev.note || ""));
+  document.getElementById("event-when").textContent = bits.dt ? bits.dt.toLocaleDateString(appLang() === "ko" ? "ko-KR" : "en-US", { weekday: "long", month: "long", day: "numeric", timeZone: "UTC" }) : t("dateTbd");
+  document.getElementById("event-time").textContent = eventTimeLabel(ev);
+  var welcome = document.getElementById("event-welcome");
+  if (welcome) welcome.hidden = !ev.community;
   var google = document.getElementById("event-google");
-  google.href = googleCalUrl(ev);
+  var icsBtn = document.getElementById("event-ics");
+  var calHead = document.getElementById("event-cal-label");
   var u = window.bethanyUser && window.bethanyUser();
   var isGoogle = u && String(u.provider || "").indexOf("google") >= 0;
   google.className = "calbtn " + (isGoogle ? "g" : "a");
-  document.getElementById("event-ics").className = "calbtn " + (isGoogle ? "a" : "g");
-  document.getElementById("event-ics").onclick = function () { icsFor(ev); };
+  icsBtn.className = "calbtn " + (isGoogle ? "a" : "g");
+  google.hidden = !bits.schedulable;
+  icsBtn.hidden = !bits.schedulable;
+  if (calHead) calHead.hidden = !bits.schedulable;
+  if (bits.schedulable) {
+    google.href = googleCalUrl(ev);
+    icsBtn.disabled = false;
+    icsBtn.onclick = function () { icsFor(ev); };
+  } else {
+    google.removeAttribute("href");
+    icsBtn.disabled = true;
+    icsBtn.onclick = null;
+  }
   document.getElementById("event-share").onclick = function () {
-    var text = ev.title + " · " + ev.date + " " + ev.time + " · Bethany Church";
+    var text = ev.title + " · " + (bits.date || t("dateTbd")) + " " + eventTimeLabel(ev) + " · Bethany Church";
     if (navigator.share) navigator.share({ title: ev.title, text: text }).catch(function () {});
     else if (navigator.clipboard) navigator.clipboard.writeText(text);
   };
@@ -488,7 +614,7 @@ function paintMinistryHead(head, m, onBack) {
   head.className = "mhead" + (m.illus ? " illus" : " photo");
   head.setAttribute("data-tone", m.id);
   var chip = hasTeam(m.id) ? '<span class="chip ok">' + escapeHtml(t("joined")) + "</span>" : "";
-  head.innerHTML = '<div class="mart" aria-hidden="true"><img alt="" src="' + escapeAttr(m.cover || "") + '"></div><div class="row-between mtop"><button class="' + (m.illus ? "back" : "back glass") + '" type="button" aria-label="' + escapeAttr(t("back")) + '"><svg class="i"><use href="#i-back"/></svg></button>' + chip + '</div><div class="mcopy"><div class="eyebrow">' + escapeHtml(t("myMin")) + "</div><h1>" + escapeHtml(name) + '</h1><div class="mut">' + escapeHtml(lead || "") + "</div></div>";
+  head.innerHTML = '<div class="mart" aria-hidden="true"><img alt="" src="' + escapeAttr(m.cover || "") + '"></div><div class="row-between mtop"><button class="' + (m.illus ? "back" : "back glass") + '" type="button" aria-label="' + escapeAttr(t("back")) + '"><svg class="i"><use href="#i-back"/></svg></button></div><div class="mcopy"><div class="eyebrow">' + escapeHtml(t("myMin")) + '</div><div class="mtitle"><h1>' + escapeHtml(name) + "</h1>" + chip + '</div><div class="mut">' + escapeHtml(lead || "") + "</div></div>";
   head.querySelector("button").onclick = onBack;
 }
 function renderMinistry() {
@@ -944,8 +1070,9 @@ function pullProfile() {
     saveProfileLocal(res.profile);
     var serverHas = Array.isArray(res.profile.teams) && res.profile.teams.indexOf("nursery") >= 0;
     if ((location.hash || "").indexOf("more") >= 0) renderAccount();
+    var here = (location.hash || "").replace(/^#\/?/, "").split(/[/?]/)[0];
     if (hadNursery && !serverHas) sendToNurseryCode();
-    else if ((location.hash || "").indexOf("home") >= 0 && window.paintHomeServingCard) window.paintHomeServingCard();
+    else if ((!here || here === "home") && window.paintHomeServingCard) window.paintHomeServingCard();
   }).catch(function () {});
 }
 function eventIdFromHash() {
@@ -1186,7 +1313,7 @@ function renderVisit() {
 document.getElementById("watch-live").onclick = function () { window.open(BETHANY.watchUrl, "_blank", "noopener"); };
 document.getElementById("all-times").onclick = function () { location.hash = "#/events"; };
 document.getElementById("see-events").onclick = function () { location.hash = "#/events"; };
-var APP_VERSION = (window.BETHANY && BETHANY.version) || "v33";
+var APP_VERSION = (window.BETHANY && BETHANY.version) || "v39";
 var fbCat = "idea";
 var fbGen = 0;
 function feedbackWho() {

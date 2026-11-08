@@ -908,6 +908,18 @@ function woPruneField(field) {
   woLangSongs().forEach(function (s) { (s[field] || []).forEach(function (v) { known[v] = 1; }); });
   woF[field] = (woF[field] || []).filter(function (v) { return known[v]; });
 }
+function woScriptureLabel(raw) {
+  var text = String(raw || "").replace(/\s+/g, " ").trim();
+  if (!text) return "";
+  var marker = text.search(/song finder|worshiptogether|worship together|all rights reserved|create a free account|privacy policy|cookie policy/i);
+  if (marker > 0) text = text.slice(0, marker).replace(/[\s|·•,;:\-–—]+$/, "").trim();
+  if (text.length > 120) {
+    var refs = text.match(/^((?:\d\s*)?[A-Za-z][A-Za-z.'’\- ]{0,28}?\d{1,3}:\d{1,3}(?:\s*[-–]\s*\d{1,3})?(?:\s*,\s*(?:\d\s*)?[A-Za-z][A-Za-z.'’\- ]{0,28}?\d{1,3}:\d{1,3}(?:\s*[-–]\s*\d{1,3})?)*)/);
+    if (refs && refs[1] && refs[1].length >= 4) text = refs[1].replace(/,\s*$/, "").trim();
+    else text = text.slice(0, 120).replace(/[\s,;:|·•\-–—]+$/, "").trim();
+  }
+  return text;
+}
 function woMetaChips(song) {
   var row = document.createElement("div");
   row.className = "meta-chips";
@@ -923,7 +935,7 @@ function woMetaChips(song) {
   (song.range || []).forEach(function (v) { add("Range " + v); });
   (song.time || []).forEach(add);
   (song.difficulty || []).forEach(function (v) { add(v.charAt(0).toUpperCase() + v.slice(1)); });
-  if (song.scripture) add(song.scripture);
+  if (song.scripture) add(woScriptureLabel(song.scripture));
   return row;
 }
 function woMatchAny(values, selected) {
@@ -1429,6 +1441,8 @@ function woSaveSet(set, remote) {
   if (i < 0) list.unshift(set); else list[i] = set;
   woSaveSets(list);
   if (!remote) woScheduleSync(set.id);
+  var setsPane = document.getElementById("wo-sets");
+  if (setsPane && !setsPane.hidden) woRenderSets();
 }
 function woSongKey(songId) {
   var song = wo.byId[songId];
@@ -1949,7 +1963,8 @@ function woRenderPlay() {
   wo.semi = (woPc(item.key) - woPc(item.song.key) + 12) % 12;
   wo.flats = false;
   document.getElementById("wo-play-title").textContent = item.song.title;
-  document.getElementById("wo-play-key").textContent = woKeyNow();
+  document.getElementById("wo-play-key").textContent = "Key: " + woKeyNow();
+  woPlayNav();
   document.getElementById("wo-play-num").classList.toggle("on", woNumbersOn());
   document.getElementById("wo-play-num").setAttribute("aria-pressed", woNumbersOn() ? "true" : "false");
   var body = document.getElementById("wo-play-body");
@@ -1994,10 +2009,92 @@ function woApplyPlaySize(px, cols) {
   body.classList.toggle("wo-cols", n > 1);
   body.style.setProperty("--wo-cols", String(Math.max(1, n)));
 }
+function woPlayBlocks() {
+  return Array.from(document.querySelectorAll("#wo-play-body .wblock"));
+}
+function woOccupiedCols() {
+  var seen = [];
+  woPlayBlocks().forEach(function (block) {
+    var x = block.getBoundingClientRect().left;
+    if (!seen.some(function (v) { return Math.abs(v - x) < 40; })) seen.push(x);
+  });
+  return seen.length;
+}
+function woLinesFit() {
+  var lines = document.querySelectorAll("#wo-play-body .wline");
+  for (var i = 0; i < lines.length; i++) {
+    var words = lines[i].querySelectorAll(".wword");
+    if (words.length < 2) continue;
+    var box = lines[i].getBoundingClientRect();
+    var top = words[0].getBoundingClientRect().top;
+    for (var j = 0; j < words.length; j++) {
+      var word = words[j].getBoundingClientRect();
+      if (word.width > box.width + 1) return false;
+      if (Math.abs(word.top - top) > 3) return false;
+    }
+  }
+  return true;
+}
+function woSongFullyVisible() {
+  var body = document.getElementById("wo-play-body");
+  var blocks = woPlayBlocks();
+  if (!body || !blocks.length) return false;
+  var kept = body.scrollTop;
+  body.scrollTop = 0;
+  var view = body.getBoundingClientRect();
+  var ok = blocks.every(function (block) {
+    var rect = block.getBoundingClientRect();
+    return rect.top >= view.top - 1 && rect.bottom <= view.bottom + 2 && rect.left >= view.left - 2 && rect.right <= view.right + 2;
+  });
+  body.scrollTop = kept;
+  return ok;
+}
+function woScrollReachesEnd() {
+  var body = document.getElementById("wo-play-body");
+  var blocks = woPlayBlocks();
+  if (!body || !blocks.length) return false;
+  var kept = body.scrollTop;
+  body.scrollTop = body.scrollHeight;
+  var view = body.getBoundingClientRect();
+  var last = blocks[blocks.length - 1].getBoundingClientRect();
+  var ok = last.bottom <= view.bottom + 2 && last.top < view.bottom - 4;
+  body.scrollTop = kept;
+  return ok;
+}
+function woLayoutOk(cols) {
+  var n = cols === true ? 2 : (Number(cols) || 1);
+  if (n > 1 && !woLinesFit()) return false;
+  if (woOccupiedCols() < Math.min(n, woPlayBlocks().length)) return false;
+  return true;
+}
+function woChooseCols(px) {
+  var options = [1];
+  if (woWidePlay()) options.push(2);
+  if (window.innerWidth >= 1100) options.push(3);
+  var fitted = 0;
+  var scrollable = 0;
+  options.forEach(function (n) {
+    woApplyPlaySize(px, n);
+    if (!woLayoutOk(n)) return;
+    if (woSongFullyVisible()) fitted = n;
+    else if (woScrollReachesEnd()) scrollable = n;
+  });
+  var choice = fitted || scrollable || 1;
+  woApplyPlaySize(px, choice);
+  if (!woLayoutOk(choice) || (!woSongFullyVisible() && !woScrollReachesEnd())) woApplyPlaySize(px, 1);
+}
 function woPlayFits(px, cols) {
   woApplyPlaySize(px, cols);
-  var body = document.getElementById("wo-play-body");
-  return !!body && body.scrollHeight <= body.clientHeight + 2;
+  var n = cols === true ? 2 : (Number(cols) || 1);
+  return woLayoutOk(n) && woSongFullyVisible();
+}
+function woPlayNav() {
+  var multi = !!(wo.playList && wo.playList.length > 1);
+  ["wo-play-prev", "wo-play-next", "wo-play-pos"].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) el.hidden = !multi;
+  });
+  document.querySelectorAll("#wo-play .wo-edge").forEach(function (el) { el.hidden = !multi; });
 }
 function woBestFit(cols) {
   var lo = 8, hi = 48, best = 8, fits = false;
@@ -2029,8 +2126,8 @@ function woFitPlay() {
     var item = wo.playList && wo.playList[wo.playIndex];
     if (!item || !item.song) return;
     var saved = woPlaySize(item.song.id);
-    if (saved) woApplyPlaySize(saved, false);
-    else woAutoFit();
+    if (saved) woChooseCols(saved);
+    if (!saved || !woSongFullyVisible()) woAutoFit();
   });
 }
 function woNudgePlaySize(delta) {
@@ -2043,7 +2140,7 @@ function woNudgePlaySize(delta) {
   }
   var next = Math.max(8, Math.min(48, Math.round(cur + delta)));
   woSetPlaySize(item.song.id, next);
-  woApplyPlaySize(next, false);
+  woChooseCols(next);
 }
 function woResetPlaySize() {
   var item = wo.playList && wo.playList[wo.playIndex];
