@@ -15,7 +15,7 @@ var BETHANY = {
   checkPayable: "Bethany Church",
   checkMemo: "For general offering, the memo line can be left blank. To give to a specific missionary or missional purpose, write where the gift should go in the memo line.",
   feedbackUrl: "",
-  version: "v38",
+  version: "v39",
   mapsUrl: "https://maps.google.com/?q=15414+Ash+Way,+Lynnwood,+WA+98087"
 };
 
@@ -40,9 +40,77 @@ var BETHANY_WEEKLY = [
   { day: 6, name: "Young Adult Men's Bible Study", ko: "청년 남성 성경공부", h: 19, m: 0, live: false }
 ];
 
-/* Add one-time events here. rsvp: true shows the existing RSVP form. */
+/* Add one-time events here. rsvp: true shows the existing RSVP form.
+   Leave date or time as an empty string when it is not set yet.
+   community: true shows the "everyone welcome" line on that event. */
 var BETHANY_EVENTS = [
-  { id: "thanks-2026", title: "Thanksgiving Fellowship Lunch", ko: "추수감사절 친교 점심", date: "2026-11-22", time: "12:45", note: "Stay after the services for a Thanksgiving lunch together.", koNote: "예배 후에 함께 추수감사절 점심을 나눕니다.", image: "assets/img/fellowship-group.webp", rsvp: false }
+  {
+    id: "joint-worship-20261108",
+    title: "Joint KM & EM Worship",
+    ko: "KM·EM 연합예배",
+    date: "2026-11-08",
+    time: "11:00",
+    note: "Join KM and EM for worship at 11 AM Pacific Time.",
+    koNote: "오전 11시(미국 태평양 시간)에 KM과 EM이 함께 연합예배를 드립니다.",
+    image: "assets/img/fellowship-group.webp",
+    rsvp: false
+  },
+  {
+    id: "thanksgiving-sunday-20261122",
+    title: "Thanksgiving Sunday Feast — Bethany Church Community Only",
+    ko: "추수감사주일 감사 잔치 — 베다니 교회 공동체 대상",
+    date: "2026-11-22",
+    time: "",
+    note: "There will be a Thanksgiving feast for our own church community only. Time TBD.",
+    koNote: "추수감사주일에 우리 교회 공동체를 위한 감사 잔치가 있습니다. 시간은 추후 안내합니다.",
+    image: "assets/img/fellowship-group.webp",
+    rsvp: false
+  },
+  {
+    id: "em-christmas-party-20261217",
+    title: "EM Christmas Party — EM",
+    ko: "EM 성탄 파티",
+    date: "2026-12-17",
+    time: "",
+    note: "Thursday, December 17. Time TBD. For EM.",
+    koNote: "12월 17일 목요일에 EM 성탄 파티가 있습니다. 시간은 추후 안내합니다.",
+    image: "assets/img/fellowship-group.webp",
+    rsvp: false
+  },
+  {
+    id: "joint-christmas-20261225",
+    title: "Joint KM & EM Christmas Day Service — Open to the Community",
+    ko: "KM·EM 성탄절 연합예배 — 지역사회 누구나 환영",
+    date: "2026-12-25",
+    time: "",
+    note: "Friday, December 25. Time TBD. Everyone in our community is welcome, not just our own church.",
+    koNote: "12월 25일 금요일에 성탄절 연합예배를 드립니다. 시간은 추후 안내합니다. 우리 교회 성도뿐 아니라 지역사회 모든 분을 환영합니다.",
+    image: "assets/img/fellowship-group.webp",
+    rsvp: false,
+    community: true
+  },
+  {
+    id: "new-years-20261231",
+    title: "KM & EM New Year\u2019s Eve Service",
+    ko: "KM·EM 송구영신예배",
+    date: "2026-12-31",
+    time: "",
+    note: "KM and EM New Year\u2019s Eve service. Time TBD.",
+    koNote: "KM과 EM이 함께 송구영신예배를 드립니다. 시간은 추후 안내합니다.",
+    image: "assets/img/fellowship-group.webp",
+    rsvp: false
+  },
+  {
+    id: "em-thanksgiving-lunch-signup",
+    title: "Thanksgiving EM Lunch Signup — EM Only",
+    ko: "EM 추수감사절 점심 신청 — EM 성도 대상",
+    date: "",
+    time: "",
+    note: "For the EM congregation only. Date and time TBD. Signup sheet: https://docs.google.com/spreadsheets/d/17vkzX-JvV0vPn_IsCQhingzVtwma-oo3aOrSyBWUKLQ/edit?usp=sharing",
+    koNote: "EM 성도만을 위한 추수감사절 점심 신청입니다. 날짜와 시간은 추후 안내합니다. 신청 명단: https://docs.google.com/spreadsheets/d/17vkzX-JvV0vPn_IsCQhingzVtwma-oo3aOrSyBWUKLQ/edit?usp=sharing",
+    image: "assets/img/fellowship-group.webp",
+    rsvp: false
+  }
 ];
 
 /* New ministries are added here, in code, not by a button in the app. */
@@ -114,6 +182,7 @@ var BETHANY_I18N = {
     good: "Good", morning: "morning", afternoon: "afternoon", evening: "evening",
     next: "Next service", livePill: "In person · livestream", watch: "Watch Live", allTimes: "All service times",
     upcoming: "Upcoming", seeAll: "See all", details: "Details", special: "SPECIAL EVENT", addCal: "Add to calendar",
+    timeTbd: "Time TBD", dateTbd: "Date TBD", dateTbdBadge: "TBD",
     thisWeek: "This week · weekly", sermon: "Sermon notes", sermonBody: "Read write-ups of past sermons", sermonOpen: "Opens bethanychurchwa.org",
     myMin: "My Ministry", openMinistry: "Open", answerOne: "1 Sunday to answer", answersSome: "Sundays to answer",
     giveSecure: "Tithe.ly · secure", sermons: "Sermons", sermonsSub: "Watch & notes",
@@ -246,6 +315,7 @@ var BETHANY_I18N = {
     good: "", morning: "좋은 아침이에요", afternoon: "좋은 오후예요", evening: "좋은 저녁이에요",
     next: "다음 예배", livePill: "현장 예배 · 생중계", watch: "생중계 보기", allTimes: "전체 예배 시간",
     upcoming: "다가오는 행사", seeAll: "전체 보기", details: "자세히", special: "특별 행사", addCal: "캘린더에 추가",
+    timeTbd: "시간 미정", dateTbd: "날짜 미정", dateTbdBadge: "미정",
     thisWeek: "이번 주 · 정기 모임", sermon: "설교 노트", sermonBody: "지난 설교 요약 읽기", sermonOpen: "bethanychurchwa.org에서 열기",
     myMin: "내 사역", openMinistry: "열기", answerOne: "답변할 주일 1개", answersSome: "답변할 주일",
     giveSecure: "Tithe.ly · 안전", sermons: "설교", sermonsSub: "영상과 노트",

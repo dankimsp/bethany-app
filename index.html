@@ -22,7 +22,7 @@ if ("serviceWorker" in navigator) {
     woRefreshing = true;
     location.reload();
   });
-  navigator.serviceWorker.register("sw.js?v=38").catch(function () {});
+  navigator.serviceWorker.register("sw.js?v=39").catch(function () {});
 }
 </script>
 <style>
@@ -176,6 +176,10 @@ body.wo-playing .app{padding-bottom:0}
 .ev-img .date{position:absolute;left:14px;top:14px;width:56px;padding:6px 0 7px;border-radius:16px;background:#F7F5EE;text-align:center;line-height:1.05}
 .ev-img .date small{display:block;font-size:12px;font-weight:800;letter-spacing:.08em;color:var(--gold-ink)}
 .ev-img .date b{display:block;font-family:var(--serif);font-size:26px;color:var(--brand)}
+.ev-img .date.tbd{display:flex;align-items:center;justify-content:center;min-height:54px}
+.ev-img .date.tbd b{font-size:14px;letter-spacing:.04em}
+.ev-link{color:var(--brand);font-weight:700;overflow-wrap:anywhere}
+#special-list .tbd-head{margin:18px 0 0;font-family:var(--serif);font-size:20px;font-weight:600}
 .ev-img .body{padding:14px 16px 16px}
 .ev-img h3{margin:4px 0 2px;font-size:20px;font-family:var(--serif)}
 .ev-img .acts{display:flex;gap:8px;margin-top:12px}
@@ -367,6 +371,7 @@ body.fb-open{overflow:hidden}
   .kitchen-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
   .week-grid{display:grid;grid-template-columns:1fr;gap:16px;align-items:start}
   #special-list{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  #special-list .tbd-head{grid-column:1 / -1}
   .ev-img{margin:0}
   .mhead{--safe:min(42%,480px);margin:0 0 16px;min-height:280px;padding:20px 28px 24px;border-radius:var(--r-card);overflow:hidden}
   .mhead.illus .mart img{width:100%;height:100%;max-width:none;position:static;left:auto;top:auto;transform:none;object-fit:contain;object-position:right center}
@@ -752,13 +757,13 @@ a.pill.line.createbtn{height:48px;margin-top:8px}
     <button class="back glass" id="event-share" type="button" aria-label="Share"><svg class="i"><use href="#i-share"/></svg></button>
   </div>
   <div class="card edcard">
-    <div class="row-between"><span class="eyebrow gold" data-i18n="eventDetail">Special event</span><span class="chip acc" data-i18n="everyone">Everyone welcome</span></div>
+    <div class="row-between"><span class="eyebrow gold" data-i18n="eventDetail">Special event</span><span class="chip acc" id="event-welcome" data-i18n="everyone">Everyone welcome</span></div>
     <h1 class="ptitle" id="event-title" style="font-size:26px;margin-top:8px"></h1>
     <p class="mut" id="event-note"></p>
     <div class="lr"><span class="mic gold"><svg class="i"><use href="#i-cal"/></svg></span><div><b id="event-when"></b><div class="mut" id="event-time"></div></div></div>
     <div class="lr"><span class="mic acc"><svg class="i"><use href="#i-pin"/></svg></span><div><b>Bethany Church</b><div class="mut">15414 Ash Way, Lynnwood</div></div></div>
   </div>
-  <div class="grp" data-i18n="addCal">Add to calendar</div>
+  <div class="grp" id="event-cal-label" data-i18n="addCal">Add to calendar</div>
   <a class="calbtn g" id="event-google" target="_blank" rel="noopener"><div class="grow"><span data-i18n="addGoogle">Add to Google Calendar</span><small data-i18n="addGoogleSub"></small></div></a>
   <button class="calbtn a" id="event-ics" type="button"><div class="grow"><span data-i18n="addIcs">Add to Apple or Outlook calendar</span><small data-i18n="addIcsSub"></small></div></button>
   <p class="mut" style="margin-top:14px"><span data-i18n="remindLine"></span> <a class="lnk" href="#/more" data-i18n="changePrefs">Change</a></p>
@@ -1278,7 +1283,7 @@ const WORSHIP_BACKEND_URL = 'https://script.google.com/macros/s/AKfycbwWtdJUNT8n
 <script src="js/config.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/app.js"></script>
-<script src="js/more.js?v=38"></script>
-<script src="worship.js?v=38"></script>
+<script src="js/more.js?v=39"></script>
+<script src="worship.js?v=39"></script>
 </body>
 </html>
