@@ -89,7 +89,7 @@ test("preview cue leaves the tag visible at phone and 768", async function ({ pa
     await expect(page.getByRole("button", { name: "Example worship member" })).toBeHidden();
     const fit = await geometry(page);
     measured.push(Object.assign({ size: size.name, mode: "fit" }, fit));
-    expect(fit.tag, JSON.stringify(fit)).toBe("Tag");
+    expect(fit.tag, JSON.stringify(fit)).toBe("TAG");
     expect(fit.covered, size.name + " fit " + JSON.stringify(fit)).toBe(false);
     expect(fit.tagBottom, size.name).toBeLessThanOrEqual(fit.bodyBottom + 1);
     expect(fit.bodyBottom, size.name).toBeLessThanOrEqual(fit.barTop + 1);

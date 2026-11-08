@@ -277,6 +277,37 @@ function woNumbersOn() { try { return localStorage.getItem(WO_NUM) === "1"; } ca
 function woSetNumbers(on) { try { localStorage.setItem(WO_NUM, on ? "1" : "0"); } catch (e) {} }
 function woLyricsOn() { try { return localStorage.getItem(WO_LYRICS) === "1"; } catch (e) { return false; } }
 function woSetLyrics(on) { try { localStorage.setItem(WO_LYRICS, on ? "1" : "0"); } catch (e) {} }
+var WO_HL = "bethany-worship-play-hl";
+var WO_THEME = "bethany-worship-play-theme";
+function woHighlightOn() { try { return localStorage.getItem(WO_HL) === "1"; } catch (e) { return false; } }
+function woPlayDark() { try { return localStorage.getItem(WO_THEME) === "dark"; } catch (e) { return false; } }
+function woApplyPlayLook() {
+  var play = document.getElementById("wo-play");
+  if (!play) return;
+  play.classList.toggle("wo-light", !woPlayDark());
+  play.classList.toggle("wo-hl", woHighlightOn());
+  var hl = document.getElementById("wo-play-hl");
+  if (hl) {
+    hl.classList.toggle("on", woHighlightOn());
+    hl.setAttribute("aria-pressed", woHighlightOn() ? "true" : "false");
+  }
+  var theme = document.getElementById("wo-play-theme");
+  if (theme) {
+    var dark = woPlayDark();
+    theme.classList.toggle("on", dark);
+    theme.setAttribute("aria-pressed", dark ? "true" : "false");
+    theme.textContent = dark ? "Dark" : "Light";
+  }
+}
+function woToggleHighlight() {
+  try { localStorage.setItem(WO_HL, woHighlightOn() ? "0" : "1"); } catch (e) {}
+  woApplyPlayLook();
+  if (document.body.classList.contains("wo-playing")) woFitPlay();
+}
+function woTogglePlayTheme() {
+  try { localStorage.setItem(WO_THEME, woPlayDark() ? "light" : "dark"); } catch (e) {}
+  woApplyPlayLook();
+}
 function woPrefs() { try { return JSON.parse(localStorage.getItem(WO_PREFS) || "{}"); } catch (e) { return {}; } }
 function woSavePref(id) {
   var all = woPrefs();
@@ -349,18 +380,62 @@ function woLabel(ch, song) {
   if (!wo.semi) return ch; // untransposed: show the chart's own spelling (Bb stays Bb, G# stays G#)
   return woTranspose(ch, wo.semi, woFlatsFor(song, wo.semi));
 }
+function woAccidentalChar(mark) {
+  return (mark === "#" ? "\u266F" : "\u266D") + "\uFE0E";
+}
+function woAccidental(text) {
+  return String(text || "").replace(/#/g, "\u266F\uFE0E").replace(/b/g, "\u266D\uFE0E");
+}
+function woFillChord(el, label) {
+  el.replaceChildren();
+  String(label || "").split("/").forEach(function (part, index) {
+    if (index) el.appendChild(document.createTextNode("/"));
+    var note = part.match(/^([A-G])([#b]?)(.*)$/);
+    if (!note) { el.appendChild(document.createTextNode(woAccidental(part))); return; }
+    var root = document.createElement("span");
+    root.className = "wo-root";
+    root.textContent = note[1];
+    el.appendChild(root);
+    if (note[2]) {
+      var acc = document.createElement("span");
+      acc.className = "wo-acc";
+      acc.textContent = woAccidentalChar(note[2]);
+      el.appendChild(acc);
+    }
+    var rest = note[3];
+    if (/^m(?!aj)/.test(rest)) { el.appendChild(document.createTextNode("m")); rest = rest.slice(1); }
+    else if (/^min(?!or)/.test(rest)) { el.appendChild(document.createTextNode("m")); rest = rest.slice(3); }
+    if (!rest) return;
+    var ext = document.createElement("sup");
+    ext.className = "wo-ext";
+    ext.textContent = woAccidental(rest);
+    el.appendChild(ext);
+  });
+}
+function woSectionHead(label) {
+  var h = document.createElement("div");
+  h.className = "wsec";
+  var role = String(label || "").match(/^(.*?)(?:\s+(Solo|Parts))$/i);
+  var name = document.createElement("span");
+  name.className = "wsec-name";
+  name.textContent = String(role ? role[1] : label || "").toUpperCase();
+  h.appendChild(name);
+  if (role) {
+    h.appendChild(document.createTextNode(" "));
+    var mark = document.createElement("span");
+    mark.className = "wsec-role";
+    mark.textContent = role[2].charAt(0).toUpperCase() + role[2].slice(1).toLowerCase();
+    h.appendChild(mark);
+  }
+  return h;
+}
 function woChart(song) {
   var root = document.createElement("div");
   root.className = "wo-chart wbody" + (woLyricsOn() ? " lyrics-only" : "");
   song.sections.forEach(function (sec) {
     var block = document.createElement("div");
     block.className = "wblock";
-    if (sec.label) {
-      var h = document.createElement("div");
-      h.className = "wsec";
-      h.textContent = sec.label;
-      block.appendChild(h);
-    }
+    if (sec.label) block.appendChild(woSectionHead(sec.label));
     sec.lines.forEach(function (line) {
       var row = document.createElement("div");
       row.className = "wline";
@@ -382,7 +457,7 @@ function woChart(song) {
         if (label) {
           var mark = document.createElement("span");
           mark.className = "chord";
-          mark.textContent = label;
+          woFillChord(mark, label);
           c.appendChild(mark);
         } else c.textContent = "\u00a0";
         var lyric = document.createElement("span");
@@ -392,11 +467,7 @@ function woChart(song) {
         var next = line[i + 1];
         var nextText = next && next.t != null ? String(next.t) : "";
         var continues = !!(next && text && !/\s$/.test(text) && nextText && !/^\s/.test(nextText));
-        var letters = text.replace(/\s/g, "");
-        if (label && label.length > letters.length) {
-          s.style.minWidth = (label.length + 0.6) + "ch";
-          if (continues) s.classList.add("cont");
-        }
+        if (continues && !/[-–—]$/.test(text)) s.dataset.join = "1";
         word.appendChild(s);
       });
       block.appendChild(row);
@@ -1661,13 +1732,6 @@ function woRenderSet() {
   if (service && document.activeElement !== service) service.value = set.service === "Korean Service" ? "Korean Service" : "English Service";
   var lang = document.getElementById("wo-set-lang");
   if (lang && document.activeElement !== lang) lang.value = set.language || "";
-  var lead = document.getElementById("wo-leader");
-  if (lead && document.activeElement !== lead) lead.value = set.leaderNote || "";
-  var banner = document.getElementById("wo-leader-banner");
-  if (banner) {
-    banner.hidden = !set.leaderNote;
-    banner.textContent = set.leaderNote || "";
-  }
   woSyncStatus(wo.syncText);
   var box = document.getElementById("wo-set");
   box.replaceChildren();
@@ -1861,10 +1925,10 @@ function woSetLangChanged() {
 }
 function woLeaderChanged() {
   var set = woLoadSet();
-  set.leaderNote = document.getElementById("wo-leader").value;
+  var lead = document.getElementById("wo-leader");
+  if (!lead) return;
+  set.leaderNote = lead.value;
   woSaveSet(set);
-  var banner = document.getElementById("wo-leader-banner");
-  if (banner) { banner.hidden = !set.leaderNote; banner.textContent = set.leaderNote || ""; }
 }
 function woShareUrl(set) {
   var payload = { id: set.id, d: set.date, t: set.title || "", svc: set.service || "", lang: set.language || "", ldr: set.leader || "", n: set.leaderNote || "", s: (set.songs || []).map(function (x) { return [x.id, x.key, x.note || ""]; }) };
@@ -1948,7 +2012,9 @@ function woSizePlayChrome() {
   play.style.setProperty("--wo-bar", Math.ceil(bar.getBoundingClientRect().height) + "px");
 }
 window.addEventListener("resize", function () {
-  if (document.body.classList.contains("wo-playing")) woSizePlayChrome();
+  if (!document.body.classList.contains("wo-playing")) return;
+  woSizePlayChrome();
+  woFitPlay();
 });
 function woExitPlay() {
   document.getElementById("wo-play").hidden = true;
@@ -1976,6 +2042,7 @@ function woRenderPlay() {
   woSizePlayChrome();
   document.getElementById("wo-play-lyrics").classList.toggle("on", woLyricsOn());
   document.getElementById("wo-play-body").classList.toggle("lyrics-only", woLyricsOn());
+  woApplyPlayLook();
   var jump = document.getElementById("wo-jump");
   if (jump) jump.hidden = true;
 }
@@ -2008,6 +2075,7 @@ function woApplyPlaySize(px, cols) {
   play.style.setProperty("--wo-fs", px + "px");
   body.classList.toggle("wo-cols", n > 1);
   body.style.setProperty("--wo-cols", String(Math.max(1, n)));
+  woSpaceChords();
 }
 function woPlayBlocks() {
   return Array.from(document.querySelectorAll("#wo-play-body .wblock"));
@@ -2020,17 +2088,88 @@ function woOccupiedCols() {
   });
   return seen.length;
 }
+function woInkHits(a, b) {
+  var x = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+  var y = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+  return x > 2 && y > 2;
+}
+function woChordGapPx() {
+  var play = document.getElementById("wo-play");
+  var fs = play ? parseFloat(getComputedStyle(play).getPropertyValue("--wo-fs")) : 16;
+  if (!fs || fs < 8) fs = 16;
+  return fs * 0.55;
+}
+function woSameChordRow(a, b) {
+  var y = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+  return y > Math.min(a.height, b.height) * 0.45;
+}
+function woSpaceChords() {
+  var gap = woChordGapPx();
+  var segs = document.querySelectorAll("#wo-play-body .wseg");
+  for (var i = 0; i < segs.length; i++) {
+    segs[i].style.marginLeft = "";
+    segs[i].classList.remove("wo-syl");
+  }
+  var items = Array.from(document.querySelectorAll("#wo-play-body .chord")).map(function (el) {
+    return { el: el, seg: el.parentElement && el.parentElement.parentElement };
+  }).filter(function (item) { return item.seg; });
+  items.sort(function (a, b) {
+    var ar = a.el.getBoundingClientRect();
+    var br = b.el.getBoundingClientRect();
+    if (Math.abs(ar.top - br.top) > 6) return ar.top - br.top;
+    return ar.left - br.left;
+  });
+  var prev = null;
+  items.forEach(function (item) {
+    var r = item.el.getBoundingClientRect();
+    if (prev) {
+      var pr = prev.el.getBoundingClientRect();
+      var same = woSameChordRow(pr, r) && r.left >= pr.left - 1 && (r.left - pr.right) < gap * 8;
+      if (same) {
+        var need = pr.right + gap - r.left;
+        if (need > 0.5) {
+          item.seg.style.marginLeft = Math.ceil(need) + "px";
+          if (item.seg.dataset.join === "1") item.seg.classList.add("wo-syl");
+        }
+      }
+    }
+    prev = item;
+  });
+}
 function woLinesFit() {
+  woSpaceChords();
   var lines = document.querySelectorAll("#wo-play-body .wline");
   for (var i = 0; i < lines.length; i++) {
+    if (lines[i].scrollWidth > lines[i].clientWidth + 2) return false;
     var words = lines[i].querySelectorAll(".wword");
-    if (words.length < 2) continue;
+    if (!words.length) continue;
     var box = lines[i].getBoundingClientRect();
     var top = words[0].getBoundingClientRect().top;
     for (var j = 0; j < words.length; j++) {
       var word = words[j].getBoundingClientRect();
-      if (word.width > box.width + 1) return false;
-      if (Math.abs(word.top - top) > 3) return false;
+      if (word.width > box.width + 2) return false;
+      if (words.length > 1 && Math.abs(word.top - top) > 3) return false;
+    }
+  }
+  var chords = Array.from(document.querySelectorAll("#wo-play-body .chord"));
+  var lyrics = Array.from(document.querySelectorAll("#wo-play-body .wseg > span:last-child"));
+  for (var c = 0; c < chords.length; c++) {
+    var cr = chords[c].getBoundingClientRect();
+    if (cr.width < 2 || cr.height < 2) continue;
+    var seg = chords[c].parentElement && chords[c].parentElement.parentElement;
+    var line = chords[c].parentElement;
+    while (line && !line.classList.contains("wline")) line = line.parentElement;
+    for (var d = c + 1; d < chords.length; d++) {
+      var otherLine = chords[d].parentElement;
+      while (otherLine && !otherLine.classList.contains("wline")) otherLine = otherLine.parentElement;
+      var other = chords[d].getBoundingClientRect();
+      if (woInkHits(cr, other)) return false;
+      if (line && line === otherLine && other.left >= cr.left - 1 && (other.left - cr.right) < woChordGapPx() - 1) return false;
+    }
+    for (var k = 0; k < lyrics.length; k++) {
+      if (seg && seg.contains(lyrics[k])) continue;
+      if (!lyrics[k].textContent.replace(/\s/g, "")) continue;
+      if (woInkHits(cr, lyrics[k].getBoundingClientRect())) return false;
     }
   }
   return true;
@@ -2063,8 +2202,8 @@ function woScrollReachesEnd() {
 }
 function woLayoutOk(cols) {
   var n = cols === true ? 2 : (Number(cols) || 1);
-  if (n > 1 && !woLinesFit()) return false;
-  if (woOccupiedCols() < Math.min(n, woPlayBlocks().length)) return false;
+  if (!woLinesFit()) return false;
+  if (n > 1 && woOccupiedCols() < Math.min(n, woPlayBlocks().length)) return false;
   return true;
 }
 function woChooseCols(px) {
@@ -2338,7 +2477,8 @@ document.getElementById("wo-set-leader").addEventListener("change", woSetLeaderC
 document.getElementById("wo-service").addEventListener("change", woServiceChanged);
 document.getElementById("wo-set-lang").addEventListener("change", woSetLangChanged);
 document.getElementById("wo-new-service").addEventListener("change", function () { woSyncServiceLang(document.getElementById("wo-new-service"), document.getElementById("wo-new-lang")); });
-document.getElementById("wo-leader").addEventListener("input", woLeaderChanged);
+var woLeaderInput = document.getElementById("wo-leader");
+if (woLeaderInput) woLeaderInput.addEventListener("input", woLeaderChanged);
 addEventListener("online", function () { if (woDirtyIds().length) woFlushSync(); });
 addEventListener("hashchange", worshipRoute);
 addEventListener("resize", function () {
