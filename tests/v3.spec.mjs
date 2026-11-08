@@ -68,8 +68,8 @@ test("member phone screens", async ({ page }) => {
   await expect(page.locator("#my-tools")).toContainText("Nursery");
   await expect(page.locator("#my-tools")).not.toContainText("Chord sheets");
   await page.screenshot({ path: "/opt/cursor/artifacts/v3/nursery.png" });
-  await page.goto("/#/events/thanks-2026");
-  await expect(page.locator("#event-title")).toContainText("Thanksgiving");
+  await page.goto("/#/events/joint-worship-20261108");
+  await expect(page.locator("#event-title")).toContainText("Joint KM");
   await expect(page.locator("#event-google")).toHaveAttribute("href", /calendar\.google\.com/);
   await expect(page.locator("#event-ics")).toBeVisible();
   await page.screenshot({ path: "/opt/cursor/artifacts/v3/event-detail.png" });
