@@ -5,4 +5,4 @@
 - church-exterior.webp (741265d0): building and members, Who We Are and Ministries pages. Used for the sign-in welcome.
 - harvestfest-flyer.webp (6640bfcf): Harvestfest flyer, Home, Blog and post pages. Used for the past event card (tablet Events).
 - Not used: acdac82e (baby's face visible), f68501c1 (portrait, identity unknown), bc3ec7 (Wix stock texture), young-adults, roar-vbs-flyer.
-- illus-*.svg and texture-rings.svg are original branded illustrations, made because no real Nursery or Food Kitchen photos exist.
+- illus-nursery.svg and texture-rings.svg are original branded illustrations, made because no real Nursery photo exists.

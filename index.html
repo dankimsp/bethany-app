@@ -22,7 +22,7 @@ if ("serviceWorker" in navigator) {
     woRefreshing = true;
     location.reload();
   });
-  navigator.serviceWorker.register("sw.js?v=40").catch(function () {});
+  navigator.serviceWorker.register("sw.js?v=41").catch(function () {});
 }
 </script>
 <style>
@@ -124,25 +124,9 @@ svg.i{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.9;stro
 .seg button.on{background:var(--brand);color:#fff}
 .warn{background:var(--no-soft);color:var(--no);border-radius:16px;padding:12px}
 .avt{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent);font-weight:800}
-.ministry-row,.signup-card{width:100%;display:flex;gap:12px;align-items:flex-start;text-align:left;cursor:pointer;color:inherit}
-.signup-card{flex-direction:column;align-items:stretch;cursor:default}
-.signup-card h3{margin:0;font-size:16px;font-weight:800;text-decoration:none}
-.signup-head{display:flex;gap:12px;align-items:flex-start}
-.signup-head h3{margin:0 0 2px;font-size:16px;font-weight:800;text-decoration:none}
-.signup-card .mut{margin:0}
-.signup-card .hint{font-size:14px;font-weight:700;color:var(--accent);margin:10px 0 0}
-.signup-card .pill{width:100%;margin-top:12px;height:44px}
+.ministry-row{width:100%;display:flex;gap:12px;align-items:flex-start;text-align:left;cursor:pointer;color:inherit}
 .radio{width:22px;height:22px;border-radius:50%;border:2px solid #C9C3B4;flex:none;display:inline-block}
 .radio.on{border:7px solid var(--brand)}
-.signup-day{padding:4px 6px}
-#s-signup .card{margin:8px 0}
-#s-signup .psub{margin-bottom:8px}
-.signup-day.on{background:var(--accent-soft);border-radius:16px}
-.signup-day.locked{opacity:.72}
-.signup-day .tt{font-size:14px}
-.signup-day .ts{font-size:12px;color:var(--text-2);font-weight:600;margin-top:1px}
-#signup-go{margin-top:8px}
-#signup-list.card{padding:6px 12px}
 #s-more .card{margin:8px 0}
 #s-more h2{margin:8px 0 4px}
 .hdr.start{justify-content:flex-start}
@@ -150,7 +134,6 @@ svg.i{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.9;stro
 .codefield{display:flex;align-items:center;gap:8px}
 .codefield input{flex:1;margin:6px 0 12px}
 .codefield .eye{width:46px;height:46px;border-radius:16px;border:1.5px solid var(--stroke);background:#fff;display:grid;place-items:center;cursor:pointer;flex:none;margin-bottom:6px}
-.signup-day .day{width:auto;min-width:42px;padding:0 6px}
 #more-code a,#more-ministry a{color:var(--accent);font-weight:800;text-decoration:none}
 #visit-map{margin-top:8px}
 .gold{color:var(--gold-ink)}
@@ -192,12 +175,10 @@ body.wo-playing .app{padding-bottom:0}
 .mic.solid-acc{background:var(--accent);color:#fff} .mic.solid-gold{background:var(--gold);color:var(--brand)} .mic.solid-plum{background:var(--plum);color:#fff}
 .mhead{--m-bg:#00303F;--safe:clamp(128px,40vw,168px);margin:-12px -20px 16px;min-height:196px;position:relative;overflow:hidden;background:var(--m-bg);color:#fff;padding:12px 20px 18px;display:flex;flex-direction:column;justify-content:space-between}
 .mhead[data-tone="nursery"]{--m-bg:#F4ECF2}
-.mhead[data-tone="kitchen"]{--m-bg:#E4EFEC}
 .mhead[data-tone="worship"]{--m-bg:#00303F}
 .mhead .mart{position:absolute;z-index:0;right:0;top:0;bottom:0;width:var(--safe);overflow:hidden;pointer-events:none}
 .mhead .mart img{width:100%;height:100%;object-fit:cover;display:block}
 .mhead[data-tone="nursery"] .mart img{object-position:17% 62%}
-.mhead[data-tone="kitchen"] .mart img{width:230%;height:auto;max-width:none;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);object-fit:fill}
 .mhead.photo .mart img{object-position:50% 72%}
 .mhead.photo .mart::after{content:"";position:absolute;left:0;top:0;bottom:0;width:26px;background:linear-gradient(90deg,var(--m-bg),transparent)}
 .mhead .mtop,.mhead .mcopy{position:relative;z-index:1}
@@ -339,7 +320,6 @@ body.fb-open{overflow:hidden}
 .name-edit input{flex:1;border-radius:16px;border:0;padding:8px 10px}
 .tab-only{display:none}
 .nav .mark,.nav .navav{display:none}
-.kitchen-grid{display:block}
 .week-grid{display:block}
 .home-grid{display:flex;flex-direction:column;gap:16px}
 #s-home .home-grid > .card{margin:0}
@@ -367,8 +347,6 @@ body.fb-open{overflow:hidden}
   .tile.photo{min-height:120px}
   #ministry-list{display:grid;grid-template-columns:1fr 1fr;gap:16px}
   #ministry-list .mcard{margin:0}
-  #ministry-list .mcard.span2{grid-column:span 2}
-  .kitchen-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
   .week-grid{display:grid;grid-template-columns:1fr;gap:16px;align-items:start}
   #special-list{display:grid;grid-template-columns:1fr 1fr;gap:16px}
   #special-list .tbd-head{grid-column:1 / -1}
@@ -408,8 +386,6 @@ body.fb-open{overflow:hidden}
   #roster-list .roster-row{min-width:0;border-top:0;border-bottom:1px solid var(--stroke)}
   #roster-list .names{overflow:hidden;text-overflow:ellipsis}
   #s-ministry #nursery-root{max-width:1100px}
-  #ministry-list{grid-template-columns:1.4fr 1fr 1fr}
-  #ministry-list .mcard.span2{grid-column:auto}
   #wo-play-body.wo-cols .wo-chart{column-count:var(--wo-cols,3)}
 }
 @media (min-width:1200px){
@@ -805,53 +781,6 @@ a.pill.line.createbtn{height:48px;margin-top:8px}
   <div class="hdr"><h1 class="ptitle" data-i18n="ministries">Ministries</h1></div>
   <p class="psub" data-i18n="find">Find your people at Bethany.</p>
   <div id="ministry-list" class="g3"></div>
-</section>
-
-<section class="screen" id="s-food-kitchen" hidden>
-  <div id="kitchen-head"></div>
-  <div class="kitchen-grid">
-  <article class="card signup-card">
-    <div class="signup-head">
-      <span class="mic acc"><svg class="i"><use href="#i-bowl"/></svg></span>
-      <div class="grow">
-        <h3 data-i18n="km">KM Food Sign-up</h3>
-        <p class="mut" data-i18n="kmBody"></p>
-        <p class="hint" id="km-hint" hidden></p>
-      </div>
-    </div>
-    <a class="pill brand" href="#/signup/km-food" data-i18n="signUp">Sign up</a>
-  </article>
-  <article class="card signup-card">
-    <div class="signup-head">
-      <span class="mic gold"><svg class="i"><use href="#i-heart"/></svg></span>
-      <div class="grow">
-        <h3 data-i18n="snack">EM Sunday Snack Sign-up</h3>
-        <p class="mut" data-i18n="snackBody"></p>
-        <p class="hint" id="snack-hint" hidden></p>
-      </div>
-    </div>
-    <a class="pill brand" href="#/signup/snack" data-i18n="signUp">Sign up</a>
-  </article>
-  </div>
-  <p class="card mut" data-i18n="donation">Want to make a snack donation instead? Contact Jennifer.</p>
-</section>
-
-<section class="screen" id="s-signup" hidden>
-  <div class="hdr"><button class="back" type="button" onclick="history.back()"><svg class="i"><use href="#i-back"/></svg></button></div>
-  <h1 class="ptitle" id="signup-title" style="font-size:26px"></h1>
-  <p class="psub" id="signup-sub"></p>
-  <p class="mut" id="signup-multi" hidden data-i18n="several"></p>
-  <label data-i18n="name">Name</label>
-  <input class="text" id="signup-name" autocomplete="name">
-  <div class="eyebrow" data-i18n="which">Which Sunday</div>
-  <div class="card" id="signup-list"></div>
-  <button class="pill brand block" id="signup-go" type="button" data-i18n="signUp">Sign up</button>
-  <p id="signup-msg" class="mut" hidden></p>
-  <div class="card row-between" id="signup-mine" hidden>
-    <div><div class="eyebrow" data-i18n="yourSignup">Your sign-up</div><b id="signup-mine-label"></b></div>
-    <button class="pill sm" id="signup-cancel" type="button" data-i18n="cancel">Cancel my sign-up</button>
-  </div>
-  <p class="card mut" id="signup-donation" data-i18n="donation"></p>
 </section>
 
 <section class="screen" id="s-give" hidden>
@@ -1288,7 +1217,6 @@ a.pill.line.createbtn{height:48px;margin-top:8px}
  <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/></symbol>
  <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5 8 12l7 7"/></symbol>
  <symbol id="i-arr" viewBox="0 0 24 24"><path d="M7 17 17 7M8 7h9v9"/></symbol>
- <symbol id="i-bowl" viewBox="0 0 24 24"><path d="M3 11h18a9 9 0 0 1-18 0Z"/></symbol>
  <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/></symbol>
  <symbol id="i-ok" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6.5 6.5 17.5 17.5M17.5 6.5 6.5 17.5"/></symbol>
@@ -1317,7 +1245,7 @@ const WORSHIP_BACKEND_URL = 'https://script.google.com/macros/s/AKfycbwWtdJUNT8n
 <script src="js/config.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/app.js"></script>
-<script src="js/more.js?v=40"></script>
-<script src="worship.js?v=40"></script>
+<script src="js/more.js?v=41"></script>
+<script src="worship.js?v=41"></script>
 </body>
 </html>
