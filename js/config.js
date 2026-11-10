@@ -15,7 +15,7 @@ var BETHANY = {
   checkPayable: "Bethany Church",
   checkMemo: "For general offering, the memo line can be left blank. To give to a specific missionary or missional purpose, write where the gift should go in the memo line.",
   feedbackUrl: "",
-  version: "v40",
+  version: "v41",
   mapsUrl: "https://maps.google.com/?q=15414+Ash+Way,+Lynnwood,+WA+98087"
 };
 
@@ -128,7 +128,7 @@ var BETHANY_MINISTRIES = [
     icon: "music",
     tools: [
       { id: "chords", name: "Chord sheets", ko: "악보", href: "#/worship/library", hint: "Sharps only · fit to screen", koHint: "샤프만 · 화면에 맞추기", icon: "music" },
-      { id: "setlists", name: "Setlists", ko: "셋리스트", href: "#/worship/setlists", hint: "This Sunday", koHint: "이번 주일", icon: "list" },
+      { id: "setlists", name: "Setlists", ko: "셋리스트", href: "#/worship/setlists", hint: "This Sunday's Setlist", koHint: "이번 주일 셋리스트", icon: "list" },
       { id: "availability", name: "Team availability", ko: "섬김 가능", href: "#/availability", hint: "Mark the Sundays you can serve", koHint: "섬길 수 있는 주일을 표시하세요", icon: "users" }
     ]
   },

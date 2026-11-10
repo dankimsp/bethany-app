@@ -76,7 +76,10 @@ test("library entry says this Sunday's setlist and play mode can change columns 
   await page.goto("/index.html#/worship/song/amazing-grace");
   await page.locator("#wo-song").getByRole("button", { name: "Play", exact: true }).click();
   await expect(page.locator("#wo-play")).toBeVisible();
-  await expect(page.locator("#wo-play").getByRole("button", { name: /column/i })).toBeVisible();
-  await expect(page.locator("#wo-play").getByRole("button", { name: /lower key/i })).toBeVisible();
-  await expect(page.locator("#wo-play").getByRole("button", { name: /raise key/i })).toBeVisible();
+  await expect(page.locator("#wo-play").getByRole("button", { name: "1 column" })).toBeVisible();
+  await expect(page.locator("#wo-play").getByRole("button", { name: "2 columns" })).toBeVisible();
+  await expect(page.locator("#wo-col-3")).toBeHidden();
+  await expect(page.locator("#wo-play").getByRole("button", { name: "Lower key" })).toBeVisible();
+  await expect(page.locator("#wo-play").getByRole("button", { name: "Raise key" })).toBeVisible();
+  await expect(page.locator(".wo-edge")).toHaveCount(0);
 });

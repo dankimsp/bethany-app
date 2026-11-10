@@ -22,7 +22,7 @@ if ("serviceWorker" in navigator) {
     woRefreshing = true;
     location.reload();
   });
-  navigator.serviceWorker.register("sw.js?v=40").catch(function () {});
+  navigator.serviceWorker.register("sw.js?v=41").catch(function () {});
 }
 </script>
 <style>
@@ -557,8 +557,12 @@ body.signed-out .screen{padding-bottom:28px}
 #wo-play-key{margin:0;color:#f7f5ee;font-weight:800}
 #wo-play-body{flex:1;overflow:auto;padding:8px 10px 24px}
 #wo-play .wsec{color:var(--gold)}
-.wo-edge{position:absolute;top:var(--wo-bar);bottom:0;width:18%;border:0;background:transparent;z-index:2}
-.wo-edge.left{left:0}.wo-edge.right{right:0}
+#wo-play-titleline{display:flex;align-items:center;gap:8px;min-width:0;flex:1 1 auto}
+#wo-play-titleline #wo-play-title{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#wo-play-keystep{flex:none;height:32px}
+#wo-play-keystep .wmini{min-width:32px;min-height:32px;height:32px;padding:0}
+#wo-play-cols{display:inline-flex;align-items:center;gap:4px}
+#wo-play-cols .wmini{min-width:32px;min-height:32px;height:32px;padding:0 8px}
 #wo-jump{position:absolute;left:12px;right:12px;top:var(--wo-bar);background:#fff;color:var(--text);border-radius:16px;max-height:70%;overflow:auto;z-index:6}
 #wo-jump button{display:block;width:100%;text-align:left;min-height:44px;border:0;border-bottom:1px solid var(--stroke);background:#fff;font-weight:800;color:var(--brand)}
 .lyrics-only .wch{display:none}
@@ -997,7 +1001,7 @@ a.pill.line.createbtn{height:48px;margin-top:8px}
    <h1 id="wo-lib-title" style="margin:0">Library</h1>
    <p id="wo-private-msg" class="mut" hidden></p>
    <p id="wo-lib-empty" class="card mut" hidden></p>
-   <button class="pill brand" id="wo-this-sunday" type="button" onclick="woThisSunday()">This Sunday</button>
+   <button class="pill brand" id="wo-this-sunday" type="button" onclick="woThisSunday()">This Sunday's Setlist</button>
    <div class="lang-switch" role="tablist" aria-label="Library language">
     <button type="button" id="wo-lang-en" class="on" role="tab" aria-selected="true">English CCM</button>
     <button type="button" id="wo-lang-ko" role="tab" aria-selected="false">Korean CCM</button>
@@ -1106,13 +1110,22 @@ a.pill.line.createbtn{height:48px;margin-top:8px}
    </div>
   </div>
   <div id="wo-jump" hidden></div>
-  <button type="button" class="wo-edge left" aria-label="Previous song" onclick="woPlayStep(-1)"></button>
-  <button type="button" class="wo-edge right" aria-label="Next song" onclick="woPlayStep(1)"></button>
   <p id="wo-play-banner" hidden style="margin:0;padding:8px 16px;background:#dcae1d;color:#00303f;font-weight:800"></p>
   <div id="wo-play-heading">
-   <h1 id="wo-play-title"></h1>
-   <p id="wo-play-key"></p>
+   <div id="wo-play-titleline">
+    <h1 id="wo-play-title"></h1>
+    <div class="keystep" id="wo-play-keystep" role="group" aria-label="Key">
+     <button type="button" class="wmini" id="wo-play-key-down" aria-label="Lower key" onclick="woNudgePlayKey(-1)">−</button>
+     <p id="wo-play-key"></p>
+     <button type="button" class="wmini" id="wo-play-key-up" aria-label="Raise key" onclick="woNudgePlayKey(1)">+</button>
+    </div>
+   </div>
    <div id="wo-play-view">
+    <div id="wo-play-cols" role="group" aria-label="Columns">
+     <button type="button" class="wmini" id="wo-col-1" aria-label="1 column" onclick="woPickCols(1)">1</button>
+     <button type="button" class="wmini" id="wo-col-2" aria-label="2 columns" onclick="woPickCols(2)">2</button>
+     <button type="button" class="wmini" id="wo-col-3" aria-label="3 columns" onclick="woPickCols(3)">3</button>
+    </div>
     <button type="button" class="wmini" id="wo-play-hl" aria-pressed="false" onclick="woToggleHighlight()">Highlight</button>
     <button type="button" class="wmini" id="wo-play-theme" aria-pressed="false" onclick="woTogglePlayTheme()">Light</button>
    </div>
@@ -1317,7 +1330,7 @@ const WORSHIP_BACKEND_URL = 'https://script.google.com/macros/s/AKfycbwWtdJUNT8n
 <script src="js/config.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/app.js"></script>
-<script src="js/more.js?v=40"></script>
-<script src="worship.js?v=40"></script>
+<script src="js/more.js?v=41"></script>
+<script src="worship.js?v=41"></script>
 </body>
 </html>

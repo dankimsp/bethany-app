@@ -957,6 +957,7 @@ function show(name) {
   if (name !== "worship" && document.body.classList.contains("wo-playing") && typeof woExitPlay === "function") woExitPlay();
   document.querySelectorAll(".screen").forEach(function (el) { el.hidden = el.id !== "s-" + name; });
   document.body.classList.toggle("in-worship", name === "worship");
+  if (name !== "worship") document.body.classList.remove("wo-split");
   document.querySelectorAll(".nav a").forEach(function (a) { a.classList.toggle("on", a.getAttribute("data-nav") === navFor(name)); });
   document.body.classList.toggle("no-nav", name === "account");
   document.querySelectorAll(".fb-layer").forEach(function (el) { el.hidden = true; });
@@ -1313,7 +1314,7 @@ function renderVisit() {
 document.getElementById("watch-live").onclick = function () { window.open(BETHANY.watchUrl, "_blank", "noopener"); };
 document.getElementById("all-times").onclick = function () { location.hash = "#/events"; };
 document.getElementById("see-events").onclick = function () { location.hash = "#/events"; };
-var APP_VERSION = (window.BETHANY && BETHANY.version) || "v40";
+var APP_VERSION = (window.BETHANY && BETHANY.version) || "v41";
 var fbCat = "idea";
 var fbGen = 0;
 function feedbackWho() {

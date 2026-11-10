@@ -1,4 +1,4 @@
-var CACHE = "bethany-worship-v40";
+var CACHE = "bethany-worship-v41";
 var FILES = [
   "./",
   "index.html",
