@@ -1,0 +1,142 @@
+[
+  {
+    "case": "phone-setlist-below-heading",
+    "before": {
+      "hash": "#/worship/setlists",
+      "y": 0,
+      "split": false,
+      "lib": 0,
+      "sets": 0,
+      "song": 0,
+      "play": 0,
+      "title": ""
+    },
+    "after": {
+      "hash": "#/worship/setlists",
+      "y": 958,
+      "split": false,
+      "lib": 0,
+      "sets": 0,
+      "song": 0,
+      "play": 0,
+      "title": ""
+    },
+    "point": {
+      "x": 20,
+      "y": 77.40625,
+      "width": 350,
+      "height": 30
+    }
+  },
+  {
+    "case": "phone-library-below-title",
+    "before": {
+      "hash": "#/worship/library",
+      "y": 27,
+      "split": false,
+      "lib": 0,
+      "sets": 0,
+      "song": 0,
+      "play": 0,
+      "title": ""
+    },
+    "after": {
+      "hash": "#/worship/library",
+      "y": 707,
+      "split": false,
+      "lib": 0,
+      "sets": 0,
+      "song": 0,
+      "play": 0,
+      "title": ""
+    }
+  },
+  {
+    "case": "phone-library-on-row",
+    "before": {
+      "hash": "#/worship/library",
+      "y": 707,
+      "split": false,
+      "lib": 0,
+      "sets": 0,
+      "song": 0,
+      "play": 0,
+      "title": ""
+    },
+    "after": {
+      "hash": "#/worship/library",
+      "y": 707,
+      "split": false,
+      "lib": 0,
+      "sets": 0,
+      "song": 0,
+      "play": 0,
+      "title": ""
+    },
+    "row": {
+      "x": 31,
+      "y": 167,
+      "width": 205,
+      "height": 96
+    }
+  },
+  {
+    "case": "tablet-library-inside-pane",
+    "before": {
+      "hash": "#/worship/library",
+      "y": 0,
+      "split": true,
+      "lib": 0,
+      "sets": 0,
+      "song": 0,
+      "play": 0,
+      "title": ""
+    },
+    "after": {
+      "hash": "#/worship/library",
+      "y": 0,
+      "split": true,
+      "lib": 393,
+      "sets": 0,
+      "song": 0,
+      "play": 0,
+      "title": ""
+    }
+  },
+  {
+    "case": "tablet-play-left-edge-drag-then-tap",
+    "before": {
+      "hash": "#/worship/setlists/audit-set-0",
+      "y": 0,
+      "split": true,
+      "lib": 0,
+      "sets": 0,
+      "song": 0,
+      "play": 0,
+      "index": 0,
+      "title": "Amazing Grace"
+    },
+    "afterDrag": {
+      "hash": "#/worship/setlists/audit-set-0",
+      "y": 0,
+      "split": true,
+      "lib": 0,
+      "sets": 0,
+      "song": 0,
+      "play": 0,
+      "index": 0,
+      "title": "Amazing Grace"
+    },
+    "afterTap": {
+      "hash": "#/worship/setlists/audit-set-0",
+      "y": 0,
+      "split": true,
+      "lib": 0,
+      "sets": 0,
+      "song": 0,
+      "play": 0,
+      "index": 0,
+      "title": "Amazing Grace"
+    }
+  }
+]

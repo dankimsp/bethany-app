@@ -1,0 +1,12 @@
+{
+  "name": "bethany-app",
+  "private": true,
+  "description": "Local test and audit tools. The app itself is the static files at the repo root.",
+  "scripts": {
+    "audit": "node tools/usability-audit.mjs",
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1"
+  }
+}
