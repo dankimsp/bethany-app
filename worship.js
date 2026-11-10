@@ -302,7 +302,7 @@ function woApplyPlayLook() {
 function woToggleHighlight() {
   try { localStorage.setItem(WO_HL, woHighlightOn() ? "0" : "1"); } catch (e) {}
   woApplyPlayLook();
-  if (document.body.classList.contains("wo-playing")) woFitPlay();
+  if (document.body.classList.contains("wo-playing")) woSpaceChords();
 }
 function woTogglePlayTheme() {
   try { localStorage.setItem(WO_THEME, woPlayDark() ? "light" : "dark"); } catch (e) {}
@@ -729,7 +729,6 @@ function woLoadSongs() {
     wo.songs.forEach(function (s) { wo.byId[s.id] = s; });
     woInitFilters();
     woApplyRoute();
-    if (!wo.songsRouted) woShow("lib");
     return woLoadPrivate();
   }).catch(function () {
     var box = document.getElementById("wo-list");
@@ -912,7 +911,7 @@ function woSyncTheme() {
 function woKo() { return typeof appLang === "function" && appLang() === "ko"; }
 function woT(key) {
   var dict = {
-    library: ["Library", "악보"], thisSunday: ["This Sunday", "이번 주일"], songName: ["Song name", "곡 이름"],
+    library: ["Library", "악보"], thisSunday: ["This Sunday's Setlist", "이번 주일 셋리스트"], songName: ["Song name", "곡 이름"],
     titleOrArtist: ["Title or artist", "제목 또는 아티스트"], title: ["Title", "제목"], filters: ["Filters", "필터"],
     artist: ["Artist", "아티스트"], theme: ["Theme", "주제"], az: ["A–Z", "가나다"], titleOnly: ["Title only", "제목만"],
     moment: ["Moment", "순서"], time: ["Time", "박자"], clear: ["Clear filters", "필터 지우기"], addSong: ["Add song", "곡 추가"],
@@ -1153,7 +1152,6 @@ function woRenderLib() {
     b.querySelector("b").textContent = s.title;
     var speed = woSpeedOf(s);
     b.querySelector("span").textContent = (s.artist ? s.artist + " · " : "") + woT("key") + " " + woSharpKey(s.key) + (speed ? " · " + speed.charAt(0).toUpperCase() + speed.slice(1) : "") + (s.tempo ? " · " + s.tempo + " BPM" : "");
-    b.addEventListener("pointerdown", function (e) { e.preventDefault(); });
     b.onclick = function () { location.hash = "#/worship/song/" + encodeURIComponent(s.id); };
     var add = document.createElement("button");
     add.type = "button";
@@ -1991,7 +1989,7 @@ function woEnterPlay(fromSet) {
   var inSet = wo.cur && set.songs.some(function (s) { return s.id === wo.cur.id; });
   var list = [];
   if (fromSet || inSet) {
-    list = set.songs.map(function (item) { return { song: wo.byId[item.id], key: item.key }; }).filter(function (x) { return x.song; });
+    list = set.songs.map(function (item, index) { return { song: wo.byId[item.id], key: item.key, setIndex: index }; }).filter(function (x) { return x.song; });
   }
   if (!list.length && wo.cur) list = [{ song: wo.cur, key: woKeyNow() }];
   if (!list.length) return;
@@ -2014,7 +2012,7 @@ function woSizePlayChrome() {
 window.addEventListener("resize", function () {
   if (!document.body.classList.contains("wo-playing")) return;
   woSizePlayChrome();
-  woFitPlay();
+  woSyncColButtons();
 });
 function woExitPlay() {
   document.getElementById("wo-play").hidden = true;
@@ -2022,7 +2020,7 @@ function woExitPlay() {
   woWake(false);
   woLiveWatch(wo.view === "edit");
 }
-function woRenderPlay() {
+function woRenderPlay(keep) {
   var item = wo.playList[wo.playIndex];
   if (!item) return;
   wo.cur = item.song;
@@ -2037,12 +2035,16 @@ function woRenderPlay() {
   body.replaceChildren(woChart(item.song));
   body.scrollTop = 0;
   document.getElementById("wo-play").classList.add("wo-fitting");
-  woFitPlay();
+  if (keep) {
+    wo.fitGen++;
+    woKeepPlaySize();
+  } else woFitPlay();
   document.getElementById("wo-play-pos").textContent = "Song " + (wo.playIndex + 1) + " of " + wo.playList.length;
   woSizePlayChrome();
   document.getElementById("wo-play-lyrics").classList.toggle("on", woLyricsOn());
   document.getElementById("wo-play-body").classList.toggle("lyrics-only", woLyricsOn());
   woApplyPlayLook();
+  woSyncColButtons();
   var jump = document.getElementById("wo-jump");
   if (jump) jump.hidden = true;
 }
@@ -2207,9 +2209,16 @@ function woLayoutOk(cols) {
   return true;
 }
 function woChooseCols(px) {
+  var picked = woChosenCols();
+  if (picked) {
+    woApplyPlaySize(px, Math.min(picked, woMaxCols()));
+    woDropColsIfClipped();
+    woSyncColButtons();
+    return;
+  }
   var options = [1];
-  if (woWidePlay()) options.push(2);
-  if (window.innerWidth >= 1100) options.push(3);
+  if (woMaxCols() >= 2 && woWidePlay()) options.push(2);
+  if (woMaxCols() >= 3) options.push(3);
   var fitted = 0;
   var scrollable = 0;
   options.forEach(function (n) {
@@ -2233,7 +2242,6 @@ function woPlayNav() {
     var el = document.getElementById(id);
     if (el) el.hidden = !multi;
   });
-  document.querySelectorAll("#wo-play .wo-edge").forEach(function (el) { el.hidden = !multi; });
 }
 function woBestFit(cols) {
   var lo = 8, hi = 48, best = 8, fits = false;
@@ -2244,14 +2252,118 @@ function woBestFit(cols) {
   }
   return { px: best, fits: fits };
 }
+var WO_COLS = "bethany-worship-play-cols";
+function woMaxCols() {
+  var w = window.innerWidth;
+  if (w < 700) return 1;
+  if (w < 1100) return 2;
+  return 3;
+}
+function woChosenCols() {
+  try {
+    var n = Number(localStorage.getItem(WO_COLS));
+    if (n === 1 || n === 2 || n === 3) return n;
+  } catch (e) {}
+  return 0;
+}
+function woCurrentPx() {
+  var item = wo.playList && wo.playList[wo.playIndex];
+  var saved = item && item.song ? woPlaySize(item.song.id) : 0;
+  if (saved) return saved;
+  var play = document.getElementById("wo-play");
+  var raw = play ? parseFloat(play.style.getPropertyValue("--wo-fs")) : 0;
+  if (!(raw >= 8)) raw = play ? parseFloat(getComputedStyle(play).getPropertyValue("--wo-fs")) : 0;
+  return raw >= 8 ? raw : 18;
+}
+function woActiveCols() {
+  var chosen = woChosenCols();
+  var n = chosen;
+  if (!n) {
+    var body = document.getElementById("wo-play-body");
+    n = body ? Number(body.style.getPropertyValue("--wo-cols")) : 0;
+  }
+  if (!(n >= 1)) n = 1;
+  return Math.min(n, woMaxCols());
+}
+function woColsClip() {
+  var lines = document.querySelectorAll("#wo-play-body .wline");
+  for (var i = 0; i < lines.length; i++) {
+    if (lines[i].scrollWidth > lines[i].clientWidth + 2) return true;
+  }
+  return false;
+}
+function woDropColsIfClipped() {
+  var play = document.getElementById("wo-play");
+  var body = document.getElementById("wo-play-body");
+  if (!play || !body) return 1;
+  var px = parseFloat(play.style.getPropertyValue("--wo-fs")) || woCurrentPx();
+  var n = Number(body.style.getPropertyValue("--wo-cols")) || 1;
+  while (n > 1 && woColsClip()) {
+    n -= 1;
+    woApplyPlaySize(px, n);
+  }
+  return n;
+}
+function woKeepPlaySize() {
+  woApplyPlaySize(woCurrentPx(), woActiveCols());
+  woDropColsIfClipped();
+}
+function woSyncColButtons() {
+  var max = woMaxCols();
+  var chosen = woChosenCols();
+  [1, 2, 3].forEach(function (n) {
+    var button = document.getElementById("wo-col-" + n);
+    if (!button) return;
+    button.hidden = n > max;
+    var on = chosen === n && n <= max;
+    button.classList.toggle("on", on);
+    button.setAttribute("aria-pressed", on ? "true" : "false");
+  });
+}
+function woPickCols(n) {
+  var use = Math.min(n, woMaxCols());
+  woApplyPlaySize(woCurrentPx(), use);
+  use = woDropColsIfClipped();
+  try { localStorage.setItem(WO_COLS, String(use)); } catch (e) {}
+  woSyncColButtons();
+}
+function woNudgePlayKey(dir) {
+  var item = wo.playList && wo.playList[wo.playIndex];
+  if (!item || !item.song) return;
+  wo.cur = item.song;
+  wo.semi = (woPc(item.key || item.song.key) - woPc(item.song.key) + 12) % 12;
+  wo.flats = false;
+  wo.semi += dir;
+  var spelled = woKeyNow();
+  item.key = spelled;
+  if (item.setIndex != null && wo.setId) {
+    var set = woGetSet(wo.setId);
+    if (set && set.songs[item.setIndex] && set.songs[item.setIndex].id === item.song.id) {
+      set.songs[item.setIndex].key = spelled;
+      woSaveSet(set);
+    }
+  }
+  woSavePref(item.song.id);
+  woRenderPlay(true);
+}
 function woWidePlay() {
   var w = window.innerWidth, h = window.innerHeight;
   return w >= 768 || (w > h && w >= 700);
 }
 function woAutoFit() {
+  var cap = woMaxCols();
+  var picked = woChosenCols();
+  if (picked) {
+    var locked = Math.min(picked, cap);
+    var pickedFit = woBestFit(locked);
+    woApplyPlaySize(pickedFit.px, locked);
+    woDropColsIfClipped();
+    woSyncColButtons();
+    return;
+  }
   var one = woBestFit(1);
-  var two = woWidePlay() ? woBestFit(2) : null;
-  var three = window.innerWidth >= 1100 ? woBestFit(3) : null;
+  var two = cap >= 2 && woWidePlay() ? woBestFit(2) : null;
+  var three = cap >= 3 ? woBestFit(3) : null;
   var cols = 1;
   var px = one.px;
   if (two && two.fits && (!one.fits || two.px >= one.px)) { cols = 2; px = two.px; }
@@ -2292,15 +2404,15 @@ function woPlayStep(dir) {
   var next = wo.playIndex + dir;
   if (next < 0 || next >= wo.playList.length) return;
   wo.playIndex = next;
-  woRenderPlay();
+  woRenderPlay(true);
 }
 function woTogglePlayNumbers() {
   woSetNumbers(!woNumbersOn());
-  woRenderPlay();
+  woRenderPlay(true);
 }
 function woTogglePlayLyrics() {
   woSetLyrics(!woLyricsOn());
-  woRenderPlay();
+  woRenderPlay(true);
 }
 function woToggleJump() {
   var box = document.getElementById("wo-jump");
@@ -2311,18 +2423,10 @@ function woToggleJump() {
     var b = document.createElement("button");
     b.type = "button";
     b.textContent = (i + 1) + ". " + item.song.title + (item.key ? " · " + woSharpKey(item.key) : "");
-    b.onclick = function () { wo.playIndex = i; box.hidden = true; woRenderPlay(); };
+    b.onclick = function () { wo.playIndex = i; box.hidden = true; woRenderPlay(true); };
     box.appendChild(b);
   });
   box.hidden = false;
-}
-function woSwipePlay(e) {
-  if (!wo.playList || wo.playList.length < 2) return;
-  var t = e.changedTouches && e.changedTouches[0];
-  if (!t || !wo.touchX) return;
-  var dx = t.clientX - wo.touchX, dy = t.clientY - wo.touchY;
-  if (Math.abs(dx) < 48 || Math.abs(dx) < Math.abs(dy)) return;
-  woPlayStep(dx < 0 ? 1 : -1);
 }
 function woLiveEnabled() {
   if (woBackendEnabled()) return true;
@@ -2489,20 +2593,9 @@ addEventListener("resize", function () {
   wo.fitTimer = setTimeout(function () {
     var item = wo.playList && wo.playList[wo.playIndex];
     if (!item || !item.song) return;
-    if (woPlaySize(item.song.id)) woApplyPlaySize(woPlaySize(item.song.id), false);
-    else woAutoFit();
+    woFitPlay();
   }, 120);
 });
-var woPlayBody = document.getElementById("wo-play-body");
-if (woPlayBody) {
-  woPlayBody.addEventListener("touchstart", function (e) {
-    var t = e.changedTouches && e.changedTouches[0];
-    if (!t) return;
-    wo.touchX = t.clientX;
-    wo.touchY = t.clientY;
-  }, { passive: true });
-  woPlayBody.addEventListener("touchend", woSwipePlay, { passive: true });
-}
 worshipRoute();
 woLoadSongs();
 woFlushSync();
