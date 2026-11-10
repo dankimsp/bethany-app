@@ -1,7 +1,6 @@
 var LANG_KEY = "bethany-lang";
 var TEAMS_KEY = "bethany-teams";
 var NAME_KEY = "bethany-display-name";
-var DEVICE_KEY = "bethany-device";
 var PERSON_KEY = "bethany-availability-person";
 var AVAIL_KEY = "bethany-availability";
 
@@ -27,13 +26,6 @@ function applyI18n() {
   document.querySelectorAll("[data-i18n-ph]").forEach(function (el) { el.placeholder = t(el.getAttribute("data-i18n-ph")); });
   document.querySelectorAll("[data-i18n-aria]").forEach(function (el) { el.setAttribute("aria-label", t(el.getAttribute("data-i18n-aria"))); });
 }
-function deviceId() {
-  try {
-    var id = localStorage.getItem(DEVICE_KEY);
-    if (!id) { id = "d" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); localStorage.setItem(DEVICE_KEY, id); }
-    return id;
-  } catch (e) { return "device"; }
-}
 function teams() {
   try { var list = JSON.parse(localStorage.getItem(TEAMS_KEY) || "[]"); return Array.isArray(list) ? list : []; } catch (e) { return []; }
 }
@@ -56,10 +48,6 @@ function saveProfileLocal(p) {
   if (p && p.rosterId) {
     try { localStorage.setItem(PERSON_KEY, p.rosterId); } catch (e) {}
   }
-}
-function currentUid() {
-  var u = window.bethanyUser && window.bethanyUser();
-  return u && u.uid ? u.uid : "";
 }
 function profileName() {
   var p = loadProfile();
@@ -104,9 +92,6 @@ function isoDay(v) {
   var p = {};
   new Intl.DateTimeFormat("en-US", { timeZone: "America/Los_Angeles", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(d).forEach(function (x) { p[x.type] = x.value; });
   return p.year + "-" + p.month + "-" + p.day;
-}
-function normSignup(row) {
-  return { sunday: isoDay(row && row.sunday), name: row && row.name || "", deviceId: row && row.deviceId || "", uid: row && row.uid || "" };
 }
 function dayName(d) { return ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][d]; }
 function dayKo(d) { return ["일", "월", "화", "수", "목", "금", "토"][d]; }
@@ -577,9 +562,9 @@ function renderMinistries() {
   BETHANY_MINISTRIES.forEach(function (m) {
     var b = document.createElement("button");
     b.type = "button";
-    b.className = "mcard" + (m.id === "worship" ? " span2" : "");
+    b.className = "mcard";
     var joined = hasTeam(m.id) ? '<span class="chip ok">' + t("joined") + "</span>" : "";
-    var solid = m.id === "nursery" ? "solid-plum" : m.id === "kitchen" ? "solid-acc" : "solid-gold";
+    var solid = m.id === "nursery" ? "solid-plum" : "solid-gold";
     b.innerHTML = '<div class="cv"><img alt="" loading="lazy" src="' + escapeAttr(m.cover || "") + '">' + joined + '<span class="mic ' + solid + '"><svg class="i"><use href="#i-' + m.icon + '"/></svg></span></div><div class="bd"><div class="grow"><b>' + escapeHtml(appLang() === "ko" ? m.ko : m.name) + '</b><div class="mut">' + escapeHtml(appLang() === "ko" ? m.koBlurb : m.blurb) + '</div></div><span class="go"><svg class="i"><use href="#i-chev"/></svg></span></div>';
     b.onclick = function () { openMinistry(m.id); };
     box.appendChild(b);
@@ -589,7 +574,6 @@ function openMinistry(id) {
   var m = ministryById(id);
   if (!m) return;
   if (m.code && !hasTeam(id)) { location.hash = "#/team-code?team=" + id; return; }
-  if (id === "kitchen") { location.hash = "#/food-kitchen"; return; }
   location.hash = "#/ministry/" + id;
 }
 function ministryHomeHash() {
@@ -645,31 +629,6 @@ function renderMinistry() {
     empty.innerHTML = '<img src="assets/img/illus-empty.svg" alt="" loading="lazy"><div><b>' + t("noSundays") + '</b><div class="mut">' + t("noSundaysBody") + '</div></div>';
   }
 }
-function renderKitchen() {
-  paintMinistryHead(document.getElementById("kitchen-head"), ministryById("kitchen"), function () { history.back(); });
-  paintKitchenCard("km-food", "km-hint");
-  paintKitchenCard("snack", "snack-hint");
-}
-function paintKitchenCard(kind, hintId) {
-  var hint = document.getElementById(hintId);
-  if (!hint) return;
-  hint.hidden = true;
-  api({ action: "getSignups", kind: kind }).then(function (res) {
-    if (soonError(res) || !res) return;
-    var rows = (res.signups || []).map(normSignup);
-    var days = upcomingSundays(6);
-    if (kind === "snack") {
-      var taken = days.filter(function (iso) { return rows.some(function (row) { return row.sunday === iso; }); }).length;
-      hint.hidden = false;
-      hint.textContent = taken + " " + t("takenOf");
-    } else {
-      var first = days[0];
-      var n = rows.filter(function (row) { return row.sunday === first; }).length;
-      hint.hidden = false;
-      hint.textContent = n + " " + t("signedThis");
-    }
-  }).catch(function () {});
-}
 function joinTeam(ev) {
   if (ev) ev.preventDefault();
   var code = document.getElementById("team-code-input").value.trim();
@@ -695,86 +654,10 @@ function teamFromHash() {
   return m ? m[1] : "";
 }
 
-var signupCache = {};
-var signupPick = "";
-function loadSignups(kind) {
-  var msg = document.getElementById("signup-msg");
-  paintSignups(kind, signupCache[kind] || []);
-  api({ action: "getSignups", kind: kind }).then(function (res) {
-    if (soonError(res)) { msg.hidden = false; msg.textContent = t("soon"); signupCache[kind] = signupCache[kind] || []; return; }
-    msg.hidden = true;
-    signupCache[kind] = ((res && res.signups) || []).map(normSignup);
-    paintSignups(kind, signupCache[kind]);
-  }).catch(function () { msg.hidden = false; msg.textContent = t("soon"); });
-}
-function paintSignups(kind, rows) {
-  var box = document.getElementById("signup-list");
-  var mine = document.getElementById("signup-mine");
-  box.replaceChildren();
-  var dev = deviceId();
-  var exclusive = kind !== "km-food";
-  var byDay = {};
-  rows.forEach(function (row) {
-    if (!byDay[row.sunday]) byDay[row.sunday] = [];
-    byDay[row.sunday].push(row);
-  });
-  var own = null;
-  upcomingSundays(6).forEach(function (iso) {
-    var people = byDay[iso] || [];
-    var mineRow = null;
-    people.forEach(function (p) { if (isMineRow(p, dev)) mineRow = p; });
-    if (mineRow) own = { iso: iso, name: mineRow.name };
-    var taken = exclusive && people.length && !mineRow;
-    var btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "lr signup-day" + (taken ? " locked" : "") + (signupPick === iso ? " on" : "");
-    btn.disabled = !!taken;
-    var meta = prettySunday(iso);
-    var names = people.map(function (p) { return isMineRow(p, dev) ? t("you") : p.name; }).join(", ");
-    var sub = names ? (taken ? t("taken") + " · " + names : names) : (taken ? t("taken") : t("open"));
-    btn.innerHTML = '<span class="day">' + meta.mon + '</span><div class="grow"><div class="tt">' + meta.label + '</div><div class="ts">' + escapeHtml(sub) + '</div></div>' + (taken ? "" : '<span class="radio' + (signupPick === iso ? " on" : "") + '"></span>');
-    if (!taken) btn.onclick = function () { signupPick = iso; paintSignups(kind, rows); };
-    box.appendChild(btn);
-  });
-  mine.hidden = !own;
-  if (own) document.getElementById("signup-mine-label").textContent = own.name + " · " + prettySunday(own.iso).label;
-  mine.dataset.sunday = own ? own.iso : "";
-}
-function addSignup(kind, iso) {
-  var name = document.getElementById("signup-name").value.trim();
-  var msg = document.getElementById("signup-msg");
-  if (!iso) iso = signupPick;
-  if (!name) { msg.hidden = false; msg.textContent = t("nameNeed"); return; }
-  if (!iso) { msg.hidden = false; msg.textContent = t("pickSunday"); return; }
-  try { localStorage.setItem("bethany-signup-name", name); } catch (e) {}
-  msg.hidden = false;
-  msg.textContent = t("saving");
-  api({ action: "addSignup", kind: kind, sunday: iso, name: name, deviceId: deviceId(), uid: currentUid() }).then(function (res) {
-    if (res && res.error === "roster") { location.replace(hasTeam("nursery") ? "#/ministry/nursery" : "#/team-code?team=nursery"); return; }
-    if (soonError(res)) { msg.textContent = t("soon"); return; }
-    if (res && res.error === "taken") { msg.textContent = t("taken"); loadSignups(kind); return; }
-    msg.hidden = true;
-    loadSignups(kind);
-  }).catch(function () { msg.hidden = false; msg.textContent = t("soon"); });
-}
-function cancelSignup(kind) {
-  var iso = document.getElementById("signup-mine").dataset.sunday;
-  if (!iso) return;
-  api({ action: "cancelSignup", kind: kind, sunday: iso, deviceId: deviceId(), uid: currentUid() }).then(function () { loadSignups(kind); }).catch(function () {
-    document.getElementById("signup-msg").hidden = false;
-    document.getElementById("signup-msg").textContent = t("soon");
-  });
-}
-
 function availMap() {
   try { return JSON.parse(localStorage.getItem(AVAIL_KEY) || "{}"); } catch (e) { return {}; }
 }
 function saveAvailLocal(map) { try { localStorage.setItem(AVAIL_KEY, JSON.stringify(map)); } catch (e) {} }
-function isMineRow(row, dev) {
-  var uid = currentUid();
-  if (uid && row.uid && row.uid === uid) return true;
-  return row.deviceId === dev;
-}
 function personId() {
   var p = loadProfile();
   if (p && p.rosterId) return p.rosterId;
@@ -966,8 +849,6 @@ function show(name) {
   if (name === "event") renderEvent(eventIdFromHash());
   if (name === "ministries") renderMinistries();
   if (name === "ministry") renderMinistry();
-  if (name === "food-kitchen") renderKitchen();
-  if (name === "signup") loadSignups(signupKind());
   if (name === "availability") { renderAvailability(); pullAvailability(); }
   if (name === "more") renderAccount();
   if (name === "account" && window.paintAccountPage) window.paintAccountPage();
@@ -976,16 +857,21 @@ function show(name) {
 }
 function navFor(name) {
   if (name === "events" || name === "event") return "events";
-  if (name === "ministries" || name === "food-kitchen" || name === "signup" || name === "ministry" || name === "team-code" || name === "availability" || name === "worship") return "ministries";
+  if (name === "ministries" || name === "ministry" || name === "team-code" || name === "availability" || name === "worship") return "ministries";
   if (name === "give") return "give";
   if (name === "more" || name === "visit" || name === "notifications" || name === "account") return "more";
   return "home";
 }
-function signupKind() {
-  var h = (location.hash || "");
-  if (h.indexOf("nursery") >= 0) return "nursery";
-  if (h.indexOf("km-food") >= 0) return "km-food";
-  return "snack";
+function nurserySignupHash() {
+  return (location.hash || "").toLowerCase().indexOf("nursery") >= 0;
+}
+function retiredKitchenPath(path) {
+  var p = String(path || "").toLowerCase();
+  if (p === "food-kitchen" || p === "kitchen" || p === "km-food" || p === "snack") return true;
+  if (p.indexOf("food-kitchen") >= 0 || p.indexOf("km-food") >= 0) return true;
+  if (/(^|\/)kitchen(\/|$)/.test(p)) return true;
+  if (/(^|\/)snack(\/|$)/.test(p)) return true;
+  return false;
 }
 function renderAccount() {
   var p = loadProfile() || {};
@@ -1109,22 +995,22 @@ function route() {
   }
   var name = path.split("/")[0] || "home";
   if (name === "signup") {
-    if (signupKind() === "nursery") {
+    if (nurserySignupHash()) {
       if (!hasTeam("nursery")) { location.replace("#/team-code?team=nursery"); return; }
       location.replace("#/ministry/nursery");
       return;
     }
-    prepareSignup();
-    show("signup");
+    location.replace("#/ministries");
     return;
   }
+  if (retiredKitchenPath(path)) { location.replace("#/ministries"); return; }
   if (name === "account") { show("account"); return; }
   if (name === "ministry") {
     var mid = path.split("/")[1] || "";
     if (!mid) { location.replace(ministryHomeHash()); return; }
+    if (mid === "kitchen") { location.replace("#/ministries"); return; }
     var ministry = ministryById(mid);
     if (!ministry || (ministry.code && !hasTeam(mid))) { location.replace("#/team-code?team=" + mid); return; }
-    if (mid === "kitchen") { location.replace("#/food-kitchen"); return; }
     show("ministry");
     return;
   }
@@ -1132,22 +1018,11 @@ function route() {
   if (name === "events" && path.split("/")[1]) { show("event"); return; }
   if (name === "give") renderGive();
   if (name === "visit") renderVisit();
-  if (name === "team-code" || name === "availability" || name === "food-kitchen" || name === "events" || name === "ministries" || name === "give" || name === "more" || name === "visit" || name === "notifications") {
+  if (name === "team-code" || name === "availability" || name === "events" || name === "ministries" || name === "give" || name === "more" || name === "visit" || name === "notifications") {
     show(name);
     return;
   }
   show("home");
-}
-function prepareSignup() {
-  var kind = signupKind();
-  document.getElementById("signup-title").textContent = kind === "km-food" ? t("km") : kind === "nursery" ? (appLang() === "ko" ? "유아부 신청" : "Nursery sign-up") : t("snack");
-  document.getElementById("signup-sub").textContent = kind === "km-food" ? t("kmBody") : kind === "snack" ? t("snackBody") : t("several");
-  document.getElementById("signup-multi").hidden = kind !== "km-food";
-  document.getElementById("signup-donation").hidden = kind !== "snack";
-  signupPick = "";
-  var savedName = displayName();
-  if (savedName && !document.getElementById("signup-name").value) document.getElementById("signup-name").value = savedName;
-  document.getElementById("signup-cancel").onclick = function () { cancelSignup(kind); };
 }
 function escapeHtml(s) { return String(s || "").replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
 function escapeAttr(s) { return escapeHtml(s).replace(/'/g, "&#39;"); }
@@ -1163,7 +1038,6 @@ function renderAll() {
 document.getElementById("lang-en").onclick = function () { setLang("en"); };
 document.getElementById("lang-ko").onclick = function () { setLang("ko"); };
 document.getElementById("team-form").onsubmit = joinTeam;
-document.getElementById("signup-go").onclick = function () { addSignup(signupKind()); };
 document.getElementById("avail-change").onclick = function () { try { localStorage.removeItem(PERSON_KEY); } catch (e) {} renderAvailability(); };
 document.getElementById("view-answers").onclick = function () {
   document.getElementById("avail-member-pane").hidden = false;
@@ -1313,7 +1187,7 @@ function renderVisit() {
 document.getElementById("watch-live").onclick = function () { window.open(BETHANY.watchUrl, "_blank", "noopener"); };
 document.getElementById("all-times").onclick = function () { location.hash = "#/events"; };
 document.getElementById("see-events").onclick = function () { location.hash = "#/events"; };
-var APP_VERSION = (window.BETHANY && BETHANY.version) || "v40";
+var APP_VERSION = (window.BETHANY && BETHANY.version) || "v41";
 var fbCat = "idea";
 var fbGen = 0;
 function feedbackWho() {

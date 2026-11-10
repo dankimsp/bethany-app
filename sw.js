@@ -1,4 +1,4 @@
-var CACHE = "bethany-worship-v40";
+var CACHE = "bethany-worship-v41";
 var FILES = [
   "./",
   "index.html",
@@ -13,7 +13,6 @@ var FILES = [
   "assets/img/church-exterior.webp",
   "assets/img/texture-rings.svg",
   "assets/img/illus-nursery.svg",
-  "assets/img/illus-kitchen.svg",
   "assets/img/illus-empty.svg",
   "songs.json",
   "manifest.webmanifest",

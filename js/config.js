@@ -15,7 +15,7 @@ var BETHANY = {
   checkPayable: "Bethany Church",
   checkMemo: "For general offering, the memo line can be left blank. To give to a specific missionary or missional purpose, write where the gift should go in the memo line.",
   feedbackUrl: "",
-  version: "v40",
+  version: "v41",
   mapsUrl: "https://maps.google.com/?q=15414+Ash+Way,+Lynnwood,+WA+98087"
 };
 
@@ -147,21 +147,6 @@ var BETHANY_MINISTRIES = [
     tools: [
       { id: "nursery-roster", name: "Nursery roster", ko: "유아부 봉사 명단", href: "#/ministry/nursery", hint: "See who's serving · pick Sundays", koHint: "함께 섬기는 분 보기 · 주일 선택", icon: "smile" }
     ]
-  },
-  {
-    id: "kitchen",
-    name: "Food Kitchen",
-    ko: "음식 사역",
-    blurb: "Sign up to help with food on Sundays.",
-    koBlurb: "주일 음식을 돕기 위해 신청하세요.",
-    cover: "assets/img/illus-kitchen.svg",
-    illus: true,
-    code: false,
-    icon: "bowl",
-    tools: [
-      { id: "km-food", name: "KM Food Sign-up", ko: "한국어 예배 음식 신청", href: "#/signup/km-food", hint: "Name and Sunday" },
-      { id: "snack", name: "EM Sunday Snack Sign-up", ko: "영어 예배 간식 신청", href: "#/signup/snack", hint: "After the 10:00 AM English service" }
-    ]
   }
 ];
 
@@ -211,22 +196,15 @@ var BETHANY_I18N = {
     leaderView: "Leader view · Worship Team", updates: "Updates live", short: "is short",
     havent: "haven't answered", of: "of",
     find: "Find your people at Bethany.", openAll: "Open to everyone",
-    kitchen: "Food Kitchen", km: "KM Food Sign-up", kmBody: "For the Korean ministry fellowship meal.",
-    snack: "EM Sunday Snack Sign-up", snackBody: "After the 10:00 AM English service.",
-    name: "Name", which: "Which Sunday", nameNeed: "Please enter your name.", pickSunday: "Pick a Sunday.", signUp: "Sign up", cancel: "Cancel my sign-up",
-    yours: "Yours", open: "Open", taken: "Taken", you: "You",
-    donation: "Want to make a snack donation instead? Contact Jennifer.",
-    several: "Several people can sign up for the same Sunday.",
+    name: "Name", nameNeed: "Please enter your name.", you: "You",
     notYet: "Reminders aren't available yet.",
     giveLead: "Thank you for supporting the ministry of Bethany Church.",
     giveOnline: "Give online", giveBody: "Secure giving through Tithe.ly. Set up a one-time or recurring gift.",
     giveBtn: "Give with Tithe.ly", venmo: "Venmo", sendTo: "Send to", openVenmo: "Open Venmo",
     byCheck: "Give by check", payable: "Payable to", mailTo: "Mail to", memo: "Memo",
     wrongCode: "That code isn't right.",
-    back: "Back", sample: "Sample", yourSignup: "Your sign-up", bringing: "signed up",
+    back: "Back", sample: "Sample",
     noMinistry: "No team tools on this phone yet.",
-    takenOf: "of 6 Sundays taken",
-    signedThis: "signed up this Sunday",
     emptyAvail: "No answers yet. Ask the team to mark their Sundays.",
     welcomeTitle: "Welcome home\u00a0to", welcomeChurch: "Bethany Church", welcomeLead: "Sign in for services, events and your ministries.",
     google: "Continue with Google", googleUp: "Sign up with Google", orEmail: "or use email", orEmailUp: "or with email",
@@ -344,22 +322,15 @@ var BETHANY_I18N = {
     leaderView: "인도자 보기 · 찬양팀", updates: "바로 반영", short: "인원이 적습니다",
     havent: "아직 답이 없습니다", of: "/",
     find: "베다니의 사람들을 찾아보세요.", openAll: "모두에게 열림",
-    kitchen: "음식 사역", km: "한국어 예배 음식 신청", kmBody: "한국어 사역 교제 식사입니다.",
-    snack: "영어 예배 간식 신청", snackBody: "오전 10시 영어 예배 후.",
-    name: "이름", which: "어느 주일", nameNeed: "이름을 입력해 주세요.", pickSunday: "주일을 골라 주세요.", signUp: "신청", cancel: "내 신청 취소",
-    yours: "내 신청", open: "비어 있음", taken: "마감", you: "나",
-    donation: "간식을 기부하고 싶나요? Jennifer에게 문의하세요.",
-    several: "같은 주일에 여러 사람이 신청할 수 있습니다.",
+    name: "이름", nameNeed: "이름을 입력해 주세요.", you: "나",
     notYet: "알림은 아직 준비되지 않았습니다.",
     giveLead: "베다니 교회 사역을 후원해 주셔서 감사합니다.",
     giveOnline: "온라인 헌금", giveBody: "Tithe.ly로 안전하게 헌금합니다. 한 번 또는 정기 헌금을 설정할 수 있습니다.",
     giveBtn: "Tithe.ly로 헌금", venmo: "Venmo", sendTo: "받을 사람", openVenmo: "Venmo 열기",
     byCheck: "수표 헌금", payable: "수표 명의", mailTo: "우편", memo: "메모",
     wrongCode: "코드가 맞지 않습니다.",
-    back: "뒤로", sample: "예시", yourSignup: "내 신청", bringing: "신청",
+    back: "뒤로", sample: "예시",
     noMinistry: "이 기기에는 아직 팀 도구가 없습니다.",
-    takenOf: "6주일 중 신청됨",
-    signedThis: "이번 주일 신청",
     emptyAvail: "아직 답이 없습니다. 팀에게 주일을 표시해 달라고 하세요.",
     welcomeTitle: "베다니\u00a0교회에", welcomeChurch: "오신 것을\u00a0환영합니다", welcomeLead: "예배, 행사, 사역을 위해 로그인하세요.",
     google: "Google로 계속", googleUp: "Google로 가입", orEmail: "또는 이메일", orEmailUp: "또는 이메일로",

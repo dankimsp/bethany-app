@@ -55,7 +55,7 @@ test("member phone screens", async ({ page }) => {
   await page.goto("/#/ministries");
   await expect(page.locator("#ministry-list")).toContainText("Worship");
   await expect(page.locator("#ministry-list")).toContainText("Nursery");
-  await expect(page.locator("#ministry-list")).toContainText("Food Kitchen");
+  await expect(page.locator("#ministry-list")).not.toContainText("Food Kitchen");
   await page.screenshot({ path: "/opt/cursor/artifacts/v3/ministries-phone.png" });
   await page.evaluate(() => {
     localStorage.setItem("bethany-teams", JSON.stringify(["nursery"]));
