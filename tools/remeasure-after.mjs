@@ -195,7 +195,7 @@ console.log("scroll and controls");
   const { ctx, page } = await context([768, 1024]);
   await page.goto(BASE + "#/events", { waitUntil: "domcontentloaded" });
   await page.waitForTimeout(400);
-  const before = await page.evaluate(() => ({ y: window.scrollY, split: document.body.classList.contains("wo-split"), bottom: document.querySelector("#special-list .ev-img:last-child").getBoundingClientRect().bottom, vh: innerHeight }));
+  const before = await page.evaluate(() => ({ y: window.scrollY, split: document.body.classList.contains("wo-split"), bottom: document.getElementById("s-events").getBoundingClientRect().bottom, vh: innerHeight }));
   await swipe(page, 420, 800, 500);
   const after = await page.evaluate(() => window.scrollY);
   notes.push({ id: "tablet-events-scroll", before, after, moved: after - before.y });

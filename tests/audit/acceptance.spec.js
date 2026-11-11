@@ -53,8 +53,8 @@ test("tablet pages still touch-scroll after songs load", async ({ page }) => {
   await page.goto("/index.html#/events");
   await page.waitForTimeout(500);
   const before = await page.evaluate(() => {
-    const last = document.querySelector("#special-list .ev-img:last-child, #s-events .ev-img:last-child");
-    const rect = last ? last.getBoundingClientRect() : { bottom: 0 };
+    const section = document.getElementById("s-events");
+    const rect = section ? section.getBoundingClientRect() : { bottom: 0 };
     return {
       split: document.body.classList.contains("wo-split"),
       scrollY: window.scrollY,

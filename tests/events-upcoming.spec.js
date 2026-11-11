@@ -71,29 +71,47 @@ test("six upcoming events render in order with TBD labels", async function ({ pa
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/#/events");
   await expect(page.locator("#s-events")).toBeVisible();
-  const titles = page.locator("#special-list article h3");
-  await expect(titles).toHaveText(EN);
+  const rows = page.locator("#special-list .ev-row");
+  await expect(rows).toHaveCount(6);
+  await expect(page.locator("#special-list .ev-title")).toHaveText(EN);
   const list = page.locator("#special-list");
+  await expect(list.locator("img")).toHaveCount(0);
   await expect(list).toContainText("11:00 AM");
   await expect(list).toContainText("Time TBD");
   await expect(list).toContainText("Date TBD");
   await expect(list).not.toContainText("NaN");
   await expect(list).not.toContainText("Invalid Date");
-  const lunch = page.locator("#special-list article", { hasText: "Thanksgiving EM Lunch" });
-  await expect(lunch.locator(".date")).toContainText("TBD");
-  await expect(lunch.locator("a.ev-link")).toHaveAttribute("href", SIGNUP);
-  await expect(lunch.locator("a.ev-link")).toHaveAttribute("target", "_blank");
-  await expect(lunch.locator("a.ev-link")).toHaveAttribute("rel", /noopener/);
-  await expect(lunch.getByRole("button", { name: "Add to calendar" })).toHaveCount(0);
-  await expect(page.locator("#special-list article", { hasText: "Joint KM & EM Worship" }).getByRole("button", { name: "Add to calendar" })).toBeVisible();
-  await expect(page.locator("#special-list article", { hasText: "EM Christmas Party" }).getByRole("button", { name: "Add to calendar" })).toHaveCount(0);
+  const joint = page.locator("#special-list .ev-row", { hasText: "Joint KM & EM Worship" });
+  await expect(joint.locator(".ev-date")).toHaveText("Sun, Nov 8");
+  await expect(joint.locator(".ev-time")).toHaveText("11:00 AM");
+  const lunch = page.locator("#special-list .ev-row", { hasText: "Thanksgiving EM Lunch" });
+  await expect(lunch.locator(".ev-date")).toHaveText("Date TBD");
+  await expect(lunch.locator(".ev-time")).toHaveText("Time TBD");
+  await expect(lunch.locator("a.ev-link")).toHaveCount(0);
+  await expect(list.getByRole("button", { name: "Add to calendar" })).toHaveCount(0);
   await expect(page.locator("#special-list .tbd-head")).toHaveText("Date TBD");
   const order = await page.locator("#special-list > *").evaluateAll(function (nodes) {
     return nodes.map(function (node) { return node.className; });
   });
   expect(order.indexOf("tbd-head")).toBe(order.length - 2);
+  await joint.click();
+  await expect(page).toHaveURL(/#\/events\/joint-worship-20261108$/);
+  await expect(page.locator("#event-title")).toHaveText("Joint KM & EM Worship");
+  await expect(page.locator("#event-time")).toHaveText("11:00 AM");
+  await expect(page.locator("#event-google")).toBeVisible();
+  await page.goto("/#/events/em-thanksgiving-lunch-signup");
+  await expect(page.locator("#event-when")).toHaveText("Date TBD");
+  await expect(page.locator("#event-time")).toHaveText("Time TBD");
+  await expect(page.locator("#event-google")).toBeHidden();
+  await expect(page.locator("#event-ics")).toBeHidden();
+  const link = page.locator("#event-note a.ev-link");
+  await expect(link).toHaveAttribute("href", SIGNUP);
+  await expect(link).toHaveAttribute("target", "_blank");
+  await expect(link).toHaveAttribute("rel", /noopener/);
+  await page.goto("/#/events");
   await noOverflow(page);
-  await page.screenshot({ path: ART + "/events-en-390.png", fullPage: true });
+  await page.screenshot({ path: ART + "/events-en-390.png" });
+  await page.screenshot({ path: "/opt/cursor/artifacts/events-list-phone.png" });
   expect(errors).toEqual([]);
 });
 
@@ -164,7 +182,7 @@ test("Nov 8 stays on the service day and leaves the next Pacific day", async fun
   await page.reload();
   await expect(page.locator("#s-events")).toBeVisible();
   await expect(page.locator("#special-list")).not.toContainText("Joint KM & EM Worship");
-  await expect(page.locator("#special-list article h3")).toHaveText(EN.slice(1));
+  await expect(page.locator("#special-list .ev-title")).toHaveText(EN.slice(1));
   await expect(page.locator("#special-list")).toContainText("Thanksgiving EM Lunch");
 });
 
@@ -174,21 +192,22 @@ test("Korean events list matches the English order", async function ({ page }) {
   await page.clock.install({ time: new Date("2026-11-08T20:30:00Z") });
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/#/events");
-  await expect(page.locator("#special-list article h3")).toHaveText(KO);
+  await expect(page.locator("#special-list .ev-title")).toHaveText(KO);
   await expect(page.locator("#special-list")).toContainText("오전 11:00");
   await expect(page.locator("#special-list")).toContainText("시간 미정");
   await expect(page.locator("#special-list .tbd-head")).toHaveText("날짜 미정");
-  await expect(page.locator("#special-list article", { hasText: "점심 신청" }).locator(".date")).toContainText("미정");
+  const lunch = page.locator("#special-list .ev-row", { hasText: "점심 신청" });
+  await expect(lunch.locator(".ev-date")).toHaveText("날짜 미정");
+  await expect(lunch.locator(".ev-time")).toHaveText("시간 미정");
   await expect(page.locator("#special-list")).not.toContainText("NaN");
-  const lunch = page.locator("#special-list article", { hasText: "점심 신청" });
-  await expect(lunch.locator("a.ev-link")).toHaveAttribute("href", SIGNUP);
-  await expect(lunch.getByRole("button", { name: "캘린더에 추가" })).toHaveCount(0);
-  await expect(page.locator("#special-list article", { hasText: "연합예배" }).first().getByRole("button", { name: "캘린더에 추가" })).toBeVisible();
+  await expect(page.locator("#special-list img")).toHaveCount(0);
+  await expect(lunch.locator("a.ev-link")).toHaveCount(0);
+  await expect(page.locator("#special-list").getByRole("button", { name: "캘린더에 추가" })).toHaveCount(0);
   await noOverflow(page);
-  await page.screenshot({ path: ART + "/events-ko-390.png", fullPage: true });
+  await page.screenshot({ path: ART + "/events-ko-390.png" });
   await page.setViewportSize({ width: 1280, height: 800 });
-  await page.screenshot({ path: ART + "/events-ko-1280.png", fullPage: true });
-  await page.goto("/#/events/em-thanksgiving-lunch-signup");
+  await page.screenshot({ path: ART + "/events-ko-1280.png" });
+  await page.locator("#special-list .ev-row", { hasText: "점심 신청" }).click();
   await expect(page.locator("#event-when")).toHaveText("날짜 미정");
   await expect(page.locator("#event-time")).toHaveText("시간 미정");
   await expect(page.locator("#event-note a.ev-link")).toHaveAttribute("href", SIGNUP);
@@ -201,9 +220,45 @@ test("English desktop events list", async function ({ page }) {
   await page.clock.install({ time: new Date("2026-11-08T20:30:00Z") });
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto("/#/events");
-  await expect(page.locator("#special-list article h3")).toHaveText(EN);
+  await expect(page.locator("#special-list .ev-title")).toHaveText(EN);
+  await expect(page.locator("#special-list .ev-row")).toHaveCount(6);
   await noOverflow(page);
-  await page.setViewportSize({ width: 1280, height: 2200 });
-  await page.screenshot({ path: ART + "/events-en-1280.png", fullPage: true });
+  await page.screenshot({ path: ART + "/events-en-1280.png" });
   expect(errors).toEqual([]);
+});
+
+test("events list scrolls at tablet width", async function ({ page }) {
+  await boot(page, "en");
+  await page.clock.install({ time: new Date("2026-11-08T20:30:00Z") });
+  await page.setViewportSize({ width: 768, height: 1024 });
+  await page.goto("/#/events");
+  await expect(page.locator("#special-list .ev-row")).toHaveCount(6);
+  const before = await page.evaluate(function () {
+    var section = document.getElementById("s-events");
+    var body = getComputedStyle(document.body);
+    var root = getComputedStyle(document.documentElement);
+    return {
+      split: document.body.classList.contains("wo-split"),
+      bottom: section.getBoundingClientRect().bottom,
+      vh: window.innerHeight,
+      scrollY: window.scrollY,
+      bodyOverflow: body.overflowY,
+      rootOverflow: root.overflowY
+    };
+  });
+  expect(before.split).toBe(false);
+  expect(before.bodyOverflow).not.toBe("hidden");
+  expect(before.rootOverflow).not.toBe("hidden");
+  expect(before.bottom).toBeGreaterThan(before.vh + 40);
+  await page.screenshot({ path: "/opt/cursor/artifacts/events-list-tablet.png" });
+  const client = await page.context().newCDPSession(page);
+  await client.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: 420, y: 760, id: 0 }] });
+  for (let i = 1; i <= 8; i++) {
+    await client.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: 420, y: 760 - 480 * i / 8, id: 0 }] });
+  }
+  await client.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  await page.waitForTimeout(250);
+  const after = await page.evaluate(function () { return window.scrollY; });
+  expect(after).toBeGreaterThan(40);
+  await page.screenshot({ path: "/opt/cursor/artifacts/events-list-tablet-scrolled.png" });
 });
