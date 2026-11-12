@@ -226,9 +226,9 @@ test("pick Sundays and availability update before the server answers", async fun
 test("service worker precache includes the nursery script", async function ({ page }) {
   await page.goto("/sw.js");
   const text = await page.locator("body").innerText();
-  expect(text).toContain('var CACHE = "bethany-worship-v41"');
+  expect(text).toContain('var CACHE = "bethany-worship-v42"');
   expect(text).toContain('"js/more.js"');
-  const more = await page.request.get("/js/more.js?v=41");
+  const more = await page.request.get("/js/more.js?v=42");
   expect(more.status()).toBe(200);
   expect(more.headers()["content-type"] || "").toContain("javascript");
 });

@@ -421,7 +421,7 @@ function homeSpecial(ev) {
   var btn = document.createElement("button");
   btn.type = "button";
   btn.className = "spec";
-  btn.innerHTML = '<img alt="" loading="lazy" src="' + escapeAttr(ev.image || "assets/img/fellowship-group.webp") + '"><div class="grow"><div class="eyebrow gold">' + t("special") + '</div><div class="tt">' + escapeHtml(appLang() === "ko" ? (ev.ko || ev.title) : ev.title) + '</div><div class="mut">' + escapeHtml(when) + "</div></div>";
+  btn.innerHTML = '<div class="grow"><div class="eyebrow gold">' + t("special") + '</div><div class="tt">' + escapeHtml(appLang() === "ko" ? (ev.ko || ev.title) : ev.title) + '</div><div class="mut">' + escapeHtml(when) + "</div></div>";
   btn.onclick = function () { location.hash = "#/events/" + ev.id; };
   return btn;
 }
@@ -456,35 +456,30 @@ function specialCard(ev, compact) {
   box.onclick = function () { location.hash = "#/events/" + ev.id; };
   return box;
 }
-function eventCard(ev) {
+function eventDateLabel(ev) {
   var bits = eventParts(ev);
-  var box = document.createElement("article");
-  box.className = "ev-img";
-  box.innerHTML = '<img class="ph" alt="" loading="lazy" src="' + escapeAttr(ev.image || "assets/img/fellowship-group.webp") + '">' + dateBadge(bits) + '<div class="body"><div class="eyebrow gold">' + t("special") + "</div><h3>" + escapeHtml(appLang() === "ko" ? (ev.ko || ev.title) : ev.title) + '</h3><div class="mut">' + escapeHtml(eventTimeLabel(ev)) + '</div><div class="acts"></div></div>';
-  var note = appLang() === "ko" ? (ev.koNote || ev.note || "") : (ev.note || "");
-  var url = firstHttps(note) || firstHttps(ev.note);
-  if (url) {
-    var line = document.createElement("p");
-    line.className = "mut";
-    line.appendChild(makeLink(url));
-    box.querySelector(".body").insertBefore(line, box.querySelector(".acts"));
-  }
-  var acts = box.querySelector(".acts");
-  if (bits.schedulable) {
-    var cal = document.createElement("button");
-    cal.type = "button";
-    cal.className = "pill brand sm cal";
-    cal.textContent = t("addCal");
-    cal.onclick = function () { icsFor(ev); };
-    acts.appendChild(cal);
-  }
-  var details = document.createElement("button");
-  details.type = "button";
-  details.className = "pill line sm details";
-  details.textContent = t("details");
-  details.onclick = function () { location.hash = "#/events/" + ev.id; };
-  acts.appendChild(details);
-  return box;
+  if (!bits.dt) return t("dateTbd");
+  var wd = bits.dt.getUTCDay();
+  if (appLang() === "ko") return (bits.dt.getUTCMonth() + 1) + "월 " + bits.dt.getUTCDate() + "일 (" + dayKo(wd) + ")";
+  var mon = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][bits.dt.getUTCMonth()];
+  return dayName(wd) + ", " + mon + " " + bits.dt.getUTCDate();
+}
+function eventDetailPhoto(ev) {
+  var src = String(ev && ev.image || "").trim();
+  if (!/^assets\/[A-Za-z0-9_./-]+$/.test(src)) return "";
+  var uses = 0;
+  BETHANY_EVENTS.forEach(function (item) {
+    if (String(item.image || "").trim() === src) uses++;
+  });
+  return uses === 1 ? src : "";
+}
+function eventRow(ev) {
+  var a = document.createElement("a");
+  a.className = "ev-row";
+  a.href = "#/events/" + ev.id;
+  var title = appLang() === "ko" ? (ev.ko || ev.title) : ev.title;
+  a.innerHTML = '<span class="ev-meta"><span class="ev-date">' + escapeHtml(eventDateLabel(ev)) + '</span><span class="ev-time">' + escapeHtml(eventTimeLabel(ev)) + '</span><svg class="i ev-go" aria-hidden="true"><use href="#i-chev"/></svg></span><h3 class="ev-title">' + escapeHtml(title) + "</h3>";
+  return a;
 }
 function renderEvents() {
   var weekly = document.getElementById("weekly-list");
@@ -528,7 +523,7 @@ function renderEvents() {
       head.textContent = t("dateTbd");
       box.appendChild(head);
     }
-    box.appendChild(eventCard(ev));
+    box.appendChild(eventRow(ev));
   });
 }
 function eventById(id) {
@@ -540,6 +535,14 @@ function renderEvent(id) {
   var ev = eventById(id);
   if (!ev) { location.replace("#/events"); return; }
   var bits = eventParts(ev);
+  var hero = document.getElementById("event-hero");
+  var photo = eventDetailPhoto(ev);
+  if (hero) {
+    hero.classList.toggle("has-photo", !!photo);
+    if (photo) hero.style.setProperty("--event-photo", 'url("' + photo + '")');
+    else hero.style.removeProperty("--event-photo");
+    hero.querySelectorAll("button.back").forEach(function (btn) { btn.classList.toggle("glass", !!photo); });
+  }
   document.getElementById("event-title").textContent = appLang() === "ko" ? (ev.ko || ev.title) : ev.title;
   linkify(document.getElementById("event-note"), appLang() === "ko" ? (ev.koNote || ev.note || "") : (ev.note || ""));
   document.getElementById("event-when").textContent = bits.dt ? bits.dt.toLocaleDateString(appLang() === "ko" ? "ko-KR" : "en-US", { weekday: "long", month: "long", day: "numeric", timeZone: "UTC" }) : t("dateTbd");
@@ -1314,7 +1317,7 @@ function renderVisit() {
 document.getElementById("watch-live").onclick = function () { window.open(BETHANY.watchUrl, "_blank", "noopener"); };
 document.getElementById("all-times").onclick = function () { location.hash = "#/events"; };
 document.getElementById("see-events").onclick = function () { location.hash = "#/events"; };
-var APP_VERSION = (window.BETHANY && BETHANY.version) || "v41";
+var APP_VERSION = (window.BETHANY && BETHANY.version) || "v42";
 var fbCat = "idea";
 var fbGen = 0;
 function feedbackWho() {
