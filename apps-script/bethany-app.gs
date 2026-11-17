@@ -4,11 +4,20 @@
 // TEAM_HASH and LEADER_HASH are optional. When they are unset, songs and publishing are open.
 // SPREADSHEET_ID is saved automatically the first time a setlist is published or a song is requested.
 // Never put a password or a hash in this file.
+//
+// Song requests do not scan Drive. Run installTriggers once so refreshWorshipIndex
+// rebuilds the index every 10 minutes. Run buildIndex once after deploying.
 
 var INDEX_NAME = "bethany-worship-index.json";
 var INDEX_LIST_MS = 600000;
 var INDEX_PAGE_SONGS = 40;
 var INDEX_PAGE_CHARS = 120000;
+var INDEX_PACK_CHARS = 800000;
+var INDEX_CHUNK_BYTES = 90000;
+var INDEX_CACHE_TTL = 21600;
+var INDEX_STAMP_KEY = "idx:stamp";
+var INDEX_MANIFEST_KEY = "idx:manifest";
+var INDEX_TRIGGER = "refreshWorshipIndex";
 
 function saveFolderIds() {
   PropertiesService.getScriptProperties().setProperties({
@@ -317,36 +326,32 @@ function songs_(params) {
   try {
     var clientEtag = String(params.etag || "");
     var cursor = String(params.cursor || "");
-    var props = PropertiesService.getScriptProperties();
-    if (!cursor && clientEtag && props.getProperty("INDEX_READY") === "1" && props.getProperty("INDEX_ETAG") === clientEtag) {
-      return {
-        ok: true,
-        status: 200,
-        unchanged: true,
-        more: false,
-        ready: true,
-        etag: clientEtag,
-        version: clientEtag,
-        count: Number(props.getProperty("INDEX_TOTAL") || 0)
-      };
+    if (!cursor && clientEtag) {
+      var stamp = indexStamp_();
+      if (stamp.ready && stamp.etag === clientEtag) return unchanged_(stamp);
     }
-    return songsBuild_(clientEtag, cursor, {});
+    return pageIndex_(loadIndexCached_(), cursor, params);
   } catch (err) {
     return { ok: false, status: 500, error: "drive", message: String(err).slice(0, 180) };
   }
 }
 
 // Run once from the editor after pasting this file. Safe to run again; saved progress is kept.
+// Visiting the app does not continue this work. The 10-minute trigger calls it.
 function buildIndex() {
   var start = Date.now();
   var last = -1;
   var spins = 0;
   while (Date.now() - start < 270000) {
     var res;
-    try { res = songsBuild_("", "", { budgetMs: 20000, maxReads: 30 }); }
+    try { res = indexBuildStep_({ budgetMs: 20000, maxReads: 30 }); }
     catch (err) { Logger.log(String(err).slice(0, 180)); return; }
     if (!res || res.ok === false) {
       Logger.log((res && (res.message || res.error)) || "Index failed.");
+      return;
+    }
+    if (res.skipped) {
+      Logger.log("Index build is already running.");
       return;
     }
     Logger.log("Indexed " + (res.indexed || 0) + " / " + (res.total || 0));
@@ -364,7 +369,31 @@ function buildIndex() {
   Logger.log("Paused before the time limit. Run buildIndex again to continue.");
 }
 
-function songsBuild_(clientEtag, cursor, opts) {
+// Run once from the editor after deploying. Replaces any older copy of this trigger
+// and leaves every other trigger alone. Approve the trigger permission when Google asks.
+function installTriggers() {
+  var existing = ScriptApp.getProjectTriggers().filter(function (trigger) {
+    return trigger.getHandlerFunction && trigger.getHandlerFunction() === INDEX_TRIGGER;
+  });
+  existing.forEach(function (trigger) { ScriptApp.deleteTrigger(trigger); });
+  ScriptApp.newTrigger(INDEX_TRIGGER).timeBased().everyMinutes(10).create();
+  Logger.log("Installed " + INDEX_TRIGGER + " every 10 minutes. Run buildIndex once if the log has not said Index complete.");
+}
+
+// Run this before deploying an older script that does not define refreshWorshipIndex.
+function uninstallTriggers() {
+  var existing = ScriptApp.getProjectTriggers().filter(function (trigger) {
+    return trigger.getHandlerFunction && trigger.getHandlerFunction() === INDEX_TRIGGER;
+  });
+  existing.forEach(function (trigger) { ScriptApp.deleteTrigger(trigger); });
+  Logger.log("Removed " + existing.length + " " + INDEX_TRIGGER + " trigger(s).");
+}
+
+function refreshWorshipIndex() {
+  buildIndex();
+}
+
+function indexBuildStep_(opts) {
   opts = opts || {};
   var props = PropertiesService.getScriptProperties();
   var en = props.getProperty("EN_FOLDER_ID");
@@ -373,30 +402,29 @@ function songsBuild_(clientEtag, cursor, opts) {
   var lock = LockService.getScriptLock();
   var locked = false;
   try { locked = lock.tryLock(opts.lockMs || 1500); } catch (err) { locked = false; }
+  if (!locked) return { ok: true, status: 200, ready: false, skipped: true, indexed: 0, total: 0 };
   var start = Date.now();
-  var budgetMs = opts.budgetMs || 20000;
-  var maxReads = opts.maxReads || 25;
+  var budgetMs = opts.budgetMs == null ? 20000 : opts.budgetMs;
+  var maxReads = opts.maxReads == null ? 25 : opts.maxReads;
   try {
     var index = loadIndex_();
-    if (locked) {
-      var changed = listStep_(index, en, ko, start, budgetMs);
-      var reads = readStep_(index, start, budgetMs, maxReads);
-      var readyNow = indexReady_(index);
-      if (changed || reads || index.ready !== readyNow) {
-        index.ready = readyNow;
-        saveIndex_(index);
-      }
-      if (readyNow && index.etag) {
-        if (props.getProperty("INDEX_READY") !== "1" || props.getProperty("INDEX_ETAG") !== index.etag) {
-          props.setProperty("INDEX_READY", "1");
-          props.setProperty("INDEX_ETAG", index.etag);
-          props.setProperty("INDEX_TOTAL", String(index.total || (index.listed || []).length));
-        }
-      } else if (props.getProperty("INDEX_READY")) props.deleteProperty("INDEX_READY");
+    var changed = listStep_(index, en, ko, start, budgetMs);
+    var reads = readStep_(index, start, budgetMs, maxReads);
+    var readyNow = indexReady_(index);
+    if (changed || reads || index.ready !== readyNow) {
+      index.ready = readyNow;
+      saveIndex_(index);
     }
-    return pageIndex_(index, String(cursor || ""));
+    if (readyNow) publishStamp_(index);
+    return {
+      ok: true,
+      status: 200,
+      ready: readyNow,
+      indexed: indexedCount_(index),
+      total: index.total || (index.listed || []).length
+    };
   } finally {
-    if (locked) { try { lock.releaseLock(); } catch (err2) {} }
+    try { lock.releaseLock(); } catch (err2) {}
   }
 }
 
@@ -574,58 +602,203 @@ function songFrom_(file, prev) {
   };
 }
 
-function pageIndex_(index, cursor) {
-  var listed = index.listed || [];
-  var ready = indexReady_(index);
-  var songs = [];
-  var used = 0;
-  var next = cursor;
-  var more = !ready;
-  if (!index.listedAt || index.listing) {
-    for (var i = 0; i < listed.length && songs.length < INDEX_PAGE_SONGS; i++) {
-      var file = listed[i];
-      if (!freshFile_(index, file) || !index.files[file.id].cho) continue;
-      var early = songFrom_(file, index.files[file.id]);
-      var earlySize = JSON.stringify(early).length;
-      if (songs.length && used + earlySize > INDEX_PAGE_CHARS) break;
-      songs.push(early);
-      used += earlySize;
-    }
-    more = true;
-    next = "";
-  } else {
-    var seenCursor = !cursor;
-    for (var j = 0; j < listed.length; j++) {
-      var item = listed[j];
-      if (!seenCursor) {
-        if (item.id === cursor) seenCursor = true;
-        continue;
-      }
-      if (!freshFile_(index, item)) { more = true; break; }
-      if (!index.files[item.id].cho) continue;
-      var song = songFrom_(item, index.files[item.id]);
-      var piece = JSON.stringify(song).length;
-      if (songs.length && (songs.length >= INDEX_PAGE_SONGS || used + piece > INDEX_PAGE_CHARS)) { more = true; break; }
-      songs.push(song);
-      used += piece;
-      next = item.id;
-    }
-    if (!seenCursor) return pageIndex_(index, "");
-    if (!more) next = "";
-  }
+function unchanged_(stamp) {
   return {
     ok: true,
     status: 200,
+    unchanged: true,
+    more: false,
+    ready: true,
+    etag: stamp.etag,
+    version: stamp.etag,
+    count: Number(stamp.total || 0),
+    api: 2
+  };
+}
+
+function indexStamp_() {
+  var cached = cacheGet_(INDEX_STAMP_KEY);
+  if (cached && cached.ready && cached.etag) return cached;
+  var props = PropertiesService.getScriptProperties();
+  if (props.getProperty("INDEX_READY") === "1" && props.getProperty("INDEX_ETAG")) {
+    return {
+      ready: true,
+      etag: props.getProperty("INDEX_ETAG"),
+      total: Number(props.getProperty("INDEX_TOTAL") || 0),
+      builtAt: Number(props.getProperty("INDEX_BUILT_AT") || 0)
+    };
+  }
+  return { ready: false, etag: "", total: 0, builtAt: 0 };
+}
+
+function publishStamp_(index) {
+  if (!indexReady_(index) || !index.etag) return null;
+  var stamp = {
+    ready: true,
+    etag: index.etag,
+    total: index.total || (index.listed || []).length,
+    builtAt: Number(index.listedAt) || Date.now()
+  };
+  PropertiesService.getScriptProperties().setProperties({
+    INDEX_READY: "1",
+    INDEX_ETAG: stamp.etag,
+    INDEX_TOTAL: String(stamp.total),
+    INDEX_BUILT_AT: String(stamp.builtAt)
+  });
+  cachePut_(INDEX_STAMP_KEY, stamp, INDEX_CACHE_TTL);
+  try { cacheIndex_(index); }
+  catch (err) { Logger.log("Index cache: " + String(err).slice(0, 180)); }
+  return stamp;
+}
+
+function chunkUtf8_(text, maxBytes) {
+  var chunks = [];
+  var start = 0;
+  var bytes = 0;
+  var i = 0;
+  var limit = maxBytes || INDEX_CHUNK_BYTES;
+  text = String(text || "");
+  while (i < text.length) {
+    var code = text.charCodeAt(i);
+    var chars = 1;
+    var size = 1;
+    if (code < 0x80) size = 1;
+    else if (code < 0x800) size = 2;
+    else if (code >= 0xD800 && code <= 0xDBFF) { size = 4; chars = 2; }
+    else size = 3;
+    if (bytes > 0 && bytes + size > limit) {
+      chunks.push(text.slice(start, i));
+      start = i;
+      bytes = 0;
+    }
+    bytes += size;
+    i += chars;
+  }
+  if (start < text.length || !chunks.length) chunks.push(text.slice(start));
+  return chunks;
+}
+
+function cacheIndex_(index) {
+  var text = JSON.stringify(index);
+  var chunks = chunkUtf8_(text, INDEX_CHUNK_BYTES);
+  var cache = CacheService.getScriptCache();
+  var prefix = "idx:" + (index.etag || "none") + ":";
+  for (var i = 0; i < chunks.length; i++) cache.put(prefix + i, chunks[i], INDEX_CACHE_TTL);
+  cache.put(INDEX_MANIFEST_KEY, JSON.stringify({
     etag: index.etag || "",
-    version: index.etag || "",
-    more: more,
-    ready: ready,
-    cursor: more ? next : "",
+    chunks: chunks.length,
+    prefix: prefix
+  }), INDEX_CACHE_TTL);
+  var back = readCachedIndex_();
+  if (!back || String(back.etag || "") !== String(index.etag || "")) throw new Error("index cache");
+}
+
+function readCachedIndex_() {
+  try {
+    var cache = CacheService.getScriptCache();
+    var raw = cache.get(INDEX_MANIFEST_KEY);
+    if (!raw) return null;
+    var manifest = JSON.parse(raw);
+    if (!manifest || !manifest.chunks || !manifest.prefix) return null;
+    var keys = [];
+    for (var i = 0; i < manifest.chunks; i++) keys.push(manifest.prefix + i);
+    var got = {};
+    for (var batch = 0; batch < keys.length; batch += 100) {
+      var slice = keys.slice(batch, batch + 100);
+      var part = cache.getAll(slice) || {};
+      for (var p = 0; p < slice.length; p++) {
+        if (!part[slice[p]]) return null;
+        got[slice[p]] = part[slice[p]];
+      }
+    }
+    var text = "";
+    for (var j = 0; j < keys.length; j++) text += got[keys[j]];
+    var data = JSON.parse(text);
+    if (!data || typeof data !== "object") return null;
+    if (!data.files || typeof data.files !== "object") data.files = {};
+    if (!Array.isArray(data.listed)) data.listed = [];
+    return data;
+  } catch (err) {
+    return null;
+  }
+}
+
+function loadIndexCached_() {
+  var stamp = indexStamp_();
+  var cached = readCachedIndex_();
+  if (cached && cached.files && (!stamp.ready || cached.etag === stamp.etag)) return cached;
+  var index = loadIndex_();
+  if (indexReady_(index) && (!stamp.ready || index.etag === stamp.etag)) {
+    try { cacheIndex_(index); } catch (err) {}
+  }
+  return index;
+}
+
+function pageLimit_(params) {
+  params = params || {};
+  var pack = String(params.pack || "");
+  var version = String(params.v || "");
+  if (pack === "1" || pack === "all" || version === "2") return { songs: 1000000, chars: INDEX_PACK_CHARS };
+  return { songs: INDEX_PAGE_SONGS, chars: INDEX_PAGE_CHARS };
+}
+
+function songPage_(index, songs, flags) {
+  var listed = index.listed || [];
+  return {
+    ok: true,
+    status: 200,
+    etag: flags.etag || "",
+    version: flags.etag || "",
+    more: flags.more,
+    ready: flags.ready,
+    cursor: flags.cursor || "",
     indexed: indexedCount_(index),
     total: index.total || listed.length,
     count: index.total || listed.length,
-    songs: songs
+    songs: songs,
+    api: 2
   };
+}
+
+function pageIndex_(index, cursor, params) {
+  var listed = index.listed || [];
+  var ready = indexReady_(index);
+  var limit = pageLimit_(params);
+  var songs = [];
+  var used = 0;
+  if (!ready) {
+    for (var i = 0; i < listed.length && songs.length < limit.songs; i++) {
+      var earlyFile = listed[i];
+      if (!freshFile_(index, earlyFile) || !index.files[earlyFile.id].cho) continue;
+      var early = songFrom_(earlyFile, index.files[earlyFile.id]);
+      var earlySize = JSON.stringify(early).length;
+      if (songs.length && used + earlySize > limit.chars) break;
+      songs.push(early);
+      used += earlySize;
+    }
+    return songPage_(index, songs, { more: false, ready: false, cursor: "", etag: "" });
+  }
+  var next = String(cursor || "");
+  var more = false;
+  var seenCursor = !cursor;
+  for (var j = 0; j < listed.length; j++) {
+    var item = listed[j];
+    if (!seenCursor) {
+      if (item.id === cursor) seenCursor = true;
+      continue;
+    }
+    if (!freshFile_(index, item)) { more = true; break; }
+    if (!index.files[item.id].cho) continue;
+    var song = songFrom_(item, index.files[item.id]);
+    var piece = JSON.stringify(song).length;
+    if (songs.length && (songs.length >= limit.songs || used + piece > limit.chars)) { more = true; break; }
+    songs.push(song);
+    used += piece;
+    next = item.id;
+  }
+  if (!seenCursor) return pageIndex_(index, "", params);
+  if (!more) next = "";
+  return songPage_(index, songs, { more: more, ready: true, cursor: more ? next : "", etag: index.etag || "" });
 }
 
 function publish_(data) {

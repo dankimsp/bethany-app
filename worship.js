@@ -650,9 +650,15 @@ function woFetchSongs() {
     if (window.bethanyIdToken) return window.bethanyIdToken().then(send, function () { return send(""); });
     return send("");
   }
+  function showDrive(list) {
+    wo.fetchedDrive = list;
+    if (list.length && wo.bundled) woApplyCatalog(list);
+  }
   function step() {
     if (++steps > 80) return fail(null, "The song library is still indexing.");
-    var params = { action: "getSongs" };
+    // pack=1 asks a newer script for one large response. The current deployment ignores it
+    // and still returns 40-song pages, which this loop keeps following.
+    var params = { action: "getSongs", pack: "1" };
     if (cursor) params.cursor = cursor;
     else if (etag) params.etag = etag;
     return call(params).then(function (data) {
@@ -666,8 +672,8 @@ function woFetchSongs() {
         merged[item.id] = item;
       });
       var list = Object.keys(merged).map(function (key) { return merged[key]; });
-      if (list.length) woApplyCatalog(list);
       if (data.more === true) {
+        showDrive(list);
         var next = typeof data.cursor === "string" ? data.cursor : cursor;
         if (!added && next === cursor) {
           stalls++;
@@ -676,6 +682,14 @@ function woFetchSongs() {
         cursor = next;
         return new Promise(function (resolve) { setTimeout(resolve, added ? 80 : 400); }).then(step);
       }
+      if (data.ready === false) {
+        wo.partialDrive = list;
+        var haveSaved = (wo.pendingDrive && wo.pendingDrive.songs && wo.pendingDrive.songs.length) ||
+          (wo.songs || []).some(function (song) { return song && !song.bundled; });
+        if (!haveSaved && wo.bundled && list.length) woApplyCatalog(list);
+        return "partial";
+      }
+      showDrive(list);
       wo.driveEtag = data.etag || etag || "";
       return woCacheWrite({ etag: wo.driveEtag, version: data.version || wo.driveEtag, songs: list }).then(function () { return "ok"; });
     });
@@ -686,9 +700,10 @@ function woLoadPrivate() {
   woSyncAdd();
   if (!woBackendEnabled()) return Promise.resolve();
   return woCacheRead().then(function (cached) {
+    wo.pendingDrive = cached || null;
     if (cached && cached.songs) {
       wo.driveEtag = cached.etag || "";
-      woApplyCatalog(cached.songs);
+      if (wo.bundled) woApplyCatalog(cached.songs);
     }
     return woFetchSongs();
   });
@@ -716,7 +731,22 @@ function woRequestSong(ev) {
   }).catch(function () { say("Couldn't reach the song library."); });
   return false;
 }
+function woApplyDriveCatalog() {
+  if (wo.fetchedDrive && wo.fetchedDrive.length) {
+    woApplyCatalog(wo.fetchedDrive);
+    return;
+  }
+  if (wo.pendingDrive && wo.pendingDrive.songs && wo.pendingDrive.songs.length) {
+    wo.driveEtag = wo.pendingDrive.etag || wo.driveEtag || "";
+    woApplyCatalog(wo.pendingDrive.songs);
+    return;
+  }
+  if (wo.partialDrive && wo.partialDrive.length && wo.bundled) woApplyCatalog(wo.partialDrive);
+}
 function woLoadSongs() {
+  // Start the saved-library read and the Apps Script fetch alongside songs.json
+  // so a fresh device does not wait for the bundled hymns before the first request.
+  var driveP = woBackendEnabled() ? woLoadPrivate() : Promise.resolve();
   return fetch("songs.json").then(function (r) { if (!r.ok) throw 0; return r.json(); }).then(function (list) {
     if (!Array.isArray(list)) throw 0;
     wo.bundled = list.map(function (item) {
@@ -728,8 +758,9 @@ function woLoadSongs() {
     wo.byId = {};
     wo.songs.forEach(function (s) { wo.byId[s.id] = s; });
     woInitFilters();
+    woApplyDriveCatalog();
     woApplyRoute();
-    return woLoadPrivate();
+    return Promise.resolve(driveP).then(function () { woApplyDriveCatalog(); });
   }).catch(function () {
     var box = document.getElementById("wo-list");
     if (box) box.textContent = "Couldn't load songs.";
