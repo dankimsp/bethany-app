@@ -8,7 +8,7 @@ The web app runs as Daniel. Songs and publishing are open. Do not set `TEAM_HASH
 
 1. Sign in to [script.google.com](https://script.google.com) as danielcyk123@gmail.com.
 2. New project. Name it **Bethany Worship**.
-3. Replace the contents of `Code.gs` with `tools/worship-backend.gs` from this repo. Save.
+3. Replace the contents of `Code.gs` with `apps-script/bethany-app.gs` from this repo. Save. Do not paste `tools/worship-backend.gs`; that copy is older.
 
 ## 2. Save the Drive folder IDs
 
@@ -49,27 +49,32 @@ The first published setlist or song request creates a spreadsheet named **Bethan
 
 Song requests append a row (`time`, `title`, `artist`, `name`) and email danielcyk123@gmail.com. The subject starts with `[Song Request]`. Publishing a setlist does not ask for a passphrase or a change note. The app saves setlist edits on its own.
 
-Song charts are stored in a Drive file named `bethany-worship-index.json`. A visit only re-reads a chart when that file is new or its modified time changed. Each web request works for about 20 seconds, then returns the songs it has plus `more: true` if there are more. The app keeps asking until the list is complete. When nothing has changed, the app sends the `etag` it already has and the script answers without opening the charts.
+Song charts are stored in a Drive file named `bethany-worship-index.json`. A visit serves that built index from cache and does not open the song folders. `refreshWorshipIndex` rescans the folders every 10 minutes, reads charts that changed, and updates the version stamp. When nothing has changed, the app sends the `etag` it already has and the script answers from that stamp.
+
+The app asks for the library in one large response (`pack=1`). This script still answers the older 40-song pages when `pack` is absent, and an older deployed script ignores `pack`. Either way the app follows `more` and `cursor` until the list is complete.
 
 ## 4b. Build the song index
 
 After you paste a new `Code.gs` and deploy it:
 
-1. In the script editor, choose the function `buildIndex`.
-2. Click **Run**. Approve Drive if Google asks.
+1. In the script editor, choose the function `installTriggers` and click **Run**. Approve the trigger permission when Google asks. This installs `refreshWorshipIndex` every 10 minutes. Running it again replaces only that trigger.
+2. Choose `buildIndex` and click **Run**. Approve Drive if Google asks.
 3. Open **Execution log**. Wait until it says `Index complete.` It logs `Indexed n / total` as it goes.
 4. If it says it paused or made no further progress, run `buildIndex` again. It continues from the charts it already stored.
+5. Open **Triggers** and confirm `refreshWorshipIndex` runs every 10 minutes.
 
-You can run `buildIndex` any time. Charts that have not changed are not opened again. The app still works if you skip this step. The first visits just finish the index in short batches.
+You can run `buildIndex` any time. Charts that have not changed are not opened again. Visits do not finish a half-built index; run `buildIndex` until the log says it is complete.
 
 ## 4c. Update an existing deployment
 
 1. Open the existing **Bethany Worship** script at [script.google.com](https://script.google.com) while signed in as danielcyk123@gmail.com.
-2. Replace `Code.gs` with `tools/worship-backend.gs` from this repo. Save.
-3. Deploy > Manage deployments > pencil on the current web app > Version: **New version** > Deploy. Keep the same `/exec` URL.
+2. Replace `Code.gs` with `apps-script/bethany-app.gs` from this repo. Save.
+3. Deploy > Manage deployments > pencil on the current web app > Version: **New version** > Deploy. Keep the same `/exec` URL. Do not change who it runs as or who can access it.
 4. If Google asks, allow Drive. Allow Sheets and Gmail if it asks for those too.
-5. Run `buildIndex` once, as above.
+5. Run `installTriggers` once, then `buildIndex`, as above.
 6. Do not type a password into the file. Leave `TEAM_HASH` and `LEADER_HASH` deleted. Leave `EN_FOLDER_ID`, `KO_FOLDER_ID`, and `REQUEST_EMAIL` as they are.
+
+To roll the script back, run `uninstallTriggers` while this version is still open. Then Deploy > Manage deployments > pencil > choose the previous version > Deploy. If the trigger is still installed on a script that has no `refreshWorshipIndex`, delete that trigger in the Triggers panel.
 
 ## 5. Point the app at the web app
 
